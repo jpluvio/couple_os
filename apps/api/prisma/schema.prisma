@@ -1,0 +1,55 @@
+// Prisma Schema — Couple OS
+// Phase 0: Users, Couples, InviteCodes
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  avatarUrl String?  @map("avatar_url")
+  googleId  String   @unique @map("google_id")
+
+  coupleId  String?  @map("couple_id")
+  couple    Couple?  @relation(fields: [coupleId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Couple {
+  id        String   @id @default(uuid())
+  name      String?
+
+  members   User[]
+
+  inviteCodes InviteCode[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("couples")
+}
+
+model InviteCode {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  used      Boolean  @default(false)
+
+  coupleId  String   @map("couple_id")
+  couple    Couple   @relation(fields: [coupleId], references: [id])
+
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("invite_codes")
+}
