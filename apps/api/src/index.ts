@@ -6,6 +6,15 @@ import jwt from "@fastify/jwt";
 import { prismaPlugin } from "./plugins/prisma.js";
 import { authRoutes } from "./routes/auth.js";
 import { coupleRoutes } from "./routes/couples.js";
+import { postRoutes } from "./routes/posts.js";
+import { eventRoutes } from "./routes/events.js";
+import { todoRoutes } from "./routes/todos.js";
+import { pantryRoutes } from "./routes/pantry.js";
+import { shoppingRoutes } from "./routes/shopping.js";
+import { recipeRoutes } from "./routes/recipes.js";
+import { financeRoutes } from "./routes/finance.js";
+import { checkinRoutes } from "./routes/checkins.js";
+import { memoryRoutes } from "./routes/memories.js";
 
 const server = Fastify({
     logger: {
@@ -38,6 +47,15 @@ await server.register(prismaPlugin);
 // --- Routes ---
 await server.register(authRoutes, { prefix: "/auth" });
 await server.register(coupleRoutes, { prefix: "/couples" });
+await server.register(postRoutes, { prefix: "/posts" });
+await server.register(eventRoutes, { prefix: "/events" });
+await server.register(todoRoutes, { prefix: "/todos" });
+await server.register(pantryRoutes, { prefix: "/pantry" });
+await server.register(shoppingRoutes, { prefix: "/shopping" });
+await server.register(recipeRoutes, { prefix: "/recipes" });
+await server.register(financeRoutes, { prefix: "/finance" });
+await server.register(checkinRoutes, { prefix: "/checkins" });
+await server.register(memoryRoutes, { prefix: "/memories" });
 
 // --- Health Check ---
 server.get("/health", async () => {

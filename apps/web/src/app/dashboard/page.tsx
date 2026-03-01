@@ -3,6 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, clearAccessToken, getAccessToken } from "@/lib/api";
+import BoardTab from "@/components/BoardTab";
+import CalendarTab from "@/components/CalendarTab";
+import TodoTab from "@/components/TodoTab";
+import PantryTab from "@/components/PantryTab";
+import FinanceTab from "@/components/FinanceTab";
+import CheckinTab from "@/components/CheckinTab";
+import MemoriesTab from "@/components/MemoriesTab";
 
 interface UserData {
     id: string;
@@ -26,6 +33,39 @@ const NAV_ITEMS = [
     { icon: "💬", label: "Check-in", id: "checkin" },
     { icon: "📸", label: "Memories", id: "memories" },
 ];
+
+function TabContent({ activeTab }: { activeTab: string }) {
+    switch (activeTab) {
+        case "board":
+            return <BoardTab />;
+        case "calendar":
+            return <CalendarTab />;
+        case "todo":
+            return <TodoTab />;
+        case "pantry":
+            return <PantryTab />;
+        case "finance":
+            return <FinanceTab />;
+        case "checkin":
+            return <CheckinTab />;
+        case "memories":
+            return <MemoriesTab />;
+        default:
+            return (
+                <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 min-h-[400px] flex items-center justify-center">
+                    <div className="text-center text-gray-400">
+                        <span className="text-5xl block mb-4">
+                            {NAV_ITEMS.find((n) => n.id === activeTab)?.icon}
+                        </span>
+                        <h2 className="text-xl font-semibold text-gray-700 mb-2">
+                            {NAV_ITEMS.find((n) => n.id === activeTab)?.label}
+                        </h2>
+                        <p className="text-sm">Coming soon ✨</p>
+                    </div>
+                </div>
+            );
+    }
+}
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -100,17 +140,7 @@ export default function DashboardPage() {
 
             {/* Content Area */}
             <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-8">
-                <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 min-h-[400px] flex items-center justify-center">
-                    <div className="text-center text-gray-400">
-                        <span className="text-5xl block mb-4">
-                            {NAV_ITEMS.find((n) => n.id === activeTab)?.icon}
-                        </span>
-                        <h2 className="text-xl font-semibold text-gray-700 mb-2">
-                            {NAV_ITEMS.find((n) => n.id === activeTab)?.label}
-                        </h2>
-                        <p className="text-sm">Coming in Phase 1 ✨</p>
-                    </div>
-                </div>
+                <TabContent activeTab={activeTab} />
             </main>
 
             {/* Bottom Navigation (mobile-first) */}
@@ -121,8 +151,8 @@ export default function DashboardPage() {
                             key={item.id}
                             onClick={() => setActiveTab(item.id)}
                             className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-all ${activeTab === item.id
-                                    ? "text-rose-600 bg-rose-50"
-                                    : "text-gray-400 hover:text-gray-600"
+                                ? "text-rose-600 bg-rose-50"
+                                : "text-gray-400 hover:text-gray-600"
                                 }`}
                         >
                             <span className="text-lg">{item.icon}</span>
