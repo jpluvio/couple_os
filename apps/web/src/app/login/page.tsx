@@ -16,21 +16,9 @@ export default function LoginPage() {
 
         try {
             // In production, this uses Google Sign-In SDK to get the idToken.
-            // For development, we'll use a mock flow.
-            if (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID === "your-google-client-id") {
-                // DEV MODE: Call a dev-only endpoint that creates a test user
-                const res = await api<AuthResponse>("/auth/google", {
-                    method: "POST",
-                    body: { idToken: "dev-mock-token" },
-                });
-                setAccessToken(res.accessToken);
-
-                if (res.user.coupleId) {
-                    router.push("/dashboard");
-                } else {
-                    router.push("/onboarding");
-                }
-                return;
+            if (process.env.NODE_ENV !== "production") {
+                // In dev mode, we can optionally bypass Google Sign In if the button is explicitly pressed
+                // Fallthrough to real Google Auth for standard clicks unless handled by a special DEV button
             }
 
             // PRODUCTION: Use Google Identity Services
@@ -124,13 +112,40 @@ export default function LoginPage() {
                     <p className="mt-6 text-center text-xs text-gray-400">
                         By continuing, you agree to our Terms of Service and Privacy Policy.
                     </p>
+
+                    {process.env.NODE_ENV !== "production" && (
+                        <div className="mt-6 pt-6 border-t border-gray-100">
+                            <button
+                                onClick={async () => {
+                                    setLoading(true);
+                                    try {
+                                        const res = await api<AuthResponse>("/auth/google", {
+                                            method: "POST",
+                                            body: { idToken: "dev-mock-token" },
+                                        });
+                                        setAccessToken(res.accessToken);
+                                        if (res.user.coupleId) {
+                                            router.push("/dashboard");
+                                        } else {
+                                            router.push("/onboarding");
+                                        }
+                                    } catch (err: any) {
+                                        setError(err.message || "Dev Login failed");
+                                        setLoading(false);
+                                    }
+                                }}
+                                disabled={loading}
+                                className="w-full py-3 rounded-xl bg-gray-100 text-gray-600 text-sm font-medium hover:bg-gray-200 transition-colors"
+                            >
+                                🧪 Dev Bypass Login
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
             {/* Google Identity Services Script (production) */}
-            {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID !== "your-google-client-id" && (
-                <script src="https://accounts.google.com/gsi/client" async defer />
-            )}
+            <script src="https://accounts.google.com/gsi/client" async defer />
         </div>
     );
 }

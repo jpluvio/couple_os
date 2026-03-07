@@ -16,6 +16,11 @@ import { financeRoutes } from "./routes/finance.js";
 import { checkinRoutes } from "./routes/checkins.js";
 import { memoryRoutes } from "./routes/memories.js";
 
+// Import workers to ensure they start processing jobs
+import "./workers/cron.js";
+import "./workers/notifications.js";
+import { cronQueue } from "./lib/queue.js";
+
 const server = Fastify({
     logger: {
         level: "info",
@@ -62,10 +67,22 @@ server.get("/health", async () => {
     return { status: "ok", timestamp: new Date().toISOString() };
 });
 
+// --- Schedule Daily Jobs ---
+async function scheduleCronJobs() {
+    // Run at 9:00 AM every day
+    const cronSchedule = "0 9 * * *";
+
+    await cronQueue.add("pantry-expiry-check", {}, { repeat: { pattern: cronSchedule } });
+    await cronQueue.add("todo-deadline-check", {}, { repeat: { pattern: cronSchedule } });
+    await cronQueue.add("on-this-day-check", {}, { repeat: { pattern: cronSchedule } });
+    server.log.info("🗓️ Scheduled daily background jobs");
+}
+
 // --- Start ---
 const PORT = Number(process.env.API_PORT) || 3001;
 
 try {
+    await scheduleCronJobs();
     await server.listen({ port: PORT, host: "0.0.0.0" });
     server.log.info(`🚀 Couple OS API running on http://localhost:${PORT}`);
 } catch (err) {

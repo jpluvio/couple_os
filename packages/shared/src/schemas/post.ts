@@ -39,6 +39,7 @@ export const CreatePostRequestSchema = z.object({
         .min(1, "Post cannot be empty")
         .max(500, "Post cannot exceed 500 characters"),
     tags: z.array(z.string().max(30)).max(5).optional(),
+    pinned: z.boolean().optional(),
 });
 
 export type CreatePostRequest = z.infer<typeof CreatePostRequestSchema>;

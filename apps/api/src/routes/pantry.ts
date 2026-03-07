@@ -30,6 +30,22 @@ export async function pantryRoutes(server: FastifyInstance) {
         };
     }
 
+    server.get("/history", async (request, reply) => {
+        const { userId } = request.user as { userId: string };
+        const coupleId = await getUserCouple(userId);
+        if (!coupleId) return reply.status(403).send({ error: "You must be in a couple" });
+
+        const items = await server.prisma.pantryItem.findMany({
+            where: { coupleId },
+            select: { name: true },
+            distinct: ['name'],
+            orderBy: { createdAt: "desc" },
+            take: 50,
+        });
+
+        return { history: items.map(i => i.name) };
+    });
+
     // ========= PANTRY =========
 
     server.get("/", async (request, reply) => {

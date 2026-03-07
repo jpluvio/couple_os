@@ -15,6 +15,15 @@ export interface GoogleUserInfo {
 export async function verifyGoogleToken(
     idToken: string
 ): Promise<GoogleUserInfo> {
+    if (idToken === "dev-mock-token" && process.env.NODE_ENV !== "production") {
+        return {
+            googleId: "dev-user-123",
+            email: "dev@couple-os.test",
+            name: "Developer Tester",
+            avatarUrl: null,
+        };
+    }
+
     const ticket = await client.verifyIdToken({
         idToken,
         audience: process.env.GOOGLE_CLIENT_ID,

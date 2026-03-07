@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { CreateCheckInSchema, RespondCheckInSchema } from "@couple-os/shared";
+import { CreateCheckInSchema, RespondCheckInSchema, CHECK_IN_PROMPTS } from "@couple-os/shared";
 
 export async function checkinRoutes(server: FastifyInstance) {
     server.addHook("onRequest", async (request, reply) => {
@@ -14,6 +14,18 @@ export async function checkinRoutes(server: FastifyInstance) {
     function fmt(c: any) {
         return { ...c, createdAt: c.createdAt.toISOString(), updatedAt: c.updatedAt.toISOString() };
     }
+
+    // Get weekly rotating prompt
+    server.get("/prompt", async (request, reply) => {
+        const { userId } = request.user as { userId: string };
+        const coupleId = await getUserCouple(userId);
+        if (!coupleId) return reply.status(403).send({ error: "You must be in a couple" });
+
+        const currentWeek = Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000));
+        const index = currentWeek % CHECK_IN_PROMPTS.length;
+
+        return { prompt: CHECK_IN_PROMPTS[index] };
+    });
 
     // List check-ins
     server.get("/", async (request, reply) => {
@@ -87,11 +99,27 @@ export async function checkinRoutes(server: FastifyInstance) {
 
         // Auto-reveal if both have answered
         const willReveal = isUser1
-            ? checkin.mood2 !== null
-            : checkin.mood1 !== null;
+            ? (checkin as any).mood2 !== null
+            : (checkin as any).mood1 !== null;
         if (willReveal) updates.revealed = true;
 
-        const updated = await server.prisma.checkIn.update({ where: { id }, data: updates });
+        const updated = await server.prisma.checkIn.update({ where: { id }, data: updates, include: { couple: { include: { members: true } } } });
+
+        // Dispatch Social Notifications
+        import("../lib/queue.js").then(({ notificationQueue }) => {
+            const partner = updated.couple.members.find(m => m.id !== userId);
+            if (partner && partner.pushTokens.length > 0) {
+                notificationQueue.add("push-notification", {
+                    userId: partner.id,
+                    title: "Check-in Update 💬",
+                    body: willReveal
+                        ? "You've both answered! Open Couple OS to see your partner's response."
+                        : "Your partner answered a check-in. Add your response to see theirs!",
+                    data: { url: "/dashboard?tab=checkin" },
+                });
+            }
+        });
+
         return fmt(updated);
     });
 

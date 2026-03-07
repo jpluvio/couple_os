@@ -7,6 +7,7 @@ export const CoupleSchema = z.object({
     id: z.string().uuid(),
     name: z.string().nullable(),
     createdAt: z.string().datetime(),
+    splitMode: z.string(),
     members: z.array(UserSchema).max(2),
 });
 

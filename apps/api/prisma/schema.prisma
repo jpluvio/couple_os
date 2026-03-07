@@ -15,8 +15,10 @@ model User {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String
-  avatarUrl String?  @map("avatar_url")
+  avatarUrl String?  @db.VarChar(500) @map("avatar_url")
+  pushTokens String[] @default([]) @map("push_tokens")
   googleId  String   @unique @map("google_id")
+  salary    Float?   @default(0)
 
   coupleId  String?  @map("couple_id")
   couple    Couple?  @relation(fields: [coupleId], references: [id])
@@ -39,6 +41,7 @@ model User {
 model Couple {
   id        String   @id @default(uuid())
   name      String?
+  splitMode String   @default("EQUAL") @map("split_mode") // "EQUAL" or "PROPORTIONAL"
 
   members   User[]
   posts     Post[]

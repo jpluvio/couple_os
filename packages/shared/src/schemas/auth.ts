@@ -9,6 +9,7 @@ export const UserSchema = z.object({
     avatarUrl: z.string().url().nullable(),
     coupleId: z.string().uuid().nullable(),
     createdAt: z.string().datetime(),
+    salary: z.number().nullable(),
 });
 
 export type User = z.infer<typeof UserSchema>;

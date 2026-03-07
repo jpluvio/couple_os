@@ -37,8 +37,8 @@ export default function PantryTab() {
                         key={t.id}
                         onClick={() => setSubTab(t.id)}
                         className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${subTab === t.id
-                                ? "bg-white shadow-sm text-gray-900"
-                                : "text-gray-500 hover:text-gray-700"
+                            ? "bg-white shadow-sm text-gray-900"
+                            : "text-gray-500 hover:text-gray-700"
                             }`}
                     >
                         {t.label}
@@ -63,12 +63,17 @@ function PantrySection() {
     const [name, setName] = useState("");
     const [category, setCategory] = useState("PANTRY");
     const [qty, setQty] = useState("1");
+    const [history, setHistory] = useState<string[]>([]);
 
     const fetchItems = useCallback(async () => {
         try {
             const url = filter === "ALL" ? "/pantry" : `/pantry?category=${filter}`;
             const data = await api<{ items: PantryItem[] }>(url);
             setItems(data.items);
+
+            // Fetch autocomplete history
+            const histData = await api<{ history: string[] }>("/pantry/history");
+            setHistory(histData.history);
         } catch { /* */ } finally { setLoading(false); }
     }, [filter]);
 
@@ -115,7 +120,10 @@ function PantrySection() {
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex gap-2 items-end">
                     <div className="flex-1">
                         <label className="text-[10px] text-gray-500 block mb-1">Name</label>
-                        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Product name..." className="w-full px-3 py-2 rounded-lg border border-gray-100 text-sm focus:border-rose-300 outline-none" onKeyDown={(e) => e.key === "Enter" && handleAdd()} />
+                        <input list="pantry-suggestions" value={name} onChange={(e) => setName(e.target.value)} placeholder="Product name..." className="w-full px-3 py-2 rounded-lg border border-gray-100 text-sm focus:border-rose-300 outline-none" onKeyDown={(e) => e.key === "Enter" && handleAdd()} />
+                        <datalist id="pantry-suggestions">
+                            {history.map((h, i) => <option key={i} value={h} />)}
+                        </datalist>
                     </div>
                     <div className="w-28">
                         <label className="text-[10px] text-gray-500 block mb-1">Category</label>
@@ -165,11 +173,15 @@ function ShoppingSection() {
     const [items, setItems] = useState<ShoppingItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [name, setName] = useState("");
+    const [history, setHistory] = useState<string[]>([]);
 
     const fetchItems = useCallback(async () => {
         try {
             const data = await api<{ items: ShoppingItem[] }>("/shopping");
             setItems(data.items);
+
+            const histData = await api<{ history: string[] }>("/shopping/history");
+            setHistory(histData.history);
         } catch { /* */ } finally { setLoading(false); }
     }, []);
 
@@ -204,12 +216,16 @@ function ShoppingSection() {
             {/* Quick Add */}
             <div className="flex gap-2">
                 <input
+                    list="shopping-suggestions"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Add item..."
                     className="flex-1 px-4 py-2.5 rounded-xl border border-gray-100 text-sm focus:border-rose-300 outline-none bg-white text-gray-900 placeholder-gray-300"
                     onKeyDown={(e) => e.key === "Enter" && handleAdd()}
                 />
+                <datalist id="shopping-suggestions">
+                    {history.map((h, i) => <option key={i} value={h} />)}
+                </datalist>
                 <button onClick={handleAdd} className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-violet-500 text-white text-sm font-medium">Add</button>
             </div>
 

@@ -117,18 +117,11 @@ export async function postRoutes(server: FastifyInstance) {
      */
     server.post("/", async (request, reply) => {
         const { userId } = request.user as { userId: string };
-        const coupleId = await getUserCouple(userId);
-
-        if (!coupleId) {
-            return reply.status(403).send({ error: "You must be in a couple" });
-        }
-
         const parsed = CreatePostRequestSchema.safeParse(request.body);
-        if (!parsed.success) {
-            return reply
-                .status(400)
-                .send({ error: "Invalid post", details: parsed.error.flatten() });
-        }
+        if (!parsed.success) return reply.status(400).send({ error: "Invalid post data", details: parsed.error.flatten() });
+
+        const coupleId = await getUserCouple(userId);
+        if (!coupleId) return reply.status(403).send({ error: "You must be in a couple" });
 
         const post = await server.prisma.post.create({
             data: {
@@ -136,11 +129,22 @@ export async function postRoutes(server: FastifyInstance) {
                 tags: parsed.data.tags || [],
                 authorId: userId,
                 coupleId,
+                pinned: parsed.data.pinned || false,
             },
-            include: {
-                author: { select: { id: true, name: true, avatarUrl: true } },
-                reactions: true,
-            },
+            include: { author: true, couple: { include: { members: true } } },
+        });
+
+        // Notify partner
+        import("../lib/queue.js").then(({ notificationQueue }) => {
+            const partner = post.couple.members.find(m => m.id !== userId);
+            if (partner && partner.pushTokens.length > 0) {
+                notificationQueue.add("push-notification", {
+                    userId: partner.id,
+                    title: "New Board Post 📌",
+                    body: `${post.author.name} posted on the board: "${post.content.substring(0, 30)}${post.content.length > 30 ? "..." : ""}"`,
+                    data: { url: "/dashboard?tab=board" },
+                });
+            }
         });
 
         return formatPost(post, userId);
@@ -229,59 +233,59 @@ export async function postRoutes(server: FastifyInstance) {
     server.post("/:id/reactions", async (request, reply) => {
         const { userId } = request.user as { userId: string };
         const { id: postId } = request.params as { id: string };
-        const coupleId = await getUserCouple(userId);
-
-        if (!coupleId) {
-            return reply.status(403).send({ error: "You must be in a couple" });
-        }
-
-        const post = await server.prisma.post.findFirst({
-            where: { id: postId, coupleId },
-        });
-
-        if (!post) {
-            return reply.status(404).send({ error: "Post not found" });
-        }
 
         const parsed = ToggleReactionRequestSchema.safeParse(request.body);
         if (!parsed.success) {
-            return reply
-                .status(400)
-                .send({ error: "Invalid reaction", details: parsed.error.flatten() });
+            return reply.status(400).send({ error: "Invalid reaction data", details: parsed.error.flatten() });
         }
 
-        // Toggle: if exists → delete, if not → create
+        const { emoji } = parsed.data;
+
+        const coupleId = await getUserCouple(userId);
+        if (!coupleId) return reply.status(403).send({ error: "You must be in a couple" });
+
+        // Ensure post belongs to couple
+        const post = await server.prisma.post.findFirst({
+            where: { id: postId, coupleId },
+            include: { author: true },
+        });
+        if (!post) return reply.status(404).send({ error: "Post not found" });
+
+        // Check if reaction exists
         const existing = await server.prisma.reaction.findUnique({
             where: {
-                userId_postId_emoji: {
-                    userId,
-                    postId,
-                    emoji: parsed.data.emoji,
-                },
+                userId_postId_emoji: { userId, postId, emoji },
             },
         });
 
         if (existing) {
+            // Remove
             await server.prisma.reaction.delete({ where: { id: existing.id } });
+            return { success: true, action: "removed" };
         } else {
+            // Add
             await server.prisma.reaction.create({
-                data: {
-                    emoji: parsed.data.emoji,
-                    userId,
-                    postId,
-                },
+                data: { userId, postId, emoji },
             });
+
+            // Notify post author if it's someone else's post
+            if (post.authorId !== userId) {
+                import("../lib/queue.js").then(({ notificationQueue }) => {
+                    server.prisma.user.findUnique({ where: { id: userId } }).then((reactor) => {
+                        const reactorName = reactor?.name || "Your partner";
+                        if (post.author.pushTokens.length > 0) {
+                            notificationQueue.add("push-notification", {
+                                userId: post.authorId,
+                                title: "New Reaction 😂",
+                                body: `${reactorName} reacted ${emoji} to your post.`,
+                                data: { url: "/dashboard?tab=board" },
+                            });
+                        }
+                    });
+                });
+            }
+
+            return { success: true, action: "added" };
         }
-
-        // Return updated post
-        const updatedPost = await server.prisma.post.findUnique({
-            where: { id: postId },
-            include: {
-                author: { select: { id: true, name: true, avatarUrl: true } },
-                reactions: true,
-            },
-        });
-
-        return formatPost(updatedPost!, userId);
     });
 }
