@@ -37,7 +37,7 @@ export default function NotificationsScreen() {
         item.read ? "bg-white" : "bg-blue-50"
       }`}
     >
-      <Text className="text-2xl mr-3">{TYPE_EMOJI[item.type] ?? "🔔"}</Text>
+      <Text className="text-2xl mr-3">{TYPE_EMOJI[item.type as NotificationType] ?? "🔔"}</Text>
       <View className="flex-1">
         <Text className="text-base font-semibold text-gray-900">{item.title}</Text>
         <Text className="text-sm text-gray-600 mt-0.5">{item.body}</Text>

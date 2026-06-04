@@ -16,7 +16,7 @@ function AuthGuard() {
     if (loading) return;
 
     const inAuthGroup = segments[0] === "(auth)";
-    const onOnboarding = segments[1] === "onboarding";
+    const onOnboarding = segments.includes("onboarding");
 
     if (!session && !inAuthGroup) {
       router.replace("/(auth)/login");
