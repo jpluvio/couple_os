@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, Pressable, ActivityIndicator, Alert } from "react-native";
+import { View, Text, Pressable, ActivityIndicator, Alert, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { makeRedirectUri } from "expo-auth-session";
@@ -16,6 +16,19 @@ export default function LoginScreen() {
   async function signInWithGoogle() {
     setLoading(true);
     try {
+      // Web: redirect a pagina intera; al ritorno detectSessionInUrl elabora il code.
+      if (Platform.OS === "web") {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: window.location.origin,
+            queryParams: { access_type: "offline", prompt: "consent" },
+          },
+        });
+        if (error) throw error;
+        return; // la pagina viene reindirizzata a Google
+      }
+
       const redirectTo = makeRedirectUri({ scheme: "couple-os", path: "auth/callback" });
 
       const { data, error } = await supabase.auth.signInWithOAuth({

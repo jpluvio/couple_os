@@ -16,10 +16,13 @@ function AuthGuard() {
     if (loading) return;
 
     const inAuthGroup = segments[0] === "(auth)";
+    const onOnboarding = segments[1] === "onboarding";
 
     if (!session && !inAuthGroup) {
       router.replace("/(auth)/login");
-    } else if (session && inAuthGroup) {
+    } else if (session && inAuthGroup && !onOnboarding) {
+      // Utente autenticato: vai alla board, ma lascialo libero
+      // sulla schermata di onboarding (crea/unisciti a una coppia).
       router.replace("/(app)/board");
     }
   }, [session, loading, segments]);

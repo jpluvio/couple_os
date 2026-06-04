@@ -29,7 +29,7 @@
     "web": {
       "bundler": "metro",
       "favicon": "./assets/favicon.png",
-      "output": "static"
+      "output": "single"
     },
     "plugins": [
       "expo-router",
@@ -48,8 +48,8 @@
       ]
     ],
     "extra": {
-      "supabaseUrl": "SUPABASE_URL_PLACEHOLDER",
-      "supabaseAnonKey": "SUPABASE_ANON_KEY_PLACEHOLDER",
+      "supabaseUrl": "https://vufwcrgdoheirjyowyaf.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1Zndjcmdkb2hlaXJqeW93eWFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTUyNDAsImV4cCI6MjA5MTY3MTI0MH0.YxSW-L6Y5F4U0bko1DiABeE-up-aSnmvY-MfdmfHJhk",
       "eas": {
         "projectId": "YOUR_EAS_PROJECT_ID"
       }

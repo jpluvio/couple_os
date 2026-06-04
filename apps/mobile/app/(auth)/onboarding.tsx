@@ -15,56 +15,39 @@ import { supabase } from "@/lib/supabase";
 
 type Mode = "choose" | "create" | "join";
 
+// Alert.alert è un no-op su react-native-web: usiamo window.alert sul web.
+function notify(title: string, message: string) {
+  if (Platform.OS === "web") {
+    window.alert(`${title}\n\n${message}`);
+  } else {
+    Alert.alert(title, message);
+  }
+}
+
 export default function OnboardingScreen() {
   const [mode, setMode] = useState<Mode>("choose");
   const [coupleName, setCoupleName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [createdCode, setCreatedCode] = useState<string | null>(null);
   const router = useRouter();
 
   async function createCouple() {
     setLoading(true);
     try {
-      const user = (await supabase.auth.getUser()).data.user;
-      if (!user) throw new Error("Utente non trovato");
-
+      // RPC atomica: crea coppia + associa utente + genera codice invito,
+      // bypassando il problema RLS del read-back lato client.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const sb = supabase as any;
-
-      // Crea la coppia
-      const { data: couple, error: coupleError } = await sb
-        .from("couples")
-        .insert({ name: coupleName.trim() || null })
-        .select()
-        .single();
-
-      if (coupleError || !couple) throw coupleError ?? new Error("Errore creazione coppia");
-
-      // Associa l'utente alla coppia
-      const { error: userError } = await sb
-        .from("users")
-        .update({ couple_id: couple.id })
-        .eq("id", user.id);
-
-      if (userError) throw userError;
-
-      // Genera codice invito (6 caratteri, 48h)
-      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-      const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
-
-      await sb.from("invite_codes").insert({
-        code,
-        couple_id: couple.id,
-        expires_at: expiresAt,
+      const { data, error } = await (supabase.rpc as any)("create_couple", {
+        couple_name: coupleName.trim() || null,
       });
 
-      Alert.alert(
-        "Coppia creata! 🎉",
-        `Condividi questo codice con il tuo partner:\n\n${code}\n\nValido per 48 ore.`,
-        [{ text: "Continua", onPress: () => router.replace("/(app)/board") }]
-      );
-    } catch (err) {
-      Alert.alert("Errore", "Impossibile creare la coppia. Riprova.");
+      if (error) throw error;
+
+      setCreatedCode(data.invite_code as string);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Impossibile creare la coppia. Riprova.";
+      notify("Errore", msg);
     } finally {
       setLoading(false);
     }
@@ -73,7 +56,7 @@ export default function OnboardingScreen() {
   async function joinCouple() {
     const code = inviteCode.trim().toUpperCase();
     if (code.length !== 6) {
-      Alert.alert("Codice non valido", "Il codice deve essere di 6 caratteri.");
+      notify("Codice non valido", "Il codice deve essere di 6 caratteri.");
       return;
     }
 
@@ -89,10 +72,35 @@ export default function OnboardingScreen() {
       router.replace("/(app)/board");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Codice non valido o scaduto.";
-      Alert.alert("Errore", msg);
+      notify("Errore", msg);
     } finally {
       setLoading(false);
     }
+  }
+
+  // Schermata di successo: mostra il codice invito da condividere col partner.
+  if (createdCode) {
+    return (
+      <View className="flex-1 bg-white items-center justify-center px-8">
+        <Text className="text-3xl font-bold text-gray-900 mb-2">Coppia creata! 🎉</Text>
+        <Text className="text-base text-gray-500 text-center mb-8">
+          Condividi questo codice con il tuo partner. Valido per 48 ore.
+        </Text>
+
+        <View className="bg-gray-100 rounded-2xl px-8 py-5 mb-10">
+          <Text className="text-3xl font-bold tracking-[8px] text-gray-900 text-center">
+            {createdCode}
+          </Text>
+        </View>
+
+        <Pressable
+          onPress={() => router.replace("/(app)/board")}
+          className="w-full bg-brand-500 rounded-2xl py-4 items-center active:opacity-80"
+        >
+          <Text className="text-white font-semibold text-base">Continua</Text>
+        </Pressable>
+      </View>
+    );
   }
 
   if (mode === "choose") {

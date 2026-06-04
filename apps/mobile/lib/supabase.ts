@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
+import { Platform } from "react-native";
 import type { Database } from "@/types/database";
 
 const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl as string;
@@ -17,6 +18,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     storage: AsyncStorage,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
+    // Sul web Supabase deve elaborare il `?code=` nell'URL al ritorno dall'OAuth.
+    detectSessionInUrl: Platform.OS === "web",
   },
 });
