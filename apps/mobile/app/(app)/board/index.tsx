@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCouple } from "@/hooks/useCouple";
 import { PostCard, type PostWithRelations } from "@/components/board/PostCard";
 import { CreatePostModal } from "@/components/board/CreatePostModal";
+import { NotificationBell } from "@/components/ui/NotificationBell";
 
 const QUERY_KEY = (coupleId: string) => ["posts", coupleId];
 
@@ -62,9 +63,12 @@ export default function BoardScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header */}
-      <View className="px-4 pt-2 pb-3">
-        <Text className="text-2xl font-bold text-gray-900">Board</Text>
-        <Text className="text-sm text-gray-500 mt-0.5">La bacheca di coppia</Text>
+      <View className="flex-row items-start justify-between px-4 pt-2 pb-3">
+        <View>
+          <Text className="text-2xl font-bold text-gray-900">Board</Text>
+          <Text className="text-sm text-gray-500 mt-0.5">La bacheca di coppia</Text>
+        </View>
+        <NotificationBell />
       </View>
 
       <FlashList

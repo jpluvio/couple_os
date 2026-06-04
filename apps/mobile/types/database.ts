@@ -8,6 +8,7 @@ export type TodoStatus = "TODO" | "IN_PROGRESS" | "DONE";
 export type PantryCategory = "FRIDGE" | "FREEZER" | "PANTRY" | "BATHROOM" | "OTHER";
 export type CheckinPeriod = "weekly" | "monthly" | "yearly";
 export type PromptSource = "SYSTEM" | "CUSTOM";
+export type NotificationType = "post" | "event" | "expense" | "todo";
 
 export interface Database {
   public: {
@@ -266,6 +267,22 @@ export interface Database {
         Insert: Omit<Database["public"]["Tables"]["memories"]["Row"], "id" | "created_at" | "updated_at"> & { id?: string };
         Update: Partial<Database["public"]["Tables"]["memories"]["Insert"]>;
       };
+      notifications: {
+        Row: {
+          id: string;
+          couple_id: string;
+          recipient_id: string;
+          actor_id: string | null;
+          type: NotificationType;
+          entity_id: string | null;
+          title: string;
+          body: string;
+          read: boolean;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["notifications"]["Row"], "id" | "created_at" | "read"> & { id?: string; read?: boolean };
+        Update: Partial<Database["public"]["Tables"]["notifications"]["Insert"]>;
+      };
     };
     Functions: {
       get_couple_id: {
@@ -299,3 +316,4 @@ export type Budget = Tables<"budgets">;
 export type FinancialGoal = Tables<"financial_goals">;
 export type CheckIn = Tables<"check_ins">;
 export type Memory = Tables<"memories">;
+export type Notification = Tables<"notifications">;

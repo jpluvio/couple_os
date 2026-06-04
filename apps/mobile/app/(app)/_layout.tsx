@@ -108,6 +108,8 @@ export default function AppLayout() {
           tabBarIcon: ({ color }) => <TabBarIcon emoji="📸" color={color} />,
         }}
       />
+      {/* Schermata raggiungibile via campanella, non come tab */}
+      <Tabs.Screen name="notifications" options={{ href: null }} />
     </Tabs>
   );
 }
