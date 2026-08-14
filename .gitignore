@@ -1,0 +1,23 @@
+# Dipendenze
+node_modules/
+
+# Build e cache
+.turbo/
+dist/
+build/
+web-build/
+*.tsbuildinfo
+
+# Expo
+.expo/
+.expo-shared/
+
+# Ambiente
+.env
+.env.local
+.env.*.local
+
+# Sistema ed editor
+.DS_Store
+Thumbs.db
+*.log
