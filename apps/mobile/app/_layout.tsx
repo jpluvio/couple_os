@@ -21,8 +21,8 @@ function AuthGuard() {
     if (!session && !inAuthGroup) {
       router.replace("/(auth)/login");
     } else if (session && inAuthGroup && !onOnboarding) {
-      // Utente autenticato: vai alla board, ma lascialo libero
-      // sulla schermata di onboarding (crea/unisciti a una coppia).
+      // Signed in: go to the board, but leave them alone on the
+      // onboarding screen (create/join a couple).
       router.replace("/(app)/board");
     }
   }, [session, loading, segments]);

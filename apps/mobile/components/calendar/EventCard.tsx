@@ -35,13 +35,13 @@ export function EventCard({ event, currentUserId, queryKey, partnerColor }: Even
     if (!isOwn) return;
     Alert.alert(event.title, undefined, [
       {
-        text: "🗑️ Elimina",
+        text: "Delete",
         style: "destructive",
         onPress: () =>
-          Alert.alert("Elimina evento", "Sei sicuro?", [
-            { text: "Annulla", style: "cancel" },
+          Alert.alert("Delete event", "This cannot be undone.", [
+            { text: "Cancel", style: "cancel" },
             {
-              text: "Elimina",
+              text: "Delete",
               style: "destructive",
               onPress: async () => {
                 await supabase.from("events").delete().eq("id", event.id);
@@ -50,7 +50,7 @@ export function EventCard({ event, currentUserId, queryKey, partnerColor }: Even
             },
           ]),
       },
-      { text: "Annulla", style: "cancel" },
+      { text: "Cancel", style: "cancel" },
     ]);
   }
 
@@ -68,7 +68,7 @@ export function EventCard({ event, currentUserId, queryKey, partnerColor }: Even
             {formatTime(event.start_at)} – {formatTime(event.end_at)}
           </Text>
         )}
-        {event.all_day && <Text className="text-xs text-gray-400 mt-0.5">Tutto il giorno</Text>}
+        {event.all_day && <Text className="text-xs text-gray-400 mt-0.5">All day</Text>}
         {event.location ? <Text className="text-xs text-gray-400 mt-0.5">📍 {event.location}</Text> : null}
       </View>
     </Pressable>

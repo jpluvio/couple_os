@@ -95,7 +95,7 @@ export function RecipesTab() {
       resetForm();
       setShowAdd(false);
     } catch {
-      Alert.alert("Errore", "Impossibile aggiungere la ricetta.");
+      Alert.alert("Something went wrong", "The recipe could not be added.");
     } finally {
       setLoading(false);
     }
@@ -111,14 +111,14 @@ export function RecipesTab() {
   function handleLongPress(recipe: Recipe) {
     Alert.alert(recipe.title, undefined, [
       {
-        text: "🗑️ Elimina",
+        text: "Delete",
         style: "destructive",
         onPress: async () => {
           await supabase.from("recipes").delete().eq("id", recipe.id);
           queryClient.invalidateQueries({ queryKey: qKey });
         },
       },
-      { text: "Annulla", style: "cancel" },
+      { text: "Cancel", style: "cancel" },
     ]);
   }
 
@@ -134,9 +134,9 @@ export function RecipesTab() {
         {(recipes ?? []).length === 0 && !isLoading ? (
           <View className="items-center py-20 px-8">
             <Text className="text-5xl mb-4">👨‍🍳</Text>
-            <Text className="text-base font-semibold text-gray-700 text-center">Nessuna ricetta ancora</Text>
+            <Text className="text-base font-semibold text-gray-700 text-center">No recipes yet</Text>
             <Text className="text-sm text-gray-400 text-center mt-1">
-              Salva le vostre ricette preferite!
+              Keep your favourite recipes here.
             </Text>
           </View>
         ) : (
@@ -174,7 +174,7 @@ export function RecipesTab() {
                 {expanded && (recipe.ingredients ?? []).length > 0 && (
                   <View className="px-4 pb-4 border-t border-gray-50">
                     <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mt-3 mb-2">
-                      Ingredienti
+                      Ingredients
                     </Text>
                     {(recipe.ingredients ?? []).map((ing) => (
                       <View key={ing.id} className="flex-row items-center py-1" style={{ gap: 8 }}>
@@ -208,9 +208,9 @@ export function RecipesTab() {
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-white">
           <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
             <Pressable onPress={() => { resetForm(); setShowAdd(false); }} className="py-1 px-2">
-              <Text className="text-base text-gray-500">Annulla</Text>
+              <Text className="text-base text-gray-500">Cancel</Text>
             </Pressable>
-            <Text className="text-base font-semibold text-gray-900">Nuova ricetta</Text>
+            <Text className="text-base font-semibold text-gray-900">New recipe</Text>
             <Pressable
               onPress={addRecipe}
               disabled={!title.trim() || loading}
@@ -219,7 +219,7 @@ export function RecipesTab() {
               {loading ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <Text className={`text-sm font-semibold ${title.trim() ? "text-white" : "text-gray-400"}`}>Salva</Text>
+                <Text className={`text-sm font-semibold ${title.trim() ? "text-white" : "text-gray-400"}`}>Save</Text>
               )}
             </Pressable>
           </View>
@@ -227,7 +227,7 @@ export function RecipesTab() {
           <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 16 }}>
             <TextInput
               className="text-base text-gray-800 border-b border-gray-100 pb-3"
-              placeholder="Nome ricetta"
+              placeholder="Recipe name"
               placeholderTextColor="#9ca3af"
               value={title}
               onChangeText={setTitle}
@@ -235,7 +235,7 @@ export function RecipesTab() {
             />
 
             <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Descrizione</Text>
+              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Description</Text>
               <TextInput
                 className="text-base text-gray-800 bg-gray-50 rounded-xl px-3 py-2"
                 placeholder="Breve descrizione o note..."
@@ -260,8 +260,8 @@ export function RecipesTab() {
             </View>
 
             <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Ingredienti</Text>
-              <Text className="text-xs text-gray-400 mb-2">Un ingrediente per riga, es. "200g farina" o "2 uova"</Text>
+              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Ingredients</Text>
+              <Text className="text-xs text-gray-400 mb-2">One ingredient per line, e.g. "200g flour" or "2 eggs"</Text>
               <TextInput
                 className="text-base text-gray-800 bg-gray-50 rounded-xl px-3 py-2"
                 placeholder={"200g farina\n2 uova\n100ml latte"}

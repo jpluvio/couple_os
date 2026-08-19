@@ -57,7 +57,7 @@ export function CreateCheckinModal({
       queryClient.invalidateQueries({ queryKey });
       onClose();
     } catch {
-      Alert.alert("Errore", "Impossibile creare il check-in. Riprova.");
+      Alert.alert("Something went wrong", "The check-in could not be created. Please try again.");
     } finally {
       setCreatingId(null);
     }
@@ -69,9 +69,9 @@ export function CreateCheckinModal({
         {/* Header */}
         <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
           <Pressable onPress={onClose} className="py-1 px-2">
-            <Text className="text-base text-gray-500">Annulla</Text>
+            <Text className="text-base text-gray-500">Cancel</Text>
           </Pressable>
-          <Text className="text-base font-semibold text-gray-900">Nuovo check-in</Text>
+          <Text className="text-base font-semibold text-gray-900">New check-in</Text>
           {/* Spazio per bilanciare l'header */}
           <View className="w-16" />
         </View>
@@ -81,10 +81,10 @@ export function CreateCheckinModal({
           <View className="flex-1 items-center justify-center px-8">
             <Text className="text-5xl mb-4">💞</Text>
             <Text className="text-lg font-semibold text-gray-700 text-center">
-              Serve un partner
+              You need a partner
             </Text>
             <Text className="text-sm text-gray-400 text-center mt-1">
-              Invita il tuo partner alla coppia per iniziare un check-in insieme.
+              Invite your partner to the couple to start a check-in together.
             </Text>
           </View>
         ) : (
@@ -124,7 +124,7 @@ export function CreateCheckinModal({
             ) : !prompts || prompts.length === 0 ? (
               <View className="py-10 items-center">
                 <Text className="text-sm text-gray-400 text-center">
-                  Nessuna domanda disponibile per questo periodo.
+                  No questions available for this period.
                 </Text>
               </View>
             ) : (

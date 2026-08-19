@@ -3,20 +3,20 @@ import type { CheckIn } from "@/types/database";
 import { getCheckInStatus, type CheckInStatus } from "@/hooks/useCheckins";
 import { PERIOD_LABELS, relativeTime } from "./checkinShared";
 
-// Configurazione visiva per ogni stato del check-in
+// Visual configuration for each check-in state
 const STATUS_CONFIG: Record<CheckInStatus, { label: string; emoji: string; classes: string }> = {
   waiting_you: {
-    label: "Tocca a te",
+    label: "Your turn",
     emoji: "✏️",
     classes: "bg-blue-50 text-blue-600",
   },
   waiting_partner: {
-    label: "In attesa del partner",
+    label: "Waiting for your partner",
     emoji: "⏳",
     classes: "bg-amber-50 text-amber-600",
   },
   revealed: {
-    label: "Rivelato",
+    label: "Revealed",
     emoji: "✨",
     classes: "bg-green-50 text-green-600",
   },

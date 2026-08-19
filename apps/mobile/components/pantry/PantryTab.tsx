@@ -29,11 +29,11 @@ type PantryItem = {
 };
 
 const CATEGORIES: { value: PantryCategory; label: string; emoji: string }[] = [
-  { value: "FRIDGE", label: "Frigo", emoji: "🧊" },
+  { value: "FRIDGE", label: "Fridge", emoji: "🧊" },
   { value: "FREEZER", label: "Freezer", emoji: "❄️" },
-  { value: "PANTRY", label: "Dispensa", emoji: "🏠" },
-  { value: "BATHROOM", label: "Bagno", emoji: "🚿" },
-  { value: "OTHER", label: "Altro", emoji: "📦" },
+  { value: "PANTRY", label: "Pantry", emoji: "🏠" },
+  { value: "BATHROOM", label: "Bathroom", emoji: "🚿" },
+  { value: "OTHER", label: "Other", emoji: "📦" },
 ];
 
 function formatExpiry(dateStr: string): { label: string; color: string } {
@@ -41,10 +41,10 @@ function formatExpiry(dateStr: string): { label: string; color: string } {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const diff = Math.ceil((date.getTime() - today.getTime()) / 86400000);
-  if (diff < 0) return { label: "Scaduto", color: "#ef4444" };
-  if (diff === 0) return { label: "Scade oggi", color: "#f97316" };
-  if (diff === 1) return { label: "Scade domani", color: "#f97316" };
-  if (diff <= 5) return { label: `Scade in ${diff}gg`, color: "#f59e0b" };
+  if (diff < 0) return { label: "Overdue", color: "#ef4444" };
+  if (diff === 0) return { label: "Expires today", color: "#f97316" };
+  if (diff === 1) return { label: "Expires tomorrow", color: "#f97316" };
+  if (diff <= 5) return { label: `Expires in ${diff}d`, color: "#f59e0b" };
   return {
     label: date.toLocaleDateString("it-IT", { day: "numeric", month: "short" }),
     color: "#9ca3af",
@@ -96,7 +96,7 @@ export function PantryTab() {
       resetForm();
       setShowAdd(false);
     } catch {
-      Alert.alert("Errore", "Impossibile aggiungere il prodotto.");
+      Alert.alert("Something went wrong", "The item could not be added.");
     } finally {
       setLoading(false);
     }
@@ -113,14 +113,14 @@ export function PantryTab() {
   function handleLongPress(item: PantryItem) {
     Alert.alert(item.name, undefined, [
       {
-        text: "🗑️ Elimina",
+        text: "Delete",
         style: "destructive",
         onPress: async () => {
           await supabase.from("pantry_items").delete().eq("id", item.id);
           queryClient.invalidateQueries({ queryKey: qKey });
         },
       },
-      { text: "Annulla", style: "cancel" },
+      { text: "Cancel", style: "cancel" },
     ]);
   }
 
@@ -141,9 +141,9 @@ export function PantryTab() {
         {grouped.length === 0 && !isLoading ? (
           <View className="items-center py-20 px-8">
             <Text className="text-5xl mb-4">🛒</Text>
-            <Text className="text-base font-semibold text-gray-700 text-center">Dispensa vuota</Text>
+            <Text className="text-base font-semibold text-gray-700 text-center">Your pantry is empty</Text>
             <Text className="text-sm text-gray-400 text-center mt-1">
-              Aggiungi i prodotti che hai in casa!
+              Add what you have at home.
             </Text>
           </View>
         ) : (
@@ -202,9 +202,9 @@ export function PantryTab() {
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-white">
           <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
             <Pressable onPress={() => { resetForm(); setShowAdd(false); }} className="py-1 px-2">
-              <Text className="text-base text-gray-500">Annulla</Text>
+              <Text className="text-base text-gray-500">Cancel</Text>
             </Pressable>
-            <Text className="text-base font-semibold text-gray-900">Nuovo prodotto</Text>
+            <Text className="text-base font-semibold text-gray-900">New item</Text>
             <Pressable
               onPress={addItem}
               disabled={!name.trim() || loading}
@@ -213,7 +213,7 @@ export function PantryTab() {
               {loading ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <Text className={`text-sm font-semibold ${name.trim() ? "text-white" : "text-gray-400"}`}>Aggiungi</Text>
+                <Text className={`text-sm font-semibold ${name.trim() ? "text-white" : "text-gray-400"}`}>Add</Text>
               )}
             </Pressable>
           </View>
@@ -221,7 +221,7 @@ export function PantryTab() {
           <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 16 }}>
             <TextInput
               className="text-base text-gray-800 border-b border-gray-100 pb-3"
-              placeholder="Nome prodotto"
+              placeholder="Item name"
               placeholderTextColor="#9ca3af"
               value={name}
               onChangeText={setName}
@@ -230,10 +230,10 @@ export function PantryTab() {
 
             <View className="flex-row" style={{ gap: 12 }}>
               <View className="flex-1">
-                <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Quantità</Text>
+                <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Quantity</Text>
                 <TextInput
                   className="text-base text-gray-800 bg-gray-50 rounded-xl px-3 py-2"
-                  placeholder="es. 2"
+                  placeholder="e.g. 2"
                   placeholderTextColor="#9ca3af"
                   value={quantity}
                   onChangeText={setQuantity}
@@ -241,10 +241,10 @@ export function PantryTab() {
                 />
               </View>
               <View className="flex-1">
-                <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Unità</Text>
+                <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Unit</Text>
                 <TextInput
                   className="text-base text-gray-800 bg-gray-50 rounded-xl px-3 py-2"
-                  placeholder="es. kg, L, pz"
+                  placeholder="e.g. kg, L, pcs"
                   placeholderTextColor="#9ca3af"
                   value={unit}
                   onChangeText={setUnit}
@@ -253,10 +253,10 @@ export function PantryTab() {
             </View>
 
             <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Scadenza (AAAA-MM-GG)</Text>
+              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Expiry date (YYYY-MM-DD)</Text>
               <TextInput
                 className="text-base text-gray-800 bg-gray-50 rounded-xl px-3 py-2"
-                placeholder="es. 2026-06-30"
+                placeholder="e.g. 2026-06-30"
                 placeholderTextColor="#9ca3af"
                 value={expiresAt}
                 onChangeText={setExpiresAt}
@@ -264,7 +264,7 @@ export function PantryTab() {
             </View>
 
             <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Categoria</Text>
+              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Category</Text>
               <View className="flex-row flex-wrap" style={{ gap: 8 }}>
                 {CATEGORIES.map((cat) => (
                   <Pressable

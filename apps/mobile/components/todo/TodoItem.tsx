@@ -24,9 +24,9 @@ const PRIORITY_COLORS: Record<PriorityLevel, string> = {
 };
 
 const PRIORITY_LABELS: Record<PriorityLevel, string> = {
-  LOW: "Bassa",
-  MEDIUM: "Media",
-  HIGH: "Alta",
+  LOW: "Low",
+  MEDIUM: "Medium",
+  HIGH: "High",
 };
 
 function formatDeadline(dateStr: string): string {
@@ -34,9 +34,9 @@ function formatDeadline(dateStr: string): string {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const diff = Math.ceil((date.getTime() - today.getTime()) / 86400000);
-  if (diff < 0) return "Scaduto";
-  if (diff === 0) return "Oggi";
-  if (diff === 1) return "Domani";
+  if (diff < 0) return "Overdue";
+  if (diff === 0) return "Today";
+  if (diff === 1) return "Tomorrow";
   return date.toLocaleDateString("it-IT", { day: "numeric", month: "short" });
 }
 
@@ -72,14 +72,14 @@ export function TodoItem({ item, currentUserId, queryKey }: TodoItemProps) {
   function handleLongPress() {
     Alert.alert(item.title, undefined, [
       {
-        text: "🗑️ Elimina",
+        text: "Delete",
         style: "destructive",
         onPress: async () => {
           await supabase.from("todo_items").delete().eq("id", item.id);
           queryClient.invalidateQueries({ queryKey });
         },
       },
-      { text: "Annulla", style: "cancel" },
+      { text: "Cancel", style: "cancel" },
     ]);
   }
 

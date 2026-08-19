@@ -37,7 +37,7 @@ export function useNotifications(): UseNotificationsReturn {
     },
   });
 
-  // Real-time: nuove notifiche per l'utente corrente
+  // Real-time: new notifications for the current user
   useEffect(() => {
     if (!userId) return;
 

@@ -10,9 +10,9 @@ import { RecipesTab } from "@/components/pantry/RecipesTab";
 type Tab = "pantry" | "shopping" | "recipes";
 
 const TABS: { key: Tab; label: string; emoji: string }[] = [
-  { key: "pantry", label: "Dispensa", emoji: "🏠" },
-  { key: "shopping", label: "Spesa", emoji: "🛍️" },
-  { key: "recipes", label: "Ricette", emoji: "👨‍🍳" },
+  { key: "pantry", label: "Pantry", emoji: "🏠" },
+  { key: "shopping", label: "Shopping", emoji: "🛍️" },
+  { key: "recipes", label: "Recipes", emoji: "👨‍🍳" },
 ];
 
 export default function PantryScreen() {
@@ -26,8 +26,8 @@ export default function PantryScreen() {
     <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header */}
       <View className="px-4 pt-2 pb-3">
-        <Text className="text-2xl font-bold text-gray-900">Cucina & Spesa</Text>
-        <Text className="text-sm text-gray-500 mt-0.5">Dispensa, lista della spesa e ricette</Text>
+        <Text className="text-2xl font-bold text-gray-900">Kitchen & Shopping</Text>
+        <Text className="text-sm text-gray-500 mt-0.5">Pantry, shopping list and recipes</Text>
       </View>
 
       {/* Tab selector */}

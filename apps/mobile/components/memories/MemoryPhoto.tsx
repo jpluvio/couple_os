@@ -3,10 +3,10 @@ import { Image, type ImageStyle } from "expo-image";
 import { useSignedPhotoUrl } from "@/hooks/useMemories";
 
 interface MemoryPhotoProps {
-  // Path della foto nel bucket privato (es. `{couple_id}/abc.jpg`).
+  // Path of the photo in the private bucket (e.g. `{couple_id}/abc.jpg`).
   path: string;
   className?: string;
-  // Usiamo ImageStyle (compatibile con ViewStyle per le proprietà di layout usate).
+  // ImageStyle is used (compatible with ViewStyle for the layout props we set).
   style?: ImageStyle;
   contentFit?: "cover" | "contain";
 }

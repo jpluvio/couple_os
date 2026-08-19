@@ -4,18 +4,18 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "./useAuth";
 import type { CheckIn, CheckinPeriod, Tables } from "@/types/database";
 
-// Tipo del prompt di check-in (non esportato da database.ts, lo deriviamo qui)
+// Check-in prompt type (not exported by database.ts, derived here)
 export type CheckInPrompt = Tables<"check_in_prompts">;
 
-// Stato derivato di un check-in dal punto di vista dell'utente corrente
+// State of a check-in from the current user's point of view
 export type CheckInStatus =
-  | "waiting_you" // manca la tua risposta
-  | "waiting_partner" // hai risposto, si aspetta il partner
-  | "revealed"; // entrambi hanno risposto, le risposte sono visibili
+  | "waiting_you" // your answer is missing
+  | "waiting_partner" // you answered, waiting for your partner
+  | "revealed"; // both answered, the answers are visible
 
 const QUERY_KEY = (coupleId: string) => ["check_ins", coupleId];
 
-// Hook per la lista dei check-in della coppia, con subscription realtime.
+// The couple's check-ins, with a realtime subscription.
 export function useCheckins() {
   const { user, coupleId } = useAuth();
   const queryClient = useQueryClient();
@@ -38,7 +38,7 @@ export function useCheckins() {
     },
   });
 
-  // Subscription realtime: ogni cambiamento sui check-in della coppia invalida la query.
+  // Realtime: any change to the couple's check-ins invalidates the query.
   useEffect(() => {
     if (!cid) return;
 
@@ -67,7 +67,7 @@ export function useCheckins() {
   };
 }
 
-// Hook per i prompt disponibili: di sistema (couple_id null) oppure custom della coppia.
+// Available prompts: system ones (couple_id null) or the couple's own.
 export function useCheckinPrompts(period?: CheckinPeriod) {
   const { coupleId } = useAuth();
   const cid = coupleId ?? "";
@@ -80,7 +80,7 @@ export function useCheckinPrompts(period?: CheckinPeriod) {
         .from("check_in_prompts")
         .select("*")
         .eq("active", true)
-        // Prompt di sistema (couple_id null) oppure custom della coppia corrente
+        // System prompts (couple_id null) or the current couple's own
         .or(`couple_id.is.null,couple_id.eq.${cid}`)
         .order("period_type", { ascending: true });
 
@@ -93,12 +93,12 @@ export function useCheckinPrompts(period?: CheckinPeriod) {
   });
 }
 
-// Determina lo stato di un check-in dal punto di vista dell'utente corrente.
+// Works out the state of a check-in from the current user's point of view.
 export function getCheckInStatus(checkin: CheckIn, currentUserId: string): CheckInStatus {
   if (checkin.revealed) return "revealed";
 
   const isUser1 = checkin.user1_id === currentUserId;
-  // Risposta corrente = quella dello slot dell'utente
+  // The current answer is the one in this user's slot
   const myResponse = isUser1 ? checkin.response1 : checkin.response2;
 
   if (!myResponse) return "waiting_you";

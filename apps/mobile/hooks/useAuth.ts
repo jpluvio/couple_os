@@ -17,14 +17,14 @@ export function useAuth(): AuthState {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Carica la sessione iniziale
+    // Load the initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) loadUser(session.user.id);
       else setLoading(false);
     });
 
-    // Ascolta i cambiamenti di stato auth
+    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setSession(session);

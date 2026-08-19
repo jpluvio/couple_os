@@ -41,13 +41,13 @@ export function MemoryDetailModal({ memory, currentUserId, coupleId, onClose }: 
     : "?";
 
   function confirmDelete() {
-    Alert.alert("Elimina memoria", "Sei sicuro? L'azione non è reversibile.", [
-      { text: "Annulla", style: "cancel" },
+    Alert.alert("Delete memory", "This cannot be undone.", [
+      { text: "Cancel", style: "cancel" },
       {
-        text: "Elimina",
+        text: "Delete",
         style: "destructive",
         onPress: async () => {
-          // Rimuovi le foto dallo Storage, poi la riga.
+          // Remove the photos from Storage, then the row.
           if (photos.length > 0) {
             await supabase.storage.from("memories").remove(photos);
           }
@@ -65,12 +65,12 @@ export function MemoryDetailModal({ memory, currentUserId, coupleId, onClose }: 
         {/* Header */}
         <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
           <Pressable onPress={onClose} className="py-1 px-2">
-            <Text className="text-base text-gray-500">Chiudi</Text>
+            <Text className="text-base text-gray-500">Close</Text>
           </Pressable>
           <Text className="text-base font-semibold text-gray-900">Memoria</Text>
           {isAuthor ? (
             <Pressable onPress={confirmDelete} className="py-1 px-2">
-              <Text className="text-base text-red-500">Elimina</Text>
+              <Text className="text-base text-red-500">Delete</Text>
             </Pressable>
           ) : (
             <View className="w-12" />

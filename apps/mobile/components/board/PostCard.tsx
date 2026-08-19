@@ -77,13 +77,13 @@ export function PostCard({ post, currentUserId, queryKey }: PostCardProps) {
         },
       },
       {
-        text: "🗑️ Elimina",
+        text: "Delete",
         style: "destructive",
         onPress: () =>
-          Alert.alert("Elimina post", "Sei sicuro?", [
-            { text: "Annulla", style: "cancel" },
+          Alert.alert("Delete post", "This cannot be undone.", [
+            { text: "Cancel", style: "cancel" },
             {
-              text: "Elimina",
+              text: "Delete",
               style: "destructive",
               onPress: async () => {
                 await supabase.from("posts").delete().eq("id", post.id);
@@ -92,7 +92,7 @@ export function PostCard({ post, currentUserId, queryKey }: PostCardProps) {
             },
           ]),
       },
-      { text: "Annulla", style: "cancel" },
+      { text: "Cancel", style: "cancel" },
     ]);
   }
 

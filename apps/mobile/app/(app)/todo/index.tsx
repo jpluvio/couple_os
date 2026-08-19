@@ -26,7 +26,7 @@ const LISTS_KEY = (cid: string) => ["todo-lists", cid];
 const ITEMS_KEY = (listId: string) => ["todo-items", listId];
 
 const PRIORITIES: PriorityLevel[] = ["LOW", "MEDIUM", "HIGH"];
-const PRIORITY_LABELS: Record<PriorityLevel, string> = { LOW: "🟢 Bassa", MEDIUM: "🟡 Media", HIGH: "🔴 Alta" };
+const PRIORITY_LABELS: Record<PriorityLevel, string> = { LOW: "🟢 Low", MEDIUM: "🟡 Medium", HIGH: "🔴 High" };
 
 export default function TodoScreen() {
   const { user } = useAuth();
@@ -105,7 +105,7 @@ export default function TodoScreen() {
       setListEmoji("📝");
       setShowCreateList(false);
     } catch {
-      Alert.alert("Errore", "Impossibile creare la lista.");
+      Alert.alert("Something went wrong", "The list could not be created.");
     } finally {
       setListLoading(false);
     }
@@ -126,17 +126,17 @@ export default function TodoScreen() {
       setItemPriority("MEDIUM");
       setShowCreateItem(false);
     } catch {
-      Alert.alert("Errore", "Impossibile aggiungere il task.");
+      Alert.alert("Something went wrong", "The task could not be added.");
     } finally {
       setItemLoading(false);
     }
   }
 
   async function deleteList(listId: string) {
-    Alert.alert("Elimina lista", "Elimina la lista e tutti i task? Non è reversibile.", [
-      { text: "Annulla", style: "cancel" },
+    Alert.alert("Delete list", "Delete the list and every task in it? This cannot be undone.", [
+      { text: "Cancel", style: "cancel" },
       {
-        text: "Elimina",
+        text: "Delete",
         style: "destructive",
         onPress: async () => {
           await supabase.from("todo_lists").delete().eq("id", listId);
@@ -158,7 +158,7 @@ export default function TodoScreen() {
         <View>
           <Text className="text-2xl font-bold text-gray-900">To-Do</Text>
           {openCount > 0 && (
-            <Text className="text-sm text-gray-500 mt-0.5">{openCount} task aperti</Text>
+            <Text className="text-sm text-gray-500 mt-0.5">{openCount} open</Text>
           )}
         </View>
         <Pressable
@@ -222,9 +222,9 @@ export default function TodoScreen() {
           {(items ?? []).length === 0 && !itemsLoading ? (
             <View className="items-center py-16 px-8">
               <Text className="text-4xl mb-3">✅</Text>
-              <Text className="text-base font-semibold text-gray-700 text-center">Lista vuota</Text>
+              <Text className="text-base font-semibold text-gray-700 text-center">Nothing here yet</Text>
               <Text className="text-sm text-gray-400 text-center mt-1">
-                Aggiungi il primo task!
+                Add the first task.
               </Text>
             </View>
           ) : (
@@ -237,8 +237,8 @@ export default function TodoScreen() {
         !listsLoading && (
           <View className="flex-1 items-center justify-center px-8">
             <Text className="text-5xl mb-4">📋</Text>
-            <Text className="text-lg font-semibold text-gray-700 text-center">Nessuna lista ancora</Text>
-            <Text className="text-sm text-gray-400 text-center mt-1">Crea la prima lista per iniziare!</Text>
+            <Text className="text-lg font-semibold text-gray-700 text-center">No lists yet</Text>
+            <Text className="text-sm text-gray-400 text-center mt-1">Create your first list to get going.</Text>
           </View>
         )
       )}
@@ -259,16 +259,16 @@ export default function TodoScreen() {
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-white">
           <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
             <Pressable onPress={() => setShowCreateList(false)} className="py-1 px-2">
-              <Text className="text-base text-gray-500">Annulla</Text>
+              <Text className="text-base text-gray-500">Cancel</Text>
             </Pressable>
-            <Text className="text-base font-semibold text-gray-900">Nuova lista</Text>
+            <Text className="text-base font-semibold text-gray-900">New list</Text>
             <Pressable
               onPress={createList}
               disabled={!listName.trim() || listLoading}
               className={`py-1.5 px-4 rounded-full ${listName.trim() && !listLoading ? "bg-green-500" : "bg-gray-200"}`}
             >
               {listLoading ? <ActivityIndicator size="small" color="#fff" /> : (
-                <Text className={`text-sm font-semibold ${listName.trim() ? "text-white" : "text-gray-400"}`}>Crea</Text>
+                <Text className={`text-sm font-semibold ${listName.trim() ? "text-white" : "text-gray-400"}`}>Create</Text>
               )}
             </Pressable>
           </View>
@@ -282,7 +282,7 @@ export default function TodoScreen() {
               />
               <TextInput
                 className="flex-1 text-base text-gray-800"
-                placeholder="Nome lista"
+                placeholder="List name"
                 placeholderTextColor="#9ca3af"
                 value={listName}
                 onChangeText={setListName}
@@ -299,23 +299,23 @@ export default function TodoScreen() {
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-white">
           <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
             <Pressable onPress={() => setShowCreateItem(false)} className="py-1 px-2">
-              <Text className="text-base text-gray-500">Annulla</Text>
+              <Text className="text-base text-gray-500">Cancel</Text>
             </Pressable>
-            <Text className="text-base font-semibold text-gray-900">Nuovo task</Text>
+            <Text className="text-base font-semibold text-gray-900">New task</Text>
             <Pressable
               onPress={createItem}
               disabled={!itemTitle.trim() || itemLoading}
               className={`py-1.5 px-4 rounded-full ${itemTitle.trim() && !itemLoading ? "bg-green-500" : "bg-gray-200"}`}
             >
               {itemLoading ? <ActivityIndicator size="small" color="#fff" /> : (
-                <Text className={`text-sm font-semibold ${itemTitle.trim() ? "text-white" : "text-gray-400"}`}>Aggiungi</Text>
+                <Text className={`text-sm font-semibold ${itemTitle.trim() ? "text-white" : "text-gray-400"}`}>Add</Text>
               )}
             </Pressable>
           </View>
           <View className="px-4 pt-4" style={{ gap: 16 }}>
             <TextInput
               className="text-base text-gray-800 border-b border-gray-100 pb-3"
-              placeholder="Cosa devi fare?"
+              placeholder="What needs doing?"
               placeholderTextColor="#9ca3af"
               value={itemTitle}
               onChangeText={setItemTitle}
@@ -323,7 +323,7 @@ export default function TodoScreen() {
               onSubmitEditing={createItem}
             />
             <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Priorità</Text>
+              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Priority</Text>
               <View className="flex-row" style={{ gap: 8 }}>
                 {PRIORITIES.map((p) => (
                   <Pressable

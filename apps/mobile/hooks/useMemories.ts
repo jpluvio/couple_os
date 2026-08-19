@@ -3,20 +3,20 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type { Memory } from "@/types/database";
 
-// Memoria con il relativo autore (join su users).
+// A memory together with its author (join on users).
 export type MemoryWithAuthor = Memory & {
   author: { name: string | null; avatar_url: string | null } | null;
 };
 
-// Chiave query del feed memorie, scoped sulla coppia.
+// Query key of the memories feed, scoped to the couple.
 export const MEMORIES_QUERY_KEY = (coupleId: string) => ["memories", coupleId];
 
-// Durata (in secondi) dei signed URL generati per le foto del bucket privato.
+// Lifetime (seconds) of the signed URLs generated for the private bucket.
 export const SIGNED_URL_TTL = 60 * 60; // 1 ora
 
 /**
- * Carica il feed delle memorie della coppia, ordinate per data (desc).
- * Si iscrive ai cambiamenti realtime sulla tabella `memories` filtrati per coppia.
+ * Loads the couple's memories feed, newest first.
+ * Subscribes to realtime changes on `memories`, filtered by couple.
  */
 export function useMemories(coupleId: string) {
   const queryClient = useQueryClient();
@@ -38,7 +38,7 @@ export function useMemories(coupleId: string) {
     },
   });
 
-  // Sottoscrizione realtime: invalida il feed a ogni cambiamento.
+  // Realtime subscription: invalidates the feed on every change.
   useEffect(() => {
     if (!coupleId) return;
 
@@ -71,7 +71,7 @@ export function useSignedPhotoUrl(path: string | null | undefined) {
   return useQuery({
     queryKey: ["memory-photo", path],
     enabled: !!path,
-    // I signed URL scadono: li rinfreschiamo prima della scadenza.
+    // Signed URLs expire: refresh them before they do.
     staleTime: (SIGNED_URL_TTL - 60) * 1000,
     queryFn: async () => {
       const { data, error } = await supabase.storage

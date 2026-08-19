@@ -27,7 +27,7 @@ export default function MemoriesScreen() {
       <View className="flex-row items-start justify-between px-4 pt-2 pb-3">
         <View>
           <Text className="text-2xl font-bold text-gray-900">Memories</Text>
-          <Text className="text-sm text-gray-500 mt-0.5">Il diario della vostra storia</Text>
+          <Text className="text-sm text-gray-500 mt-0.5">The diary of your story</Text>
         </View>
         <NotificationBell />
       </View>
@@ -48,10 +48,10 @@ export default function MemoriesScreen() {
             <View className="items-center justify-center py-24 px-8">
               <Text className="text-5xl mb-4">📸</Text>
               <Text className="text-lg font-semibold text-gray-700 text-center">
-                Nessun ricordo ancora
+                No memories yet
               </Text>
               <Text className="text-sm text-gray-400 text-center mt-1">
-                Salvate insieme i vostri momenti più belli!
+                Save your favourite moments together.
               </Text>
             </View>
           ) : null

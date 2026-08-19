@@ -40,5 +40,5 @@ export const TabColors = {
   memories:  "#f97316",
 } as const;
 
-// Colori dei partner per il calendario
+// Partner colours for the calendar
 export const PartnerColors = ["#0e82ea", "#ec4899"] as const;

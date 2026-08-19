@@ -29,7 +29,7 @@ export default function CheckinScreen() {
       <View className="flex-row items-start justify-between px-4 pt-2 pb-3">
         <View>
           <Text className="text-2xl font-bold text-gray-900">Check-in</Text>
-          <Text className="text-sm text-gray-500 mt-0.5">Il rituale di coppia</Text>
+          <Text className="text-sm text-gray-500 mt-0.5">Your couple ritual</Text>
         </View>
         <NotificationBell />
       </View>
@@ -54,10 +54,10 @@ export default function CheckinScreen() {
             <View className="items-center justify-center py-24 px-8">
               <Text className="text-5xl mb-4">💬</Text>
               <Text className="text-lg font-semibold text-gray-700 text-center">
-                Nessun check-in ancora
+                No check-ins yet
               </Text>
               <Text className="text-sm text-gray-400 text-center mt-1">
-                Inizia un check-in: rispondete entrambi e poi scoprite le vostre risposte.
+                Start one: you both answer, then the answers are revealed.
               </Text>
             </View>
           ) : null
@@ -89,7 +89,7 @@ export default function CheckinScreen() {
         queryKey={queryKey}
       />
 
-      {/* Modale di dettaglio / risposta / reveal */}
+      {/* Detail / answer / reveal modal */}
       <CheckinDetailModal
         checkin={selected}
         currentUserId={user.id}

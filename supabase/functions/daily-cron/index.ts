@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Schedulata via Supabase Cron: ogni giorno alle 09:00
+// Scheduled via Supabase Cron: every day at 09:00
 // Dashboard → Edge Functions → daily-cron → Schedule: 0 9 * * *
 
 const supabase = createClient(
@@ -25,7 +25,7 @@ async function getPushTokens(userIds: string[]): Promise<string[]> {
   return (data ?? []).flatMap((u: { push_tokens: string[] }) => u.push_tokens);
 }
 
-// 1. Pantry expiry alert (prodotti in scadenza entro 3 giorni)
+// 1. Pantry expiry alert (items expiring within 3 days)
 async function checkPantryExpiry() {
   const today = new Date();
   const in3Days = new Date(today);
@@ -39,7 +39,7 @@ async function checkPantryExpiry() {
 
   if (!items?.length) return;
 
-  // Raggruppa per coppia per evitare notifiche duplicate
+  // Group by couple to avoid duplicate notifications
   const byCouple = new Map<string, { names: string[]; tokens: string[] }>();
   for (const item of items as Record<string, unknown>[]) {
     const couple = item.couples as { members: { id: string; push_tokens: string[] }[] };
@@ -56,13 +56,13 @@ async function checkPantryExpiry() {
   for (const { names, tokens } of byCouple.values()) {
     const body =
       names.length === 1
-        ? `${names[0]} scade nei prossimi 3 giorni`
-        : `${names.slice(0, 3).join(", ")}${names.length > 3 ? ` e altri ${names.length - 3}` : ""} scadono presto`;
-    await sendPush(tokens, "Dispensa — Prodotti in scadenza 🥛", body, { screen: "pantry" });
+        ? `${names[0]} expires within 3 days`
+        : `${names.slice(0, 3).join(", ")}${names.length > 3 ? ` and ${names.length - 3} more` : ""} expire soon`;
+    await sendPush(tokens, "Pantry — expiring soon 🥛", body, { screen: "pantry" });
   }
 }
 
-// 2. "On this day" — memories dello stesso giorno degli anni scorsi
+// 2. "On this day" — memories from the same day in past years
 async function checkOnThisDay() {
   const today = new Date();
   const month = today.getMonth() + 1;
@@ -77,7 +77,7 @@ async function checkOnThisDay() {
 
   if (!memories?.length) return;
 
-  // Una notifica per coppia
+  // One notification per couple
   const seen = new Set<string>();
   for (const memory of memories as Record<string, unknown>[]) {
     const coupleId = memory.couple_id as string;
@@ -91,14 +91,14 @@ async function checkOnThisDay() {
 
     await sendPush(
       tokens,
-      "Un ricordo di oggi 📸",
-      `${yearsAgo} ${yearsAgo === 1 ? "anno" : "anni"} fa...`,
+      "A memory from today 📸",
+      `${yearsAgo} ${yearsAgo === 1 ? "year" : "years"} ago…`,
       { screen: "memories" },
     );
   }
 }
 
-// 3. Todo deadline — task in scadenza domani
+// 3. Todo deadline — tasks due tomorrow
 async function checkTodoDeadlines() {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -119,7 +119,7 @@ async function checkTodoDeadlines() {
       couples: { members: { id: string; push_tokens: string[] }[] };
     };
 
-    // Se ha un assegnatario, notifica solo lui; altrimenti entrambi i partner
+    // With an assignee, notify only them; otherwise every member
     let tokens: string[];
     if (item.assignee_id) {
       const member = list.couples.members.find((m) => m.id === item.assignee_id);
@@ -128,9 +128,27 @@ async function checkTodoDeadlines() {
       tokens = list.couples.members.flatMap((m) => m.push_tokens);
     }
 
-    await sendPush(tokens, "Task in scadenza domani ✅", item.title as string, {
+    await sendPush(tokens, "Task due tomorrow ✅", item.title as string, {
       screen: "todo",
     });
+  }
+}
+
+// 4. Post the recurring expenses that fell due, for every household.
+// Idempotent: the unique index on (recurring_expense_id, occurrence_date)
+// makes a double run a no-op, so this is safe to retry.
+async function postDueRecurring() {
+  const { data: couples } = await supabase.from("couples").select("id");
+  if (!couples?.length) return;
+
+  const today = new Date().toISOString().split("T")[0];
+
+  for (const couple of couples as { id: string }[]) {
+    const { error } = await supabase.rpc("post_due_recurring", {
+      p_couple_id: couple.id,
+      p_up_to: today,
+    });
+    if (error) console.error("post_due_recurring failed", couple.id, error.message);
   }
 }
 
@@ -139,6 +157,7 @@ serve(async () => {
     checkPantryExpiry(),
     checkOnThisDay(),
     checkTodoDeadlines(),
+    postDueRecurring(),
   ]);
 
   return new Response(JSON.stringify({ ok: true }), {

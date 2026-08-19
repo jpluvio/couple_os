@@ -9,7 +9,7 @@ const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey as string;
 
 if (!supabaseUrl || supabaseUrl === "SUPABASE_URL_PLACEHOLDER") {
   console.warn(
-    "Supabase URL non configurata. Aggiorna extra.supabaseUrl in app.json."
+    "Supabase URL is not configured. Update extra.supabaseUrl in app.json."
   );
 }
 
@@ -18,7 +18,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     storage: AsyncStorage,
     autoRefreshToken: true,
     persistSession: true,
-    // Sul web Supabase deve elaborare il `?code=` nell'URL al ritorno dall'OAuth.
+    // On web, Supabase must process the `?code=` in the URL when OAuth returns.
     detectSessionInUrl: Platform.OS === "web",
   },
 });

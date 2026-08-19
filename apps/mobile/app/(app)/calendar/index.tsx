@@ -81,7 +81,7 @@ export default function CalendarScreen() {
 
   const dayEvents = (events ?? []).filter((ev) => ev.start_at.slice(0, 10) === selectedDay);
 
-  const displayDay = new Date(selectedDay + "T12:00:00").toLocaleDateString("it-IT", {
+  const displayDay = new Date(selectedDay + "T12:00:00").toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -93,7 +93,7 @@ export default function CalendarScreen() {
     <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header */}
       <View className="px-4 pt-2 pb-3">
-        <Text className="text-2xl font-bold text-gray-900">Calendario</Text>
+        <Text className="text-2xl font-bold text-gray-900">Calendar</Text>
       </View>
 
       <ScrollView className="flex-1">
@@ -127,7 +127,7 @@ export default function CalendarScreen() {
         <View className="flex-row px-4 mb-3" style={{ gap: 16 }}>
           <View className="flex-row items-center" style={{ gap: 4 }}>
             <View className="w-2 h-2 rounded-full" style={{ backgroundColor: myColor }} />
-            <Text className="text-xs text-gray-500">I miei eventi</Text>
+            <Text className="text-xs text-gray-500">My events</Text>
           </View>
           {partner && (
             <View className="flex-row items-center" style={{ gap: 4 }}>
@@ -146,13 +146,13 @@ export default function CalendarScreen() {
             style={{ gap: 4 }}
           >
             <Text className="text-white text-sm">+</Text>
-            <Text className="text-white text-xs font-semibold">Evento</Text>
+            <Text className="text-white text-xs font-semibold">Event</Text>
           </Pressable>
         </View>
 
         {dayEvents.length === 0 ? (
           <View className="items-center py-8">
-            <Text className="text-gray-400 text-sm">Nessun evento questo giorno</Text>
+            <Text className="text-gray-400 text-sm">Nothing on this day</Text>
           </View>
         ) : (
           dayEvents.map((ev) => (

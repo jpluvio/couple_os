@@ -2,9 +2,9 @@ import type { CheckinPeriod } from "@/types/database";
 
 // Etichette dei periodi in italiano
 export const PERIOD_LABELS: Record<CheckinPeriod, string> = {
-  weekly: "Settimanale",
-  monthly: "Mensile",
-  yearly: "Annuale",
+  weekly: "Weekly",
+  monthly: "Monthly",
+  yearly: "Yearly",
 };
 
 // Ordine di visualizzazione dei periodi
@@ -12,11 +12,11 @@ export const PERIODS: CheckinPeriod[] = ["weekly", "monthly", "yearly"];
 
 // Scala dei mood 1-5 con emoji (😞 → 😍)
 export const MOODS: { value: number; emoji: string; label: string }[] = [
-  { value: 1, emoji: "😞", label: "Male" },
-  { value: 2, emoji: "😕", label: "Così così" },
-  { value: 3, emoji: "😐", label: "Neutro" },
-  { value: 4, emoji: "🙂", label: "Bene" },
-  { value: 5, emoji: "😍", label: "Benissimo" },
+  { value: 1, emoji: "😞", label: "Rough" },
+  { value: 2, emoji: "😕", label: "So-so" },
+  { value: 3, emoji: "😐", label: "Okay" },
+  { value: 4, emoji: "🙂", label: "Good" },
+  { value: 5, emoji: "😍", label: "Great" },
 ];
 
 // Emoji corrispondente a un valore di mood (fallback neutro)

@@ -43,7 +43,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Couple OS usa le tue foto per le memorie di coppia."
+          "photosPermission": "Couple OS uses your photos for your shared memories."
         }
       ]
     ],

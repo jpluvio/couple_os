@@ -54,7 +54,7 @@ export default function NotificationsScreen() {
         <Pressable onPress={() => router.back()} hitSlop={8} className="w-10">
           <Text className="text-2xl text-gray-700">‹</Text>
         </Pressable>
-        <Text className="text-lg font-bold text-gray-900">Notifiche</Text>
+        <Text className="text-lg font-bold text-gray-900">Notifications</Text>
         <Pressable
           onPress={markAllRead}
           disabled={unreadCount === 0}
@@ -84,10 +84,10 @@ export default function NotificationsScreen() {
             <View className="items-center justify-center py-24 px-8">
               <Text className="text-5xl mb-4">🔔</Text>
               <Text className="text-lg font-semibold text-gray-700 text-center">
-                Nessuna notifica
+                No notifications
               </Text>
               <Text className="text-sm text-gray-400 text-center mt-1">
-                Qui vedrai gli aggiornamenti del tuo partner.
+                Your partner's updates will show up here.
               </Text>
             </View>
           ) : null

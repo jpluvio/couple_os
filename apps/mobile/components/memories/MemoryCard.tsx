@@ -2,7 +2,7 @@ import { View, Text, Pressable } from "react-native";
 import { MemoryPhoto } from "./MemoryPhoto";
 import type { MemoryWithAuthor } from "@/hooks/useMemories";
 
-// Formatta la data della memoria in italiano (es. "4 giugno 2026").
+// Formats the memory date (e.g. "4 June 2026").
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
   return d.toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });

@@ -39,7 +39,7 @@ export function CheckinDetailModal({
   const [loading, setLoading] = useState(false);
   const queryClient = useQueryClient();
 
-  // Resetta lo stato del form quando cambia il check-in selezionato
+  // Reset the form when the selected check-in changes
   useEffect(() => {
     setMood(null);
     setResponse("");
@@ -50,7 +50,7 @@ export function CheckinDetailModal({
   const isUser1 = checkin.user1_id === currentUserId;
   const status = getCheckInStatus(checkin, currentUserId);
 
-  // Risposte mappate sullo slot corretto
+  // Answers mapped onto the right slot
   const myMood = isUser1 ? checkin.mood1 : checkin.mood2;
   const myResponse = isUser1 ? checkin.response1 : checkin.response2;
   const partnerMood = isUser1 ? checkin.mood2 : checkin.mood1;
@@ -63,7 +63,7 @@ export function CheckinDetailModal({
       const partnerHasAnswered = isUser1 ? !!checkin.response2 : !!checkin.response1;
 
       // Scrive nello slot dell'utente corrente (mood1/response1 vs mood2/response2).
-      // Se anche il partner ha già risposto, il check-in viene rivelato.
+      // Once the partner has answered too, the check-in is revealed.
       const update = isUser1
         ? { mood1: mood, response1: response.trim() }
         : { mood2: mood, response2: response.trim() };
@@ -77,14 +77,14 @@ export function CheckinDetailModal({
       queryClient.invalidateQueries({ queryKey });
       onClose();
     } catch {
-      Alert.alert("Errore", "Impossibile salvare la risposta. Riprova.");
+      Alert.alert("Something went wrong", "Your answer could not be saved. Please try again.");
     } finally {
       setLoading(false);
     }
   }
 
-  const partnerName = partner?.name ?? "Il partner";
-  const myName = currentUserName ?? "Tu";
+  const partnerName = partner?.name ?? "Your partner";
+  const myName = currentUserName ?? "You";
 
   return (
     <Modal
@@ -100,7 +100,7 @@ export function CheckinDetailModal({
         {/* Header */}
         <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
           <Pressable onPress={onClose} className="py-1 px-2">
-            <Text className="text-base text-gray-500">Chiudi</Text>
+            <Text className="text-base text-gray-500">Close</Text>
           </Pressable>
           <Text className="text-base font-semibold text-gray-900">Check-in</Text>
           <View className="w-14" />
@@ -118,7 +118,7 @@ export function CheckinDetailModal({
           </View>
 
           {status === "revealed" ? (
-            // ─── Reveal: entrambe le risposte affiancate ───
+            // ─── Reveal: both answers side by side ───
             <View style={{ gap: 12 }}>
               <AnswerCard
                 name={myName}
@@ -134,24 +134,24 @@ export function CheckinDetailModal({
               />
             </View>
           ) : status === "waiting_partner" ? (
-            // ─── Hai risposto, si aspetta il partner ───
+            // ─── You answered, waiting for your partner ───
             <View>
               <AnswerCard name={myName} mood={myMood} response={myResponse} accent="blue" />
               <View className="items-center py-8 px-6 mt-2">
                 <Text className="text-4xl mb-3">⏳</Text>
                 <Text className="text-base font-semibold text-gray-700 text-center">
-                  In attesa di {partnerName}
+                  Waiting for {partnerName}
                 </Text>
                 <Text className="text-sm text-gray-400 text-center mt-1">
-                  La sua risposta sarà visibile quando avrà completato il check-in.
+                  Their answer shows up once they complete the check-in.
                 </Text>
               </View>
             </View>
           ) : (
-            // ─── Manca la tua risposta: form ───
+            // ─── Your answer is missing: the form ───
             <View>
               <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                Come ti senti?
+                How are you feeling?
               </Text>
               <View className="flex-row justify-between mb-6">
                 {MOODS.map((m) => {
@@ -171,11 +171,11 @@ export function CheckinDetailModal({
               </View>
 
               <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                La tua risposta
+                Your answer
               </Text>
               <TextInput
                 className="text-base text-gray-800 min-h-28 leading-relaxed border border-gray-200 rounded-2xl px-4 py-3"
-                placeholder="Scrivi cosa ne pensi..."
+                placeholder="Write what you think…"
                 placeholderTextColor="#9ca3af"
                 value={response}
                 onChangeText={setResponse}
@@ -202,13 +202,13 @@ export function CheckinDetailModal({
                       mood && response.trim() ? "text-white" : "text-gray-400"
                     }`}
                   >
-                    Invia risposta
+                    Send answer
                   </Text>
                 )}
               </Pressable>
 
               <Text className="text-xs text-gray-400 text-center mt-3">
-                La tua risposta resterà nascosta finché anche {partnerName} non avrà risposto.
+                Your answer stays hidden until {partnerName} has answered too.
               </Text>
             </View>
           )}
@@ -220,7 +220,7 @@ export function CheckinDetailModal({
   );
 }
 
-// Card che mostra la risposta di una persona (mood + testo)
+// Card showing one person's answer (mood + text)
 function AnswerCard({
   name,
   mood,

@@ -66,7 +66,7 @@ export default function BoardScreen() {
       <View className="flex-row items-start justify-between px-4 pt-2 pb-3">
         <View>
           <Text className="text-2xl font-bold text-gray-900">Board</Text>
-          <Text className="text-sm text-gray-500 mt-0.5">La bacheca di coppia</Text>
+          <Text className="text-sm text-gray-500 mt-0.5">Your shared board</Text>
         </View>
         <NotificationBell />
       </View>
@@ -87,10 +87,10 @@ export default function BoardScreen() {
             <View className="items-center justify-center py-24 px-8">
               <Text className="text-5xl mb-4">📋</Text>
               <Text className="text-lg font-semibold text-gray-700 text-center">
-                Nessun post ancora
+                No posts yet
               </Text>
               <Text className="text-sm text-gray-400 text-center mt-1">
-                Sii il primo a condividere qualcosa con il tuo partner!
+                Be the first to share something with your partner.
               </Text>
             </View>
           ) : null

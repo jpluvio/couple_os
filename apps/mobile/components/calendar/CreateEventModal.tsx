@@ -74,7 +74,7 @@ export function CreateEventModal({
       queryClient.invalidateQueries({ queryKey });
       handleClose();
     } catch {
-      Alert.alert("Errore", "Impossibile creare l'evento. Riprova.");
+      Alert.alert("Something went wrong", "The event could not be created. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -106,9 +106,9 @@ export function CreateEventModal({
         {/* Header */}
         <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
           <Pressable onPress={handleClose} className="py-1 px-2">
-            <Text className="text-base text-gray-500">Annulla</Text>
+            <Text className="text-base text-gray-500">Cancel</Text>
           </Pressable>
-          <Text className="text-base font-semibold text-gray-900">Nuovo evento</Text>
+          <Text className="text-base font-semibold text-gray-900">New event</Text>
           <Pressable
             onPress={submit}
             disabled={!title.trim() || loading}
@@ -118,7 +118,7 @@ export function CreateEventModal({
               <ActivityIndicator size="small" color="#fff" />
             ) : (
               <Text className={`text-sm font-semibold ${title.trim() ? "text-white" : "text-gray-400"}`}>
-                Salva
+                Save
               </Text>
             )}
           </Pressable>
@@ -131,7 +131,7 @@ export function CreateEventModal({
           {/* Title */}
           <TextInput
             className="text-xl font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-3"
-            placeholder="Titolo evento"
+            placeholder="Event title"
             placeholderTextColor="#9ca3af"
             value={title}
             onChangeText={setTitle}
@@ -140,7 +140,7 @@ export function CreateEventModal({
 
           {/* All day toggle */}
           <View className="flex-row items-center justify-between py-3 border-b border-gray-100 mb-3">
-            <Text className="text-base text-gray-700">Tutto il giorno</Text>
+            <Text className="text-base text-gray-700">All day</Text>
             <Switch value={allDay} onValueChange={setAllDay} trackColor={{ true: "#0e82ea" }} />
           </View>
 

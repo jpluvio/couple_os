@@ -19,13 +19,13 @@ import { MEMORIES_QUERY_KEY } from "@/hooks/useMemories";
 
 const PRESET_TAGS = ["viaggio ✈️", "anniversario 💍", "cena 🍝", "famiglia 👨‍👩‍👧", "avventura 🏔️", "casa 🏡"];
 
-// Limite massimo di foto per memoria (enforce lato UI, come da schema).
+// Maximum photos per memory (enforced in the UI, matching the schema).
 const MAX_PHOTOS = 5;
 
-// Foto selezionata localmente, prima dell'upload.
+// A photo picked locally, before it is uploaded.
 interface PickedPhoto {
   uri: string;
-  // Estensione dedotta dal nome/mime, per il nome file su Storage.
+  // Extension inferred from the name/mime, for the file name in Storage.
   ext: string;
   mimeType: string;
 }
@@ -51,7 +51,7 @@ export function CreateMemoryModal({ visible, onClose, coupleId, authorId }: Crea
     );
   }
 
-  // Apre la galleria e aggiunge le foto selezionate (fino al limite di 5).
+  // Opens the gallery and adds the picked photos (up to the limit of 5).
   async function pickPhotos() {
     const remaining = MAX_PHOTOS - photos.length;
     if (remaining <= 0) {
@@ -59,11 +59,11 @@ export function CreateMemoryModal({ visible, onClose, coupleId, authorId }: Crea
       return;
     }
 
-    // Su web il permesso non è richiesto; su nativo sì.
+    // The permission is not needed on web, only on native.
     if (Platform.OS !== "web") {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
-        Alert.alert("Permesso negato", "Concedi l'accesso alla galleria per aggiungere foto.");
+        Alert.alert("Permesso negato", "Allow access to your photos to add them here.");
         return;
       }
     }
@@ -90,12 +90,12 @@ export function CreateMemoryModal({ visible, onClose, coupleId, authorId }: Crea
     setPhotos((prev) => prev.filter((_, i) => i !== index));
   }
 
-  // Carica una foto nel bucket privato sotto `{couple_id}/...` e ritorna il path salvato.
+  // Uploads a photo to the private bucket under `{couple_id}/...` and returns the stored path.
   async function uploadPhoto(photo: PickedPhoto): Promise<string> {
     const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${photo.ext}`;
     const path = `${coupleId}/${filename}`;
 
-    // Leggiamo il file come ArrayBuffer: funziona sia su web sia su nativo.
+    // Read the file as an ArrayBuffer: works on web and on native alike.
     const response = await fetch(photo.uri);
     const arrayBuffer = await response.arrayBuffer();
 
@@ -108,14 +108,14 @@ export function CreateMemoryModal({ visible, onClose, coupleId, authorId }: Crea
   }
 
   async function submit() {
-    // Serve almeno del testo oppure almeno una foto.
+    // Either some text or at least one photo is required.
     if (!content.trim() && photos.length === 0) return;
     setLoading(true);
     try {
-      // 1) Upload delle foto -> array di path.
+      // 1) Upload the photos -> array of paths.
       const photoPaths = await Promise.all(photos.map(uploadPhoto));
 
-      // 2) Insert della memoria.
+      // 2) Insert the memory.
       const { error } = await supabase.from("memories").insert({
         content: content.trim() || null,
         tags: selectedTags,
@@ -130,7 +130,7 @@ export function CreateMemoryModal({ visible, onClose, coupleId, authorId }: Crea
       reset();
       onClose();
     } catch {
-      Alert.alert("Errore", "Impossibile salvare la memoria. Riprova.");
+      Alert.alert("Something went wrong", "The memory could not be saved. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -160,9 +160,9 @@ export function CreateMemoryModal({ visible, onClose, coupleId, authorId }: Crea
         {/* Header */}
         <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
           <Pressable onPress={handleClose} className="py-1 px-2">
-            <Text className="text-base text-gray-500">Annulla</Text>
+            <Text className="text-base text-gray-500">Cancel</Text>
           </Pressable>
-          <Text className="text-base font-semibold text-gray-900">Nuova memoria</Text>
+          <Text className="text-base font-semibold text-gray-900">New memory</Text>
           <Pressable
             onPress={submit}
             disabled={!canSubmit}
@@ -172,7 +172,7 @@ export function CreateMemoryModal({ visible, onClose, coupleId, authorId }: Crea
               <ActivityIndicator size="small" color="#fff" />
             ) : (
               <Text className={`text-sm font-semibold ${canSubmit ? "text-white" : "text-gray-400"}`}>
-                Salva
+                Save
               </Text>
             )}
           </Pressable>
@@ -206,14 +206,14 @@ export function CreateMemoryModal({ visible, onClose, coupleId, authorId }: Crea
                 style={{ width: 88, height: 88 }}
               >
                 <Text className="text-2xl text-gray-400">+</Text>
-                <Text className="text-[10px] text-gray-400 mt-0.5">Aggiungi</Text>
+                <Text className="text-[10px] text-gray-400 mt-0.5">Add</Text>
               </Pressable>
             )}
           </View>
 
           {/* Data */}
           <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mt-5 mb-2">
-            Data
+            Date
           </Text>
           <TextInput
             className="border border-gray-200 rounded-xl px-3 py-2.5 text-base text-gray-800"
@@ -230,7 +230,7 @@ export function CreateMemoryModal({ visible, onClose, coupleId, authorId }: Crea
           </Text>
           <TextInput
             className="text-base text-gray-800 min-h-24 leading-relaxed border border-gray-200 rounded-xl px-3 py-2.5"
-            placeholder="Racconta questo momento..."
+            placeholder="Tell the story of this moment…"
             placeholderTextColor="#9ca3af"
             value={content}
             onChangeText={setContent}

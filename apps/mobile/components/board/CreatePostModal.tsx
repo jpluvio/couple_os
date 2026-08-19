@@ -52,7 +52,7 @@ export function CreatePostModal({ visible, onClose, coupleId, authorId, queryKey
       setSelectedTags([]);
       onClose();
     } catch {
-      Alert.alert("Errore", "Impossibile pubblicare il post. Riprova.");
+      Alert.alert("Something went wrong", "The post could not be published. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -73,9 +73,9 @@ export function CreatePostModal({ visible, onClose, coupleId, authorId, queryKey
         {/* Header */}
         <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
           <Pressable onPress={handleClose} className="py-1 px-2">
-            <Text className="text-base text-gray-500">Annulla</Text>
+            <Text className="text-base text-gray-500">Cancel</Text>
           </Pressable>
-          <Text className="text-base font-semibold text-gray-900">Nuovo post</Text>
+          <Text className="text-base font-semibold text-gray-900">New post</Text>
           <Pressable
             onPress={submit}
             disabled={!content.trim() || loading}
@@ -95,7 +95,7 @@ export function CreatePostModal({ visible, onClose, coupleId, authorId, queryKey
           {/* Text input */}
           <TextInput
             className="text-base text-gray-800 min-h-28 leading-relaxed"
-            placeholder="Cosa vuoi condividere con il tuo partner?"
+            placeholder="What do you want to share with your partner?"
             placeholderTextColor="#9ca3af"
             value={content}
             onChangeText={setContent}

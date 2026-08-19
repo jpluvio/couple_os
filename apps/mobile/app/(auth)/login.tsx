@@ -16,7 +16,7 @@ export default function LoginScreen() {
   async function signInWithGoogle() {
     setLoading(true);
     try {
-      // Web: redirect a pagina intera; al ritorno detectSessionInUrl elabora il code.
+      // Web: full-page redirect; on return detectSessionInUrl handles the code.
       if (Platform.OS === "web") {
         const { error } = await supabase.auth.signInWithOAuth({
           provider: "google",
@@ -26,7 +26,7 @@ export default function LoginScreen() {
           },
         });
         if (error) throw error;
-        return; // la pagina viene reindirizzata a Google
+        return; // the page is redirected to Google
       }
 
       const redirectTo = makeRedirectUri({ scheme: "couple-os", path: "auth/callback" });
@@ -50,11 +50,11 @@ export default function LoginScreen() {
         if (code) {
           const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
           if (exchangeError) throw exchangeError;
-          // AuthGuard in _layout.tsx gestisce il redirect
+          // The AuthGuard in _layout.tsx handles the redirect
         }
       }
     } catch (err) {
-      Alert.alert("Errore", "Accesso con Google non riuscito. Riprova.");
+      Alert.alert("Sign-in failed", "Could not sign in with Google. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -67,7 +67,7 @@ export default function LoginScreen() {
         <Text className="text-5xl mb-3">💑</Text>
         <Text className="text-3xl font-bold text-gray-900 tracking-tight">Couple OS</Text>
         <Text className="text-base text-gray-500 mt-2 text-center">
-          Il vostro spazio condiviso
+          Your shared space
         </Text>
       </View>
 
@@ -83,14 +83,14 @@ export default function LoginScreen() {
           <>
             <Text className="text-xl mr-3">G</Text>
             <Text className="text-base font-semibold text-gray-800">
-              Continua con Google
+              Continue with Google
             </Text>
           </>
         )}
       </Pressable>
 
       <Text className="text-xs text-gray-400 mt-8 text-center px-4">
-        Accedendo accetti che i tuoi dati siano visibili solo al tuo partner.
+        By signing in, your data stays visible to your partner only.
       </Text>
     </View>
   );

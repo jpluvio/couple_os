@@ -31,11 +31,11 @@ type ShoppingItem = {
 };
 
 const CATEGORIES: { value: PantryCategory; label: string; emoji: string }[] = [
-  { value: "FRIDGE", label: "Frigo", emoji: "🧊" },
+  { value: "FRIDGE", label: "Fridge", emoji: "🧊" },
   { value: "FREEZER", label: "Freezer", emoji: "❄️" },
-  { value: "PANTRY", label: "Dispensa", emoji: "🏠" },
-  { value: "BATHROOM", label: "Bagno", emoji: "🚿" },
-  { value: "OTHER", label: "Altro", emoji: "📦" },
+  { value: "PANTRY", label: "Pantry", emoji: "🏠" },
+  { value: "BATHROOM", label: "Bathroom", emoji: "🚿" },
+  { value: "OTHER", label: "Other", emoji: "📦" },
 ];
 
 function ShoppingRow({
@@ -139,7 +139,7 @@ export function ShoppingTab() {
       resetForm();
       setShowAdd(false);
     } catch {
-      Alert.alert("Errore", "Impossibile aggiungere il prodotto.");
+      Alert.alert("Something went wrong", "The item could not be added.");
     } finally {
       setLoading(false);
     }
@@ -156,10 +156,10 @@ export function ShoppingTab() {
   async function clearChecked() {
     const checked = (items ?? []).filter((i) => i.checked);
     if (checked.length === 0) return;
-    Alert.alert("Svuota completati", `Elimina ${checked.length} prodotti spuntati?`, [
-      { text: "Annulla", style: "cancel" },
+    Alert.alert("Clear ticked items", `Remove ${checked.length} ticked items?`, [
+      { text: "Cancel", style: "cancel" },
       {
-        text: "Elimina",
+        text: "Delete",
         style: "destructive",
         onPress: async () => {
           await supabase.from("shopping_items").delete().eq("couple_id", coupleId).eq("checked", true);
@@ -172,14 +172,14 @@ export function ShoppingTab() {
   function handleLongPress(item: ShoppingItem) {
     Alert.alert(item.name, undefined, [
       {
-        text: "🗑️ Elimina",
+        text: "Delete",
         style: "destructive",
         onPress: async () => {
           await supabase.from("shopping_items").delete().eq("id", item.id);
           queryClient.invalidateQueries({ queryKey: qKey });
         },
       },
-      { text: "Annulla", style: "cancel" },
+      { text: "Cancel", style: "cancel" },
     ]);
   }
 
@@ -195,7 +195,7 @@ export function ShoppingTab() {
           className="mx-4 mt-2 mb-1 py-2 rounded-xl bg-gray-100 items-center"
         >
           <Text className="text-sm text-gray-500 font-medium">
-            Svuota {checkedCount} completati
+            Clear {checkedCount} ticked
           </Text>
         </Pressable>
       )}
@@ -210,9 +210,9 @@ export function ShoppingTab() {
         {totalCount === 0 && !isLoading ? (
           <View className="items-center py-20 px-8">
             <Text className="text-5xl mb-4">🛍️</Text>
-            <Text className="text-base font-semibold text-gray-700 text-center">Lista della spesa vuota</Text>
+            <Text className="text-base font-semibold text-gray-700 text-center">Your shopping list is empty</Text>
             <Text className="text-sm text-gray-400 text-center mt-1">
-              Aggiungi cosa devi comprare!
+              Add what you need to buy.
             </Text>
           </View>
         ) : (
@@ -240,9 +240,9 @@ export function ShoppingTab() {
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-white">
           <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
             <Pressable onPress={() => { resetForm(); setShowAdd(false); }} className="py-1 px-2">
-              <Text className="text-base text-gray-500">Annulla</Text>
+              <Text className="text-base text-gray-500">Cancel</Text>
             </Pressable>
-            <Text className="text-base font-semibold text-gray-900">Aggiungi alla spesa</Text>
+            <Text className="text-base font-semibold text-gray-900">Add to the list</Text>
             <Pressable
               onPress={addItem}
               disabled={!name.trim() || loading}
@@ -251,7 +251,7 @@ export function ShoppingTab() {
               {loading ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <Text className={`text-sm font-semibold ${name.trim() ? "text-white" : "text-gray-400"}`}>Aggiungi</Text>
+                <Text className={`text-sm font-semibold ${name.trim() ? "text-white" : "text-gray-400"}`}>Add</Text>
               )}
             </Pressable>
           </View>
@@ -259,7 +259,7 @@ export function ShoppingTab() {
           <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 16 }}>
             <TextInput
               className="text-base text-gray-800 border-b border-gray-100 pb-3"
-              placeholder="Cosa devi comprare?"
+              placeholder="What do you need to buy?"
               placeholderTextColor="#9ca3af"
               value={name}
               onChangeText={setName}
@@ -269,10 +269,10 @@ export function ShoppingTab() {
 
             <View className="flex-row" style={{ gap: 12 }}>
               <View className="flex-1">
-                <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Quantità</Text>
+                <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Quantity</Text>
                 <TextInput
                   className="text-base text-gray-800 bg-gray-50 rounded-xl px-3 py-2"
-                  placeholder="es. 2"
+                  placeholder="e.g. 2"
                   placeholderTextColor="#9ca3af"
                   value={quantity}
                   onChangeText={setQuantity}
@@ -280,7 +280,7 @@ export function ShoppingTab() {
                 />
               </View>
               <View className="flex-1">
-                <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Unità</Text>
+                <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Unit</Text>
                 <TextInput
                   className="text-base text-gray-800 bg-gray-50 rounded-xl px-3 py-2"
                   placeholder="es. kg, L, pz"
@@ -292,10 +292,10 @@ export function ShoppingTab() {
             </View>
 
             <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Note</Text>
+              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Notes</Text>
               <TextInput
                 className="text-base text-gray-800 bg-gray-50 rounded-xl px-3 py-2"
-                placeholder="es. marca specifica, senza glutine..."
+                placeholder="e.g. a specific brand, gluten-free…"
                 placeholderTextColor="#9ca3af"
                 value={notes}
                 onChangeText={setNotes}
@@ -303,7 +303,7 @@ export function ShoppingTab() {
             </View>
 
             <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Categoria</Text>
+              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Category</Text>
               <View className="flex-row flex-wrap" style={{ gap: 8 }}>
                 {CATEGORIES.map((cat) => (
                   <Pressable
