@@ -55,19 +55,27 @@ export default function OnboardingScreen() {
 
   async function joinCouple() {
     const code = inviteCode.trim().toUpperCase();
-    if (code.length !== 6) {
-      notify("Codice non valido", "Il codice deve essere di 6 caratteri.");
+    // I codici emessi prima dell'hardening erano di 6 caratteri, i nuovi di 10.
+    if (code.length < 6 || code.length > 10) {
+      notify("Codice non valido", "Controlla il codice e riprova.");
       return;
     }
 
     setLoading(true);
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.rpc as any)("join_couple_by_code", {
+      const { data, error } = await (supabase.rpc as any)("join_couple_by_code", {
         invite_code: code,
       });
 
       if (error) throw error;
+
+      // La funzione restituisce null sul codice non valido: sollevare
+      // un'eccezione lato DB annullerebbe il conteggio dei tentativi.
+      if (!data) {
+        notify("Codice non valido", "Il codice non esiste, è scaduto o è già stato usato.");
+        return;
+      }
 
       router.replace("/(app)/board");
     } catch (err: unknown) {
@@ -186,7 +194,7 @@ export default function OnboardingScreen() {
               placeholderTextColor="#9ca3af"
               autoCapitalize="characters"
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 text-center tracking-widest mb-6"
-              maxLength={6}
+              maxLength={10}
             />
 
             <Pressable
