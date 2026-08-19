@@ -3,6 +3,7 @@ import { View, Text, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCouple } from "@/hooks/useCouple";
 import { useAuth } from "@/hooks/useAuth";
+import { formatMonth } from "@/lib/format";
 import { ExpensesTab } from "@/components/finance/ExpensesTab";
 import { BudgetTab } from "@/components/finance/BudgetTab";
 import { GoalsTab } from "@/components/finance/GoalsTab";
@@ -10,17 +11,14 @@ import { GoalsTab } from "@/components/finance/GoalsTab";
 type Tab = "expenses" | "budget" | "goals";
 
 const TABS: { key: Tab; label: string; emoji: string }[] = [
-  { key: "expenses", label: "Spese", emoji: "💸" },
+  { key: "expenses", label: "Expenses", emoji: "💸" },
   { key: "budget", label: "Budget", emoji: "📊" },
-  { key: "goals", label: "Obiettivi", emoji: "🎯" },
+  { key: "goals", label: "Goals", emoji: "🎯" },
 ];
-
-const now = new Date();
-const MONTH_LABEL = now.toLocaleDateString("it-IT", { month: "long", year: "numeric" });
 
 export default function FinanceScreen() {
   const { user } = useAuth();
-  const { couple, partner } = useCouple();
+  const { couple } = useCouple();
   const [activeTab, setActiveTab] = useState<Tab>("expenses");
 
   if (!user || !couple) return null;
@@ -29,8 +27,8 @@ export default function FinanceScreen() {
     <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header */}
       <View className="px-4 pt-2 pb-3">
-        <Text className="text-2xl font-bold text-gray-900">Finanze</Text>
-        <Text className="text-sm text-gray-500 mt-0.5 capitalize">{MONTH_LABEL}</Text>
+        <Text className="text-2xl font-bold text-gray-900">Finance</Text>
+        <Text className="text-sm text-gray-500 mt-0.5">{formatMonth(new Date())}</Text>
       </View>
 
       {/* Tab selector */}
@@ -61,12 +59,7 @@ export default function FinanceScreen() {
       </View>
 
       {/* Tab content */}
-      {activeTab === "expenses" && (
-        <ExpensesTab
-          partnerName={partner?.name ?? null}
-          partnerSalary={partner?.salary ?? null}
-        />
-      )}
+      {activeTab === "expenses" && <ExpensesTab />}
       {activeTab === "budget" && <BudgetTab />}
       {activeTab === "goals" && <GoalsTab />}
     </SafeAreaView>

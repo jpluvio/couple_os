@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -11,315 +11,408 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
+  Switch,
 } from "react-native";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
-import { useCouple } from "@/hooks/useCouple";
-import type { Budget, Expense } from "@/types/database";
+import { useRouter } from "expo-router";
+import { useBudgetOverview, useBudgetMutations } from "@/hooks/useBudget";
+import { useHouseholdMembers } from "@/hooks/useHouseholdMembers";
+import { BudgetLineRow } from "./BudgetLineRow";
+import { CategoryPicker } from "./CategoryPicker";
+import {
+  formatCurrency,
+  formatCurrencyCompact,
+  formatMonth,
+  parseAmount,
+  shiftPeriod,
+  toPeriodKey,
+} from "@/lib/format";
+import type { BudgetLine } from "@/types/database";
 
-const CATEGORIES: { value: string; label: string; emoji: string }[] = [
-  { value: "casa", label: "Casa", emoji: "🏠" },
-  { value: "cibo", label: "Cibo", emoji: "🍕" },
-  { value: "trasporti", label: "Trasporti", emoji: "🚗" },
-  { value: "intrattenimento", label: "Svago", emoji: "🎉" },
-  { value: "salute", label: "Salute", emoji: "💊" },
-  { value: "altro", label: "Altro", emoji: "📦" },
-];
-
-function catInfo(cat: string) {
-  return CATEGORIES.find((c) => c.value === cat) ?? { label: cat, emoji: "📦" };
+function SummaryRow({ label, value, tone }: { label: string; value: string; tone?: string }) {
+  return (
+    <View className="flex-row justify-between items-baseline">
+      <Text className="text-sm text-gray-500">{label}</Text>
+      <Text className={`text-sm font-semibold ${tone ?? "text-gray-900"}`}>{value}</Text>
+    </View>
+  );
 }
 
-function ProgressBar({ ratio, color }: { ratio: number; color: string }) {
-  const clamped = Math.min(ratio, 1);
+function SectionHeader({ title, total }: { title: string; total: number }) {
   return (
-    <View className="h-2 bg-gray-100 rounded-full overflow-hidden mt-2">
-      <View
-        className="h-full rounded-full"
-        style={{ width: `${clamped * 100}%`, backgroundColor: color }}
-      />
+    <View className="flex-row justify-between items-baseline px-5 mt-4 mb-2">
+      <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{title}</Text>
+      <Text className="text-xs font-semibold text-gray-400">{formatCurrencyCompact(total)}</Text>
     </View>
   );
 }
 
 export function BudgetTab() {
-  const { couple } = useCouple();
-  const queryClient = useQueryClient();
-  const coupleId = couple?.id ?? "";
+  const router = useRouter();
+  const [periodKey, setPeriodKey] = useState(() => toPeriodKey(new Date()));
 
-  const now = new Date();
-  const month = now.getMonth() + 1;
-  const year = now.getFullYear();
+  const { overview, isLoading, isFetching, refetch } = useBudgetOverview(periodKey);
+  const { setLine, setIncome, copyFromPreviousMonth } = useBudgetMutations(periodKey);
+  const { canWrite } = useHouseholdMembers();
 
-  const budgetsKey = ["budgets", coupleId];
-  const expensesKey = ["expenses", coupleId];
+  const [editing, setEditing] = useState<BudgetLine | null>(null);
+  const [pickingCategory, setPickingCategory] = useState(false);
+  const [newCategoryId, setNewCategoryId] = useState<string | null>(null);
+  const [amount, setAmount] = useState("");
+  const [rollover, setRollover] = useState(false);
+  const [incomeDraft, setIncomeDraft] = useState<string | null>(null);
 
-  const [showAdd, setShowAdd] = useState(false);
-  const [editBudget, setEditBudget] = useState<Budget | null>(null);
-  const [category, setCategory] = useState("cibo");
-  const [budgetAmount, setBudgetAmount] = useState("");
-  const [loading, setLoading] = useState(false);
+  const lines = overview?.lines ?? [];
+  const fixed = useMemo(() => lines.filter((l) => l.kind === "FIXED"), [lines]);
+  const variable = useMemo(() => lines.filter((l) => l.kind === "VARIABLE"), [lines]);
+  const planned = overview?.planned ?? 0;
+  const spent = overview?.spent ?? 0;
+  const isEmptyMonth = planned === 0 && spent === 0;
 
-  const { data: budgets, isLoading: loadingBudgets, refetch } = useQuery({
-    queryKey: budgetsKey,
-    enabled: !!coupleId,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("budgets")
-        .select("*")
-        .eq("couple_id", coupleId)
-        .eq("month", month)
-        .eq("year", year);
-      if (error) throw error;
-      return data as Budget[];
-    },
-  });
+  function openEditor(line: BudgetLine) {
+    if (!canWrite) return;
+    setEditing(line);
+    setNewCategoryId(line.category_id);
+    setAmount(line.planned ? String(line.planned) : "");
+    setRollover(line.rollover_enabled);
+  }
 
-  const { data: expenses } = useQuery({
-    queryKey: expensesKey,
-    enabled: !!coupleId,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("expenses")
-        .select("*")
-        .eq("couple_id", coupleId)
-        .gte("date", `${year}-${String(month).padStart(2, "0")}-01`);
-      if (error) throw error;
-      return data as Expense[];
-    },
-  });
+  function openNewLine() {
+    if (!canWrite) return;
+    setEditing(null);
+    setNewCategoryId(null);
+    setAmount("");
+    setRollover(false);
+    setPickingCategory(true);
+  }
 
-  const spentByCategory = (expenses ?? []).reduce<Record<string, number>>((acc, e) => {
-    acc[e.category] = (acc[e.category] ?? 0) + e.amount;
-    return acc;
-  }, {});
+  function closeEditor() {
+    setEditing(null);
+    setPickingCategory(false);
+    setNewCategoryId(null);
+    setAmount("");
+  }
 
-  const allCategories = Array.from(
-    new Set([...(budgets ?? []).map((b) => b.category), ...Object.keys(spentByCategory)])
-  );
-
-  async function saveBudget() {
-    const parsed = parseFloat(budgetAmount.replace(",", "."));
-    if (isNaN(parsed) || parsed <= 0) {
-      Alert.alert("Errore", "Inserisci un importo valido.");
+  async function save() {
+    const categoryId = editing?.category_id ?? newCategoryId;
+    if (!categoryId) {
+      Alert.alert("Pick a category", "Choose which category this budget is for.");
       return;
     }
-    setLoading(true);
+    const parsed = parseAmount(amount);
+    if (parsed == null || parsed <= 0) {
+      Alert.alert("Invalid amount", "Enter an amount greater than zero.");
+      return;
+    }
     try {
-      if (editBudget) {
-        await supabase.from("budgets").update({ amount: parsed }).eq("id", editBudget.id);
-      } else {
-        const existing = budgets?.find((b) => b.category === category);
-        if (existing) {
-          await supabase.from("budgets").update({ amount: parsed }).eq("id", existing.id);
-        } else {
-          await supabase.from("budgets").insert({
-            category,
-            amount: parsed,
-            month,
-            year,
-            couple_id: coupleId,
-          });
-        }
-      }
-      queryClient.invalidateQueries({ queryKey: budgetsKey });
-      resetForm();
-      setShowAdd(false);
-    } catch {
-      Alert.alert("Errore", "Impossibile salvare il budget.");
-    } finally {
-      setLoading(false);
+      await setLine.mutateAsync({ categoryId, amount: parsed, rollover });
+      closeEditor();
+    } catch (error) {
+      Alert.alert("Could not save", (error as Error).message);
     }
   }
 
-  function openEdit(cat: string) {
-    const b = budgets?.find((b) => b.category === cat);
-    setEditBudget(b ?? null);
-    setCategory(cat);
-    setBudgetAmount(b ? String(b.amount) : "");
-    setShowAdd(true);
-  }
-
-  function resetForm() {
-    setEditBudget(null);
-    setCategory("cibo");
-    setBudgetAmount("");
-  }
-
-  function handleLongPress(cat: string) {
-    const b = budgets?.find((b) => b.category === cat);
-    if (!b) return;
-    Alert.alert("Budget", `Rimuovere il budget per ${catInfo(cat).label}?`, [
+  function removeLine(line: BudgetLine) {
+    if (!canWrite || line.status === "UNPLANNED") return;
+    Alert.alert("Remove budget", `Remove the budget for ${line.label}?`, [
+      { text: "Cancel", style: "cancel" },
       {
-        text: "🗑️ Rimuovi",
+        text: "Remove",
         style: "destructive",
-        onPress: async () => {
-          await supabase.from("budgets").delete().eq("id", b.id);
-          queryClient.invalidateQueries({ queryKey: budgetsKey });
-        },
+        onPress: () => setLine.mutate({ categoryId: line.category_id, amount: null }),
       },
-      { text: "Annulla", style: "cancel" },
     ]);
   }
 
-  const totalBudget = (budgets ?? []).reduce((s, b) => s + b.amount, 0);
-  const totalSpent = (budgets ?? []).reduce((s, b) => s + (spentByCategory[b.category] ?? 0), 0);
+  async function saveIncome() {
+    const parsed = parseAmount(incomeDraft ?? "");
+    setIncomeDraft(null);
+    if (parsed == null || parsed < 0) return;
+    try {
+      await setIncome.mutateAsync(parsed);
+    } catch (error) {
+      Alert.alert("Could not save", (error as Error).message);
+    }
+  }
 
   return (
     <View className="flex-1">
+      {/* Month navigation */}
+      <View className="flex-row items-center justify-between mx-4 mb-3">
+        <Pressable
+          onPress={() => setPeriodKey(shiftPeriod(periodKey, -1))}
+          accessibilityLabel="Previous month"
+          className="w-9 h-9 rounded-full bg-white items-center justify-center"
+        >
+          <Text className="text-lg text-gray-500">‹</Text>
+        </Pressable>
+
+        <Text className="text-base font-semibold text-gray-900">{formatMonth(periodKey)}</Text>
+
+        <View className="flex-row" style={{ gap: 8 }}>
+          <Pressable
+            onPress={() => router.push("/(app)/finance/recurring")}
+            accessibilityLabel="Fixed expenses"
+            className="w-9 h-9 rounded-full bg-white items-center justify-center"
+          >
+            <Text className="text-base">🔁</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => router.push("/(app)/finance/categories")}
+            accessibilityLabel="Categories"
+            className="w-9 h-9 rounded-full bg-white items-center justify-center"
+          >
+            <Text className="text-base">⚙️</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setPeriodKey(shiftPeriod(periodKey, 1))}
+            accessibilityLabel="Next month"
+            className="w-9 h-9 rounded-full bg-white items-center justify-center"
+          >
+            <Text className="text-lg text-gray-500">›</Text>
+          </Pressable>
+        </View>
+      </View>
+
       {/* Summary */}
-      {(budgets?.length ?? 0) > 0 && (
-        <View className="mx-4 mb-3 bg-white rounded-2xl px-4 py-3">
-          <View className="flex-row justify-between">
-            <Text className="text-xs text-gray-500">Totale budget</Text>
-            <Text className="text-xs text-gray-500">Speso</Text>
-          </View>
-          <View className="flex-row justify-between mt-1">
-            <Text className="text-lg font-bold text-gray-900">€{totalBudget.toFixed(0)}</Text>
-            <Text className={`text-lg font-bold ${totalSpent > totalBudget ? "text-red-500" : "text-emerald-600"}`}>
-              €{totalSpent.toFixed(0)}
-            </Text>
-          </View>
-          <ProgressBar
-            ratio={totalBudget > 0 ? totalSpent / totalBudget : 0}
-            color={totalSpent > totalBudget ? "#ef4444" : "#10b981"}
+      <View className="mx-4 mb-1 bg-white rounded-2xl px-4 py-3" style={{ gap: 4 }}>
+        <Pressable
+          onPress={() => canWrite && setIncomeDraft(String(overview?.expected_income ?? 0))}
+          className="flex-row justify-between items-baseline"
+        >
+          <Text className="text-sm text-gray-500">Expected income</Text>
+          <Text className="text-sm font-semibold text-gray-900">
+            {formatCurrency(overview?.expected_income)}
+          </Text>
+        </Pressable>
+        <SummaryRow label="Planned" value={formatCurrency(planned)} />
+        <SummaryRow
+          label="Spent"
+          value={formatCurrency(spent)}
+          tone={spent > planned && planned > 0 ? "text-red-500" : "text-emerald-600"}
+        />
+
+        <View className="h-2 bg-gray-100 rounded-full overflow-hidden mt-1">
+          <View
+            className="h-full rounded-full"
+            style={{
+              width: `${planned > 0 ? Math.min(spent / planned, 1) * 100 : 0}%`,
+              backgroundColor: spent > planned ? "#ef4444" : "#10b981",
+            }}
           />
         </View>
-      )}
+
+        <SummaryRow
+          label="Left to allocate"
+          value={formatCurrency(overview?.available)}
+          tone={(overview?.available ?? 0) < 0 ? "text-red-500" : "text-gray-900"}
+        />
+      </View>
 
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingTop: 4, paddingBottom: 120 }}
         refreshControl={
-          <RefreshControl refreshing={loadingBudgets} onRefresh={refetch} tintColor="#10b981" />
+          <RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor="#10b981" />
         }
       >
-        {allCategories.length === 0 && !loadingBudgets ? (
-          <View className="items-center py-20 px-8">
+        {isLoading ? (
+          <View className="py-20">
+            <ActivityIndicator size="large" color="#10b981" />
+          </View>
+        ) : isEmptyMonth ? (
+          <View className="items-center py-16 px-8">
             <Text className="text-5xl mb-4">📊</Text>
-            <Text className="text-base font-semibold text-gray-700 text-center">Nessun budget impostato</Text>
-            <Text className="text-sm text-gray-400 text-center mt-1">
-              Imposta un budget mensile per ogni categoria!
+            <Text className="text-base font-semibold text-gray-700 text-center">
+              Nothing planned for {formatMonth(periodKey)}
             </Text>
+            <Text className="text-sm text-gray-400 text-center mt-1 mb-6">
+              Set a monthly budget per category, or start from last month.
+            </Text>
+            <View className="flex-row" style={{ gap: 10 }}>
+              <Pressable
+                onPress={openNewLine}
+                className="bg-emerald-500 px-5 py-3 rounded-2xl"
+              >
+                <Text className="text-white font-semibold text-sm">Create a budget</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => copyFromPreviousMonth.mutate(shiftPeriod(periodKey, -1))}
+                className="bg-white border border-gray-200 px-5 py-3 rounded-2xl"
+              >
+                <Text className="text-gray-700 font-semibold text-sm">Copy last month</Text>
+              </Pressable>
+            </View>
           </View>
         ) : (
-          allCategories.map((cat) => {
-            const info = catInfo(cat);
-            const budget = budgets?.find((b) => b.category === cat);
-            const spent = spentByCategory[cat] ?? 0;
-            const ratio = budget ? spent / budget.amount : null;
-            const over = ratio != null && ratio > 1;
-
-            return (
-              <Pressable
-                key={cat}
-                onPress={() => openEdit(cat)}
-                onLongPress={() => handleLongPress(cat)}
-                className="bg-white mx-4 mb-2 rounded-xl px-4 py-3"
-              >
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center" style={{ gap: 8 }}>
-                    <Text className="text-xl">{info.emoji}</Text>
-                    <Text className="text-sm font-semibold text-gray-800">{info.label}</Text>
-                  </View>
-                  <View className="items-end">
-                    <Text className={`text-sm font-bold ${over ? "text-red-500" : "text-gray-900"}`}>
-                      €{spent.toFixed(0)}
-                      {budget ? (
-                        <Text className="text-gray-400 font-normal"> / €{budget.amount.toFixed(0)}</Text>
-                      ) : null}
-                    </Text>
-                    {!budget && (
-                      <Text className="text-xs text-gray-400">Nessun budget</Text>
-                    )}
-                  </View>
-                </View>
-                {budget && (
-                  <ProgressBar
-                    ratio={ratio!}
-                    color={over ? "#ef4444" : ratio! > 0.8 ? "#f59e0b" : "#10b981"}
+          <>
+            {fixed.length > 0 && (
+              <>
+                <SectionHeader
+                  title="Fixed"
+                  total={fixed.reduce((sum, l) => sum + l.spent, 0)}
+                />
+                {fixed.map((line) => (
+                  <BudgetLineRow
+                    key={line.category_id}
+                    line={line}
+                    onPress={() => openEditor(line)}
+                    onLongPress={() => removeLine(line)}
                   />
-                )}
-              </Pressable>
-            );
-          })
+                ))}
+              </>
+            )}
+
+            {variable.length > 0 && (
+              <>
+                <SectionHeader
+                  title="Variable"
+                  total={variable.reduce((sum, l) => sum + l.spent, 0)}
+                />
+                {variable.map((line) => (
+                  <BudgetLineRow
+                    key={line.category_id}
+                    line={line}
+                    onPress={() => openEditor(line)}
+                    onLongPress={() => removeLine(line)}
+                  />
+                ))}
+              </>
+            )}
+          </>
         )}
       </ScrollView>
 
-      {/* FAB */}
-      <Pressable
-        onPress={() => { resetForm(); setShowAdd(true); }}
-        className="absolute bottom-8 right-6 w-14 h-14 bg-emerald-500 rounded-full items-center justify-center"
-        style={{ shadowColor: "#10b981", shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 6 }}
-      >
-        <Text className="text-white text-3xl" style={{ lineHeight: 36 }}>+</Text>
-      </Pressable>
+      {canWrite && (
+        <Pressable
+          onPress={openNewLine}
+          accessibilityLabel="Set a budget"
+          className="absolute bottom-8 right-6 w-14 h-14 bg-emerald-500 rounded-full items-center justify-center"
+          style={{
+            shadowColor: "#10b981",
+            shadowOpacity: 0.4,
+            shadowRadius: 12,
+            shadowOffset: { width: 0, height: 4 },
+            elevation: 6,
+          }}
+        >
+          <Text className="text-white text-3xl" style={{ lineHeight: 36 }}>
+            +
+          </Text>
+        </Pressable>
+      )}
 
+      {/* Budget line editor */}
       <Modal
-        visible={showAdd}
+        visible={editing != null || pickingCategory}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => { resetForm(); setShowAdd(false); }}
+        onRequestClose={closeEditor}
       >
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-white">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          className="flex-1 bg-white"
+        >
           <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
-            <Pressable onPress={() => { resetForm(); setShowAdd(false); }} className="py-1 px-2">
-              <Text className="text-base text-gray-500">Annulla</Text>
+            <Pressable onPress={closeEditor} className="py-1 px-2">
+              <Text className="text-base text-gray-500">Cancel</Text>
             </Pressable>
             <Text className="text-base font-semibold text-gray-900">
-              {editBudget ? "Modifica budget" : "Nuovo budget"}
+              {editing ? editing.label : "New budget"}
             </Text>
             <Pressable
-              onPress={saveBudget}
-              disabled={!budgetAmount.trim() || loading}
-              className={`py-1.5 px-4 rounded-full ${budgetAmount.trim() && !loading ? "bg-emerald-500" : "bg-gray-200"}`}
+              onPress={save}
+              disabled={!amount.trim() || setLine.isPending}
+              className={`py-1.5 px-4 rounded-full ${
+                amount.trim() && !setLine.isPending ? "bg-emerald-500" : "bg-gray-200"
+              }`}
             >
-              {loading ? (
+              {setLine.isPending ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <Text className={`text-sm font-semibold ${budgetAmount.trim() ? "text-white" : "text-gray-400"}`}>Salva</Text>
+                <Text
+                  className={`text-sm font-semibold ${
+                    amount.trim() ? "text-white" : "text-gray-400"
+                  }`}
+                >
+                  Save
+                </Text>
               )}
             </Pressable>
           </View>
 
-          <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 20 }}>
+          <ScrollView
+            className="flex-1 px-4 pt-4"
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ gap: 20 }}
+          >
             <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Budget mensile (€)</Text>
+              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Monthly budget
+              </Text>
               <TextInput
                 className="text-3xl font-bold text-gray-900 border-b border-gray-100 pb-2"
                 placeholder="0"
                 placeholderTextColor="#d1d5db"
-                value={budgetAmount}
-                onChangeText={setBudgetAmount}
+                value={amount}
+                onChangeText={setAmount}
                 keyboardType="decimal-pad"
                 autoFocus
               />
             </View>
 
-            {!editBudget && (
-              <View>
-                <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Categoria</Text>
-                <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-                  {CATEGORIES.map((cat) => (
-                    <Pressable
-                      key={cat.value}
-                      onPress={() => setCategory(cat.value)}
-                      className={`flex-row items-center px-3 py-2 rounded-xl border ${
-                        category === cat.value ? "bg-emerald-500 border-emerald-500" : "bg-white border-gray-200"
-                      }`}
-                      style={{ gap: 4 }}
-                    >
-                      <Text>{cat.emoji}</Text>
-                      <Text className={`text-sm font-medium ${category === cat.value ? "text-white" : "text-gray-700"}`}>
-                        {cat.label}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
+            {!editing && (
+              <CategoryPicker label="Category" value={newCategoryId} onChange={setNewCategoryId} />
             )}
+
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1 pr-4">
+                <Text className="text-sm font-medium text-gray-800">Carry over what's left</Text>
+                <Text className="text-xs text-gray-400 mt-0.5">
+                  When the month closes, the leftover (or the overspend) moves to next month.
+                </Text>
+              </View>
+              <Switch
+                value={rollover}
+                onValueChange={setRollover}
+                trackColor={{ true: "#10b981", false: "#e5e7eb" }}
+              />
+            </View>
           </ScrollView>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Expected income */}
+      <Modal
+        visible={incomeDraft != null}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setIncomeDraft(null)}
+      >
+        <View className="flex-1 bg-black/40 items-center justify-center px-8">
+          <View className="bg-white rounded-2xl px-5 py-5 w-full" style={{ gap: 14 }}>
+            <Text className="text-base font-semibold text-gray-900">Expected income</Text>
+            <Text className="text-xs text-gray-500">
+              What the household expects to earn in {formatMonth(periodKey)}.
+            </Text>
+            <TextInput
+              className="text-2xl font-bold text-gray-900 border-b border-gray-100 pb-2"
+              placeholder="0"
+              placeholderTextColor="#d1d5db"
+              value={incomeDraft ?? ""}
+              onChangeText={setIncomeDraft}
+              keyboardType="decimal-pad"
+              autoFocus
+            />
+            <View className="flex-row justify-end" style={{ gap: 12 }}>
+              <Pressable onPress={() => setIncomeDraft(null)} className="py-2 px-3">
+                <Text className="text-sm text-gray-500">Cancel</Text>
+              </Pressable>
+              <Pressable onPress={saveIncome} className="bg-emerald-500 py-2 px-4 rounded-full">
+                <Text className="text-sm font-semibold text-white">Save</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
       </Modal>
     </View>
   );

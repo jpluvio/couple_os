@@ -15,6 +15,7 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useCouple } from "@/hooks/useCouple";
+import { formatCurrencyCompact, parseAmount } from "@/lib/format";
 import type { FinancialGoal } from "@/types/database";
 
 function ProgressBar({ ratio }: { ratio: number }) {
@@ -57,10 +58,10 @@ export function GoalsTab() {
 
   async function addGoal() {
     if (!title.trim() || !targetAmount.trim() || !coupleId) return;
-    const target = parseFloat(targetAmount.replace(",", "."));
-    const saved = savedAmount ? parseFloat(savedAmount.replace(",", ".")) : 0;
-    if (isNaN(target) || target <= 0) {
-      Alert.alert("Errore", "Inserisci un importo target valido.");
+    const target = parseAmount(targetAmount);
+    const saved = savedAmount ? parseAmount(savedAmount) ?? 0 : 0;
+    if (target == null || target <= 0) {
+      Alert.alert("Invalid amount", "Enter a target greater than zero.");
       return;
     }
     setLoading(true);
@@ -75,7 +76,7 @@ export function GoalsTab() {
       resetForm();
       setShowAdd(false);
     } catch {
-      Alert.alert("Errore", "Impossibile aggiungere l'obiettivo.");
+      Alert.alert("Could not save", "The goal could not be created.");
     } finally {
       setLoading(false);
     }
@@ -83,9 +84,9 @@ export function GoalsTab() {
 
   async function updateSaved() {
     if (!showUpdate || !updateAmount.trim()) return;
-    const amount = parseFloat(updateAmount.replace(",", "."));
-    if (isNaN(amount) || amount < 0) {
-      Alert.alert("Errore", "Inserisci un importo valido.");
+    const amount = parseAmount(updateAmount);
+    if (amount == null || amount < 0) {
+      Alert.alert("Invalid amount", "Enter an amount of zero or more.");
       return;
     }
     setLoading(true);
@@ -98,7 +99,7 @@ export function GoalsTab() {
       setShowUpdate(null);
       setUpdateAmount("");
     } catch {
-      Alert.alert("Errore", "Impossibile aggiornare l'obiettivo.");
+      Alert.alert("Could not save", "The goal could not be updated.");
     } finally {
       setLoading(false);
     }
@@ -113,14 +114,14 @@ export function GoalsTab() {
   function handleLongPress(goal: FinancialGoal) {
     Alert.alert(goal.title, undefined, [
       {
-        text: "🗑️ Elimina",
+        text: "Delete",
         style: "destructive",
         onPress: async () => {
           await supabase.from("financial_goals").delete().eq("id", goal.id);
           queryClient.invalidateQueries({ queryKey: qKey });
         },
       },
-      { text: "Annulla", style: "cancel" },
+      { text: "Cancel", style: "cancel" },
     ]);
   }
 
@@ -136,9 +137,9 @@ export function GoalsTab() {
         {(!goals || goals.length === 0) && !isLoading ? (
           <View className="items-center py-20 px-8">
             <Text className="text-5xl mb-4">🎯</Text>
-            <Text className="text-base font-semibold text-gray-700 text-center">Nessun obiettivo</Text>
+            <Text className="text-base font-semibold text-gray-700 text-center">No goals yet</Text>
             <Text className="text-sm text-gray-400 text-center mt-1">
-              Crea il vostro primo obiettivo finanziario di coppia!
+              Create your first shared savings goal.
             </Text>
           </View>
         ) : (
@@ -163,7 +164,7 @@ export function GoalsTab() {
                       </Text>
                     </View>
                     <Text className="text-xs text-gray-400">
-                      Tocca per aggiornare · tieni premuto per eliminare
+                      Tap to update · hold to delete
                     </Text>
                   </View>
                   <Text className="text-lg font-bold text-emerald-600 ml-3">{pct}%</Text>
@@ -173,10 +174,10 @@ export function GoalsTab() {
 
                 <View className="flex-row justify-between mt-2">
                   <Text className="text-sm text-gray-600">
-                    Risparmiati: <Text className="font-semibold">€{goal.saved_amount.toFixed(0)}</Text>
+                    Saved: <Text className="font-semibold">{formatCurrencyCompact(goal.saved_amount)}</Text>
                   </Text>
                   <Text className="text-sm text-gray-400">
-                    Obiettivo: €{goal.target_amount.toFixed(0)}
+                    Target: {formatCurrencyCompact(goal.target_amount)}
                   </Text>
                 </View>
               </Pressable>
@@ -204,9 +205,9 @@ export function GoalsTab() {
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-white">
           <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
             <Pressable onPress={() => { resetForm(); setShowAdd(false); }} className="py-1 px-2">
-              <Text className="text-base text-gray-500">Annulla</Text>
+              <Text className="text-base text-gray-500">Cancel</Text>
             </Pressable>
-            <Text className="text-base font-semibold text-gray-900">Nuovo obiettivo</Text>
+            <Text className="text-base font-semibold text-gray-900">New goal</Text>
             <Pressable
               onPress={addGoal}
               disabled={!title.trim() || !targetAmount.trim() || loading}
@@ -216,7 +217,7 @@ export function GoalsTab() {
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <Text className={`text-sm font-semibold ${title.trim() && targetAmount.trim() ? "text-white" : "text-gray-400"}`}>
-                  Crea
+                  Create
                 </Text>
               )}
             </Pressable>
@@ -224,10 +225,10 @@ export function GoalsTab() {
 
           <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 20 }}>
             <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Nome obiettivo</Text>
+              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Goal name</Text>
               <TextInput
                 className="text-lg text-gray-900 border-b border-gray-100 pb-2"
-                placeholder="es. Vacanza in Giappone"
+                placeholder="e.g. Trip to Japan"
                 placeholderTextColor="#9ca3af"
                 value={title}
                 onChangeText={setTitle}
@@ -236,7 +237,7 @@ export function GoalsTab() {
             </View>
 
             <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Importo target (€)</Text>
+              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Target amount</Text>
               <TextInput
                 className="text-3xl font-bold text-gray-900 border-b border-gray-100 pb-2"
                 placeholder="0"
@@ -248,7 +249,7 @@ export function GoalsTab() {
             </View>
 
             <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Già risparmiati (€)</Text>
+              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Already saved</Text>
               <TextInput
                 className="text-base text-gray-800 bg-gray-50 rounded-xl px-3 py-2"
                 placeholder="0"
@@ -272,7 +273,7 @@ export function GoalsTab() {
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-white">
           <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
             <Pressable onPress={() => { setShowUpdate(null); setUpdateAmount(""); }} className="py-1 px-2">
-              <Text className="text-base text-gray-500">Annulla</Text>
+              <Text className="text-base text-gray-500">Cancel</Text>
             </Pressable>
             <Text className="text-base font-semibold text-gray-900" numberOfLines={1}>
               {showUpdate?.title}
@@ -285,14 +286,14 @@ export function GoalsTab() {
               {loading ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <Text className={`text-sm font-semibold ${updateAmount.trim() ? "text-white" : "text-gray-400"}`}>Salva</Text>
+                <Text className={`text-sm font-semibold ${updateAmount.trim() ? "text-white" : "text-gray-400"}`}>Save</Text>
               )}
             </Pressable>
           </View>
 
           <View className="px-4 pt-6" style={{ gap: 8 }}>
             <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Totale risparmiato (€)
+              Total saved
             </Text>
             <TextInput
               className="text-4xl font-bold text-gray-900 border-b border-gray-100 pb-3"
@@ -305,7 +306,7 @@ export function GoalsTab() {
             />
             {showUpdate && (
               <Text className="text-sm text-gray-400">
-                Obiettivo: €{showUpdate.target_amount.toFixed(0)}
+                Target: {formatCurrencyCompact(showUpdate.target_amount)}
               </Text>
             )}
           </View>

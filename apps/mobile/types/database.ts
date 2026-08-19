@@ -1,8 +1,8 @@
-// Tipi generati dallo schema Supabase.
-// Rigenerare con:
+// Types generated from the Supabase schema.
+// Regenerate with:
 //   npx supabase gen types typescript --project-id vufwcrgdoheirjyowyaf > types/database.ts
-// (oppure via Supabase MCP `generate_typescript_types`).
-// In fondo al file ci sono gli alias shorthand e gli enum usati dai componenti.
+// (or via the Supabase MCP `generate_typescript_types`).
+// The shorthand aliases and enums used by the components are at the bottom.
 
 export type Json =
   | string
@@ -20,33 +20,329 @@ export type Database = {
   }
   public: {
     Tables: {
+      budget_periods: {
+        Row: {
+          closed_at: string | null
+          couple_id: string
+          created_at: string
+          expected_income: number
+          id: string
+          note: string | null
+          period_key: string
+          rollover_enabled: boolean
+          status: Database["public"]["Enums"]["budget_period_status"]
+          updated_at: string
+        }
+        Insert: {
+          closed_at?: string | null
+          couple_id: string
+          created_at?: string
+          expected_income?: number
+          id?: string
+          note?: string | null
+          period_key: string
+          rollover_enabled?: boolean
+          status?: Database["public"]["Enums"]["budget_period_status"]
+          updated_at?: string
+        }
+        Update: {
+          closed_at?: string | null
+          couple_id?: string
+          created_at?: string
+          expected_income?: number
+          id?: string
+          note?: string | null
+          period_key?: string
+          rollover_enabled?: boolean
+          status?: Database["public"]["Enums"]["budget_period_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_periods_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_categories: {
+        Row: {
+          archived: boolean
+          color: string | null
+          couple_id: string | null
+          created_at: string
+          emoji: string | null
+          id: string
+          kind: Database["public"]["Enums"]["expense_kind"]
+          label: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          color?: string | null
+          couple_id?: string | null
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["expense_kind"]
+          label: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          color?: string | null
+          couple_id?: string | null
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["expense_kind"]
+          label?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_categories_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_shares: {
+        Row: {
+          expense_id: string
+          member_id: string
+          share_amount: number
+        }
+        Insert: {
+          expense_id: string
+          member_id: string
+          share_amount: number
+        }
+        Update: {
+          expense_id?: string
+          member_id?: string
+          share_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_shares_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_shares_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "household_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      household_members: {
+        Row: {
+          active: boolean
+          avatar_emoji: string | null
+          color: string | null
+          couple_id: string
+          created_at: string
+          custom_share: number | null
+          display_name: string
+          id: string
+          monthly_income: number | null
+          role: Database["public"]["Enums"]["member_role"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          active?: boolean
+          avatar_emoji?: string | null
+          color?: string | null
+          couple_id: string
+          created_at?: string
+          custom_share?: number | null
+          display_name: string
+          id?: string
+          monthly_income?: number | null
+          role?: Database["public"]["Enums"]["member_role"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          active?: boolean
+          avatar_emoji?: string | null
+          color?: string | null
+          couple_id?: string
+          created_at?: string
+          custom_share?: number | null
+          display_name?: string
+          id?: string
+          monthly_income?: number | null
+          role?: Database["public"]["Enums"]["member_role"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_members_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "household_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recurring_expenses: {
+        Row: {
+          active: boolean
+          amount: number
+          auto_post: boolean
+          category_id: string
+          couple_id: string
+          created_at: string
+          day_of_month: number | null
+          day_of_week: number | null
+          end_date: string | null
+          frequency: Database["public"]["Enums"]["recurrence_freq"]
+          id: string
+          label: string
+          last_posted_occurrence: string | null
+          note: string | null
+          paid_by_member_id: string | null
+          pending_occurrence: string | null
+          start_date: string
+          updated_at: string
+          variable_amount: boolean
+        }
+        Insert: {
+          active?: boolean
+          amount: number
+          auto_post?: boolean
+          category_id: string
+          couple_id: string
+          created_at?: string
+          day_of_month?: number | null
+          day_of_week?: number | null
+          end_date?: string | null
+          frequency?: Database["public"]["Enums"]["recurrence_freq"]
+          id?: string
+          label: string
+          last_posted_occurrence?: string | null
+          note?: string | null
+          paid_by_member_id?: string | null
+          pending_occurrence?: string | null
+          start_date: string
+          updated_at?: string
+          variable_amount?: boolean
+        }
+        Update: {
+          active?: boolean
+          amount?: number
+          auto_post?: boolean
+          category_id?: string
+          couple_id?: string
+          created_at?: string
+          day_of_month?: number | null
+          day_of_week?: number | null
+          end_date?: string | null
+          frequency?: Database["public"]["Enums"]["recurrence_freq"]
+          id?: string
+          label?: string
+          last_posted_occurrence?: string | null
+          note?: string | null
+          paid_by_member_id?: string | null
+          pending_occurrence?: string | null
+          start_date?: string
+          updated_at?: string
+          variable_amount?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_expenses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_expenses_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_expenses_paid_by_member_id_fkey"
+            columns: ["paid_by_member_id"]
+            isOneToOne: false
+            referencedRelation: "household_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budgets: {
         Row: {
           amount: number
-          category: string
+          budget_period_id: string | null
+          carried_amount: number
+          category: string | null
+          category_id: string | null
           couple_id: string
           created_at: string
           id: string
-          month: number
-          year: number
+          month: number | null
+          period_key: string | null
+          rollover_enabled: boolean
+          updated_at: string
+          year: number | null
         }
         Insert: {
           amount: number
-          category: string
+          budget_period_id?: string | null
+          carried_amount?: number
+          category?: string | null
+          category_id?: string | null
           couple_id: string
           created_at?: string
           id?: string
-          month: number
-          year: number
+          month?: number | null
+          period_key?: string | null
+          rollover_enabled?: boolean
+          updated_at?: string
+          year?: number | null
         }
         Update: {
           amount?: number
-          category?: string
+          budget_period_id?: string | null
+          carried_amount?: number
+          category?: string | null
+          category_id?: string | null
           couple_id?: string
           created_at?: string
           id?: string
-          month?: number
-          year?: number
+          month?: number | null
+          period_key?: string | null
+          rollover_enabled?: boolean
+          updated_at?: string
+          year?: number | null
         }
         Relationships: [
           {
@@ -259,33 +555,54 @@ export type Database = {
       expenses: {
         Row: {
           amount: number
-          category: string
+          category: string | null
+          category_id: string | null
           couple_id: string
           created_at: string
           date: string
           id: string
           note: string | null
-          paid_by_id: string
+          occurrence_date: string | null
+          paid_by_id: string | null
+          paid_by_member_id: string | null
+          period_key: string | null
+          recurring_expense_id: string | null
+          source: Database["public"]["Enums"]["expense_source"]
+          updated_at: string
         }
         Insert: {
           amount: number
-          category: string
+          category?: string | null
+          category_id?: string | null
           couple_id: string
           created_at?: string
           date?: string
           id?: string
           note?: string | null
-          paid_by_id: string
+          occurrence_date?: string | null
+          paid_by_id?: string | null
+          paid_by_member_id?: string | null
+          period_key?: string | null
+          recurring_expense_id?: string | null
+          source?: Database["public"]["Enums"]["expense_source"]
+          updated_at?: string
         }
         Update: {
           amount?: number
-          category?: string
+          category?: string | null
+          category_id?: string | null
           couple_id?: string
           created_at?: string
           date?: string
           id?: string
           note?: string | null
-          paid_by_id?: string
+          occurrence_date?: string | null
+          paid_by_id?: string | null
+          paid_by_member_id?: string | null
+          period_key?: string | null
+          recurring_expense_id?: string | null
+          source?: Database["public"]["Enums"]["expense_source"]
+          updated_at?: string
         }
         Relationships: [
           {
@@ -872,16 +1189,56 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      close_budget_period: { Args: { p_period: string }; Returns: string }
+      confirm_recurring_occurrence: {
+        Args: { p_recurring_id: string; p_amount?: number; p_occurrence?: string }
+        Returns: string
+      }
       create_couple: { Args: { couple_name?: string }; Returns: Json }
+      create_next_period: {
+        Args: { p_period: string; p_copy_from?: string }
+        Returns: string
+      }
+      get_budget_overview: { Args: { p_period?: string }; Returns: Json }
       get_couple_id: { Args: never; Returns: string }
       join_couple_by_code: { Args: { invite_code: string }; Returns: string }
+      next_recurring_due: { Args: { p_recurring_id: string }; Returns: string }
+      post_due_recurring: {
+        Args: { p_couple_id: string; p_up_to?: string }
+        Returns: number
+      }
+      set_budget_amount: {
+        Args: {
+          p_period: string
+          p_category_id: string
+          p_amount: number
+          p_rollover?: boolean
+        }
+        Returns: string
+      }
+      set_expected_income: { Args: { p_period: string; p_amount: number }; Returns: undefined }
+      skip_recurring_occurrence: {
+        Args: { p_recurring_id: string; p_occurrence?: string }
+        Returns: undefined
+      }
     }
     Enums: {
+      budget_period_status: "DRAFT" | "ACTIVE" | "CLOSED"
       checkin_period: "weekly" | "monthly" | "yearly"
+      expense_kind: "FIXED" | "VARIABLE"
+      expense_source: "MANUAL" | "RECURRING"
+      member_role: "OWNER" | "MEMBER" | "VIEWER"
       pantry_category: "FRIDGE" | "FREEZER" | "PANTRY" | "BATHROOM" | "OTHER"
       priority_level: "LOW" | "MEDIUM" | "HIGH"
       prompt_source: "SYSTEM" | "CUSTOM"
-      split_mode: "EQUAL" | "PROPORTIONAL"
+      recurrence_freq:
+        | "WEEKLY"
+        | "MONTHLY"
+        | "BIMONTHLY"
+        | "QUARTERLY"
+        | "SEMIANNUAL"
+        | "ANNUAL"
+      split_mode: "EQUAL" | "PROPORTIONAL" | "CUSTOM"
       todo_status: "TODO" | "IN_PROGRESS" | "DONE"
     }
     CompositeTypes: {
@@ -1010,18 +1367,30 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      budget_period_status: ["DRAFT", "ACTIVE", "CLOSED"],
       checkin_period: ["weekly", "monthly", "yearly"],
+      expense_kind: ["FIXED", "VARIABLE"],
+      expense_source: ["MANUAL", "RECURRING"],
+      member_role: ["OWNER", "MEMBER", "VIEWER"],
       pantry_category: ["FRIDGE", "FREEZER", "PANTRY", "BATHROOM", "OTHER"],
       priority_level: ["LOW", "MEDIUM", "HIGH"],
       prompt_source: ["SYSTEM", "CUSTOM"],
-      split_mode: ["EQUAL", "PROPORTIONAL"],
+      recurrence_freq: [
+        "WEEKLY",
+        "MONTHLY",
+        "BIMONTHLY",
+        "QUARTERLY",
+        "SEMIANNUAL",
+        "ANNUAL",
+      ],
+      split_mode: ["EQUAL", "PROPORTIONAL", "CUSTOM"],
       todo_status: ["TODO", "IN_PROGRESS", "DONE"],
     },
   },
 } as const
 
 // ─────────────────────────────────────────
-// Shorthand types (usati nei componenti) — non generati da Supabase.
+// Shorthand types (used by the components) — not generated by Supabase.
 // ─────────────────────────────────────────
 
 // Enum
@@ -1031,10 +1400,15 @@ export type TodoStatus = Enums<"todo_status">;
 export type PantryCategory = Enums<"pantry_category">;
 export type CheckinPeriod = Enums<"checkin_period">;
 export type PromptSource = Enums<"prompt_source">;
-// La colonna notifications.type è `text` nel DB; questi sono i valori emessi dai trigger.
+export type ExpenseKind = Enums<"expense_kind">;
+export type ExpenseSource = Enums<"expense_source">;
+export type MemberRole = Enums<"member_role">;
+export type RecurrenceFreq = Enums<"recurrence_freq">;
+export type BudgetPeriodStatus = Enums<"budget_period_status">;
+// notifications.type is `text` in the DB; these are the values the triggers emit.
 export type NotificationType = "post" | "event" | "expense" | "todo";
 
-// Tabelle
+// Tables
 export type User = Tables<"users">;
 export type Couple = Tables<"couples">;
 export type Post = Tables<"posts">;
@@ -1051,3 +1425,46 @@ export type FinancialGoal = Tables<"financial_goals">;
 export type CheckIn = Tables<"check_ins">;
 export type Memory = Tables<"memories">;
 export type Notification = Tables<"notifications">;
+export type HouseholdMember = Tables<"household_members">;
+export type ExpenseCategory = Tables<"expense_categories">;
+export type RecurringExpense = Tables<"recurring_expenses">;
+export type BudgetPeriod = Tables<"budget_periods">;
+export type ExpenseShare = Tables<"expense_shares">;
+
+// ─────────────────────────────────────────
+// Shape of the get_budget_overview() payload (returns jsonb).
+// ─────────────────────────────────────────
+
+export type BudgetLineStatus = "OK" | "WARNING" | "OVER" | "UNPLANNED";
+
+export interface BudgetLine {
+  category_id: string;
+  slug: string;
+  label: string;
+  emoji: string | null;
+  color: string | null;
+  kind: ExpenseKind;
+  budget_id: string | null;
+  planned: number;
+  carried: number;
+  effective: number;
+  rollover_enabled: boolean;
+  spent: number;
+  expense_count: number;
+  remaining: number;
+  progress_ratio: number | null;
+  status: BudgetLineStatus;
+}
+
+export interface BudgetOverview {
+  period_key: string;
+  period_id: string | null;
+  status: BudgetPeriodStatus;
+  expected_income: number;
+  planned: number;
+  spent: number;
+  fixed_spent: number;
+  variable_spent: number;
+  available: number;
+  lines: BudgetLine[];
+}

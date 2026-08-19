@@ -18,21 +18,21 @@ export default function AppLayout() {
     );
   }
 
-  // Utente autenticato ma non in una coppia → onboarding
+  // Signed in but not in a couple yet → onboarding
   if (session && !couple) {
     return (
       <View className="flex-1 bg-white items-center justify-center px-8">
         <Text className="text-2xl font-bold text-gray-900 mb-3 text-center">
-          Crea o unisciti a una coppia
+          Create or join a couple
         </Text>
         <Text className="text-gray-500 text-center mb-8">
-          Per usare Couple OS hai bisogno di un partner.
+          Couple OS needs a partner to work.
         </Text>
         <Pressable
           onPress={() => router.replace("/(auth)/onboarding")}
           className="bg-brand-500 px-8 py-4 rounded-2xl"
         >
-          <Text className="text-white font-semibold text-base">Inizia</Text>
+          <Text className="text-white font-semibold text-base">Get started</Text>
         </Pressable>
       </View>
     );
@@ -108,8 +108,10 @@ export default function AppLayout() {
           tabBarIcon: ({ color }) => <TabBarIcon emoji="📸" color={color} />,
         }}
       />
-      {/* Schermata raggiungibile via campanella, non come tab */}
+      {/* Reachable from the bell and from Budget, not as tabs */}
       <Tabs.Screen name="notifications" options={{ href: null }} />
+      <Tabs.Screen name="finance/categories" options={{ href: null }} />
+      <Tabs.Screen name="finance/recurring" options={{ href: null }} />
     </Tabs>
   );
 }
