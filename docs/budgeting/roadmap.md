@@ -23,10 +23,13 @@
 | 1 | Categorie personalizzabili | `008` | ✅ Utente | ✅ implementata |
 | 2 | Spese fisse ricorrenti | `009` | ✅ Utente | ✅ implementata |
 | 3 | Budget mensile completo | `010` | ✅ Utente | ✅ implementata |
-| 4 | Statistiche | `011` | ✅ Utente |
-| 5 | Obiettivi legati al budget | `012` | ✅ Utente |
-| 6 | Split a N membri e pareggio | `013` | ✅ Utente |
-| 7 | Rifinitura, pulizia, integrazione | `014` | ✅ Utente |
+| 4 | Statistiche | `012` | ✅ Utente | ⬜ da fare |
+| 5 | Obiettivi legati al budget | `013` | ✅ Utente | ⬜ da fare |
+| 6 | Split a N membri e pareggio | `014` | ✅ Utente | 🚧 solo dati e calcolo (Fase 0) |
+| 7 | Rifinitura, pulizia, integrazione | `015` | ✅ Utente | ⬜ da fare |
+
+> La migrazione `011` è occupata dai messaggi in inglese, quindi la numerazione
+> delle fasi successive scala di uno.
 
 ---
 
@@ -37,24 +40,24 @@
 **Perché prima di tutto:** `expenses.paid_by_id` punta a `users`, il che rende impossibile registrare una spesa di un partecipante senza account e costringe il codice attuale a dedurre il partner con `expenses.find(e => e.paid_by_id !== user.id)` — che restituisce stringa vuota finché il partner non ha inserito almeno una spesa. Tutto il resto poggia su questo.
 
 ### 0.1 — Membri del nucleo
-- [ ] Migrazione `007`: enum `member_role`, valore `CUSTOM` su `split_mode`
-- [ ] Tabella `household_members` con indice unico parziale su `(couple_id, user_id)`
-- [ ] Trigger `sync_member_on_user_couple`: crea la riga membro quando un utente entra nel nucleo
-- [ ] Backfill dei membri per i nuclei esistenti (`display_name`, `monthly_income` da `users.salary`, ruolo `OWNER` al primo)
-- [ ] Colonna `expenses.paid_by_member_id` + backfill da `paid_by_id`
-- [ ] Trigger `sync_legacy_expense_fields` per mantenere popolate le colonne legacy
-- [ ] RLS su `household_members`, aggiunta alla publication realtime
+- [x] Migrazione `007`: enum `member_role`, valore `CUSTOM` su `split_mode`
+- [x] Tabella `household_members` con indice unico parziale su `(couple_id, user_id)`
+- [x] Trigger `sync_member_on_user_couple`: crea la riga membro quando un utente entra nel nucleo
+- [x] Backfill dei membri per i nuclei esistenti (`display_name`, `monthly_income` da `users.salary`, ruolo `OWNER` al primo)
+- [x] Colonna `expenses.paid_by_member_id` + backfill da `paid_by_id`
+- [x] Trigger `sync_legacy_expense_fields` per mantenere popolate le colonne legacy
+- [x] RLS su `household_members`, aggiunta alla publication realtime
 
 ### 0.2 — Motore di calcolo
-- [ ] `split_expense_cents()` con metodo dei resti maggiori
-- [ ] `member_weights(p_couple_id)`: pesi per modalità di split, con degrado a `EQUAL` se i redditi mancano
-- [ ] Tabella `expense_shares` + trigger di validazione della somma
-- [ ] Vista `v_expense_member_shares`
-- [ ] `validate_custom_shares()` per la somma delle quote personalizzate
+- [x] `split_expense_cents()` con metodo dei resti maggiori
+- [x] `member_weights(p_couple_id)`: pesi per modalità di split, con degrado a `EQUAL` se i redditi mancano
+- [x] Tabella `expense_shares` + trigger di validazione della somma
+- [x] Vista `v_expense_member_shares`
+- [x] `validate_custom_shares()` per la somma delle quote personalizzate
 
 ### 0.3 — Verifica
-- [ ] Test: la somma delle quote uguaglia il totale per N da 1 a 10, in tutte e tre le modalità
-- [ ] Test RLS: isolamento di `household_members` tra nuclei
+- [x] Test: la somma delle quote uguaglia il totale per N da 1 a 10, in tutte e tre le modalità
+- [x] Test RLS: isolamento di `household_members` tra nuclei
 - [ ] Verifica di non regressione: `ExpensesTab` e `BudgetTab` funzionano identici a prima
 
 **Deliverable:** nessun cambiamento visibile. Il database sa chi sono i membri e sa dividere una cifra senza perdere centesimi.
@@ -68,30 +71,30 @@
 **Il problema che risolve.** Oggi le categorie sono definite in tre punti con due vocabolari diversi: `EXPENSE_CATEGORIES` in `packages/shared/src/index.ts` (`"Affitto"`, `"Bollette"`, …) che nessun componente importa, e un array `CATEGORIES` duplicato identico in `ExpensesTab.tsx` e `BudgetTab.tsx` (`"casa"`, `"cibo"`, …). Aggiungere una categoria significa modificare tre file, e i dati storici possono contenere entrambi i vocabolari.
 
 ### 1.1 — Schema e migrazione dati
-- [ ] Migrazione `008`: enum `expense_kind`, tabella `expense_categories`
-- [ ] Seed dei 12 preset di sistema (`couple_id is null`)
-- [ ] Trigger `seed_household_on_couple`: clona i preset per ogni nuovo nucleo
-- [ ] Clonazione dei preset per i nuclei già esistenti
-- [ ] Colonna `expenses.category_id` e `budgets.category_id`
-- [ ] **Mapping dei valori storici** secondo la tabella in [`specs.md` §6](./specs.md#6-migrazione-dei-dati-esistenti)
-- [ ] Valori non mappati → categoria del nucleo con la label originale, mai riassegnati ad "Altro"
-- [ ] Assertion di fine migrazione: zero spese con `category_id` nullo, altrimenti rollback
-- [ ] Trigger `guard_category_delete`: blocca la cancellazione con dati collegati
-- [ ] RLS + realtime
+- [x] Migrazione `008`: enum `expense_kind`, tabella `expense_categories`
+- [x] Seed dei 12 preset di sistema (`couple_id is null`)
+- [x] Trigger `seed_household_on_couple`: clona i preset per ogni nuovo nucleo
+- [x] Clonazione dei preset per i nuclei già esistenti
+- [x] Colonna `expenses.category_id` e `budgets.category_id`
+- [x] **Mapping dei valori storici** secondo la tabella in [`specs.md` §6](./specs.md#6-migrazione-dei-dati-esistenti)
+- [x] Valori non mappati → categoria del nucleo con la label originale, mai riassegnati ad "Altro"
+- [x] Assertion di fine migrazione: zero spese con `category_id` nullo, altrimenti rollback
+- [x] Trigger `guard_category_delete`: blocca la cancellazione con dati collegati
+- [x] RLS + realtime
 
 ### 1.2 — Schemi condivisi
-- [ ] `CreateCategorySchema` in `packages/shared`
-- [ ] `DEFAULT_EXPENSE_CATEGORIES` con slug, label, emoji, kind
-- [ ] Deprecare `EXPENSE_CATEGORIES` (commento + rimozione in Fase 7)
+- [x] `CreateCategorySchema` in `packages/shared`
+- [x] `DEFAULT_EXPENSE_CATEGORIES` con slug, label, emoji, kind
+- [x] Deprecare `EXPENSE_CATEGORIES` (commento + rimozione in Fase 7)
 
 ### 1.3 — Interfaccia
-- [ ] `hooks/useCategories.ts` con cache TanStack Query
-- [ ] `components/finance/CategoryPicker.tsx` — **unico** selettore, sostituisce i tre array
-- [ ] `components/finance/CategoryChip.tsx`
+- [x] `hooks/useCategories.ts` con cache TanStack Query
+- [x] `components/finance/CategoryPicker.tsx` — **unico** selettore, sostituisce i tre array
+- [x] `components/finance/CategoryChip.tsx`
 - [ ] Schermata `app/(app)/finance/categories.tsx`: lista, riordino, crea, modifica, archivia
-- [ ] Selettore emoji e colore
-- [ ] Toggle Fissa/Variabile sulla categoria
-- [ ] Rimuovere gli array `CATEGORIES` da `ExpensesTab.tsx` e `BudgetTab.tsx`
+- [x] Selettore emoji e colore
+- [x] Toggle Fissa/Variabile sulla categoria
+- [x] Rimuovere gli array `CATEGORIES` da `ExpensesTab.tsx` e `BudgetTab.tsx`
 
 **Deliverable:** l'utente crea, rinomina, colora e archivia le proprie categorie. Nessun dato storico perso.
 
@@ -102,33 +105,33 @@
 **Obiettivo:** affitto, bollette e abbonamenti si dichiarano una volta e si registrano da soli.
 
 ### 2.1 — Schema
-- [ ] Migrazione `009`: enum `recurrence_freq`, `expense_source`
-- [ ] Tabella `recurring_expenses`
-- [ ] Colonne `expenses.source`, `recurring_expense_id`, `period_key`
-- [ ] **Indice unico `(recurring_expense_id, period_key)`** — la garanzia di idempotenza
-- [ ] Trigger `set_expense_period_key`
-- [ ] RLS + realtime
+- [x] Migrazione `009`: enum `recurrence_freq`, `expense_source`
+- [x] Tabella `recurring_expenses`
+- [x] Colonne `expenses.source`, `recurring_expense_id`, `period_key`
+- [x] **Indice unico `(recurring_expense_id, period_key)`** — la garanzia di idempotenza
+- [x] Trigger `set_expense_period_key`
+- [x] RLS + realtime
 
 ### 2.2 — Generazione
-- [ ] `resolve_due_date(period, day_of_month)` con gestione dei mesi corti e di `-1` (ultimo giorno)
-- [ ] `post_due_recurring(p_couple_id, p_up_to)` — idempotente
-- [ ] Estendere la Edge Function `daily-cron` esistente con la chiamata per ogni nucleo attivo
-- [ ] `hooks/useRecurringCatchUp.ts`: catch-up all'apertura dell'app
-- [ ] Gestione `auto_post = false`: crea proposta invece di spesa
-- [ ] Gestione `variable_amount`: propone l'importo dell'ultima occorrenza
+- [x] `resolve_due_date(period, day_of_month)` con gestione dei mesi corti e di `-1` (ultimo giorno)
+- [x] `post_due_recurring(p_couple_id, p_up_to)` — idempotente
+- [x] Estendere la Edge Function `daily-cron` esistente con la chiamata per ogni nucleo attivo
+- [x] `hooks/useRecurringCatchUp.ts`: catch-up all'apertura dell'app
+- [x] Gestione `auto_post = false`: crea proposta invece di spesa
+- [x] Gestione `variable_amount`: propone l'importo dell'ultima occorrenza
 
 ### 2.3 — Interfaccia
-- [ ] Schermata `app/(app)/finance/recurring.tsx`
+- [x] Schermata `app/(app)/finance/recurring.tsx`
 - [ ] `RecurringCard.tsx` con prossima scadenza e importo
-- [ ] Form crea/modifica con selettore di frequenza e giorno del mese
-- [ ] `PendingRecurringBanner.tsx` in cima alla lista spese, con conferma inline
-- [ ] Badge "auto" sulle spese generate, per distinguerle da quelle manuali
-- [ ] Azione "Salta questo mese" su una singola occorrenza
+- [x] Form crea/modifica con selettore di frequenza e giorno del mese
+- [x] `PendingRecurringBanner.tsx` in cima alla lista spese, con conferma inline
+- [x] Badge "auto" sulle spese generate, per distinguerle da quelle manuali
+- [x] Azione "Salta questo mese" su una singola occorrenza
 
 ### 2.4 — Verifica
-- [ ] Test: `post_due_recurring` eseguita tre volte produce una sola spesa
-- [ ] Test: ricorrente al giorno 31 genera correttamente a febbraio
-- [ ] Test: una ricorrente terminata (`end_date` passata) non genera più
+- [x] Test: `post_due_recurring` eseguita tre volte produce una sola spesa
+- [x] Test: ricorrente al giorno 31 genera correttamente a febbraio
+- [x] Test: una ricorrente terminata (`end_date` passata) non genera più
 
 **Deliverable:** le spese incomprimibili del nucleo si registrano da sole. È la fase che riduce di più l'attrito quotidiano.
 
@@ -139,32 +142,32 @@
 **Obiettivo:** pianificare il mese, non solo consuntivarlo.
 
 ### 3.1 — Schema
-- [ ] Migrazione `010`: enum `budget_period_status`, tabella `budget_periods`
-- [ ] Colonne su `budgets`: `budget_period_id`, `period_key`, `rollover_enabled`, `carried_amount`
-- [ ] Sostituire il vincolo unico `(couple_id, category, month, year)` con `(budget_period_id, category_id)`
-- [ ] Migrazione delle righe di budget esistenti nei rispettivi periodi
-- [ ] RLS + realtime
+- [x] Migrazione `010`: enum `budget_period_status`, tabella `budget_periods`
+- [x] Colonne su `budgets`: `budget_period_id`, `period_key`, `rollover_enabled`, `carried_amount`
+- [x] Sostituire il vincolo unico `(couple_id, category, month, year)` con `(budget_period_id, category_id)`
+- [x] Migrazione delle righe di budget esistenti nei rispettivi periodi
+- [x] RLS + realtime
 
 ### 3.2 — Calcolo
-- [ ] Vista `v_period_category_spend`
-- [ ] RPC `get_budget_overview(p_period)` — pianificato, riportato, speso, residuo, stato per categoria
-- [ ] RPC `create_next_period(p_period, p_copy_from)`
-- [ ] RPC `close_budget_period(p_period)`: calcola i rollover e apre il periodo successivo
-- [ ] Logica di rollover: residuo positivo e negativo, solo se `rollover_enabled`
+- [x] Vista `v_period_category_spend`
+- [x] RPC `get_budget_overview(p_period)` — pianificato, riportato, speso, residuo, stato per categoria
+- [x] RPC `create_next_period(p_period, p_copy_from)`
+- [x] RPC `close_budget_period(p_period)`: calcola i rollover e apre il periodo successivo
+- [x] Logica di rollover: residuo positivo e negativo, solo se `rollover_enabled`
 
 ### 3.3 — Interfaccia
-- [ ] Riscrivere `BudgetTab.tsx` su `get_budget_overview` (via singola RPC anziché due query + reduce lato client)
+- [x] Riscrivere `BudgetTab.tsx` su `get_budget_overview` (via singola RPC anziché due query + reduce lato client)
 - [ ] Navigazione tra mesi (frecce + swipe)
-- [ ] Campo entrate previste del periodo
-- [ ] Sezioni separate Fisse / Variabili con subtotali
-- [ ] Riga di budget con barra, soglie a colori (verde / ambra oltre 80% / rosso oltre 100%)
-- [ ] Azione "Copia dal mese precedente" sui periodi vuoti
-- [ ] Toggle rollover per riga di budget
-- [ ] Riepilogo in cima: entrate, pianificato, speso, disponibile
+- [x] Campo entrate previste del periodo
+- [x] Sezioni separate Fisse / Variabili con subtotali
+- [x] Riga di budget con barra, soglie a colori (verde / ambra oltre 80% / rosso oltre 100%)
+- [x] Azione "Copia dal mese precedente" sui periodi vuoti
+- [x] Toggle rollover per riga di budget
+- [x] Riepilogo in cima: entrate, pianificato, speso, disponibile
 
 ### 3.4 — Notifiche
-- [ ] Trigger soglie budget 80% e 100%, con guardia anti-ripetizione
-- [ ] Generalizzare `notify_partner()` a tutti i membri del nucleo (oggi ne seleziona uno solo con `limit 1`)
+- [x] Trigger soglie budget 80% e 100%, con guardia anti-ripetizione
+- [x] Generalizzare `notify_partner()` a tutti i membri del nucleo (oggi ne seleziona uno solo con `limit 1`)
 
 **Deliverable:** il budget mensile è pianificabile, confrontabile e si porta dietro gli avanzi.
 
@@ -175,7 +178,7 @@
 **Obiettivo:** rispondere a "dove finiscono i soldi" e "sta migliorando o peggiorando".
 
 ### 4.1 — Calcolo
-- [ ] Migrazione `011`: viste e indici di supporto
+- [ ] Migrazione `012`: viste e indici di supporto
 - [ ] RPC `get_category_stats(p_from, p_to)` con variazione rispetto al periodo precedente
 - [ ] RPC `get_monthly_trend(p_months)` con serie totale / fisse / variabili / budget
 - [ ] Verifica performance su dataset di 5.000 spese
@@ -207,7 +210,7 @@
 **Obiettivo:** un obiettivo di risparmio assorbe una quota mensile del budget e cresce da solo.
 
 ### 5.1 — Schema
-- [ ] Migrazione `012`: enum `goal_status`, `contribution_source`
+- [ ] Migrazione `013`: enum `goal_status`, `contribution_source`
 - [ ] Colonne su `financial_goals`: `target_date`, `monthly_allocation`, `emoji`, `color`, `status`, `priority`
 - [ ] Tabella `goal_contributions`
 - [ ] **Indice unico parziale** `(goal_id, budget_period_id) where source = 'BUDGET_ALLOCATION'`
@@ -241,7 +244,7 @@
 **Perché in questa posizione:** le fasi precedenti funzionano già con N membri grazie alle fondamenta della Fase 0. Questa fase espone all'utente il controllo sulla divisione e chiude il ciclo con il pareggio dei conti — che ha senso solo dopo che spese, budget e statistiche sono a regime.
 
 ### 6.1 — Schema e calcolo
-- [ ] Migrazione `013`: tabella `settlements`
+- [ ] Migrazione `014`: tabella `settlements`
 - [ ] Vista `v_member_balances`
 - [ ] RPC `get_member_balances(p_from, p_to)`
 - [ ] RPC `suggest_settlements()` — algoritmo min cash flow, al massimo N−1 trasferimenti
@@ -341,6 +344,13 @@ in inglese). Le verifiche della Fase 0.3 e della Fase 2.4 vivono in
    (specs.md §10 «Localizzazione»): valuta formattata con
    `Intl.NumberFormat('en-IE')` e date con `en-GB`, centralizzate in
    `apps/mobile/lib/format.ts`.
+
+Restano aperte, dentro le Fasi 0–3: il riordino manuale delle categorie, la
+prossima scadenza sulla card di una ricorrente (la RPC `next_recurring_due`
+esiste ma l'interfaccia mostra solo l'occorrenza da confermare) e lo swipe tra i
+mesi nella schermata Budget, che oggi si cambia con le frecce. `ExpensesTab` e
+`BudgetTab` non sono stati preservati identici come previsto dalla verifica 0.3:
+sono stati riscritti sulle nuove RPC nella stessa serie di modifiche.
 
 Restano da fare le Fasi 4 (statistiche), 5 (obiettivi legati al budget),
 6 (interfaccia dello split a N membri e pareggio — lo strato dati e di calcolo
