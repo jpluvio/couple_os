@@ -17,12 +17,12 @@
 
 ## Panoramica
 
-| Fase | Tema | Migrazioni | Rilascio |
-|---|---|---|---|
-| 0 | Fondamenta: membri del nucleo e strato di calcolo | `007` | Interno |
-| 1 | Categorie personalizzabili | `008` | ✅ Utente |
-| 2 | Spese fisse ricorrenti | `009` | ✅ Utente |
-| 3 | Budget mensile completo | `010` | ✅ Utente |
+| Fase | Tema | Migrazioni | Rilascio | Stato |
+|---|---|---|---|---|
+| 0 | Fondamenta: membri del nucleo e strato di calcolo | `007` | Interno | ✅ implementata |
+| 1 | Categorie personalizzabili | `008` | ✅ Utente | ✅ implementata |
+| 2 | Spese fisse ricorrenti | `009` | ✅ Utente | ✅ implementata |
+| 3 | Budget mensile completo | `010` | ✅ Utente | ✅ implementata |
 | 4 | Statistiche | `011` | ✅ Utente |
 | 5 | Obiettivi legati al budget | `012` | ✅ Utente |
 | 6 | Split a N membri e pareggio | `013` | ✅ Utente |
@@ -307,20 +307,44 @@
 
 | Area | Schema | Calcolo | Interfaccia |
 |---|---|---|---|
-| Membri del nucleo | ⬜ | ⬜ | ⬜ |
-| Categorie personalizzabili | ⬜ | — | ⬜ |
-| Spese fisse | ⬜ | ⬜ | ⬜ |
-| Spese variabili | ✅ | ⬜ | 🚧 |
-| Budget mensile | 🚧 | ⬜ | 🚧 |
-| Rollover | ⬜ | ⬜ | ⬜ |
+| Membri del nucleo | ✅ | ✅ | 🚧 (nessuna schermata dedicata: Fase 6) |
+| Categorie personalizzabili | ✅ | — | ✅ |
+| Spese fisse | ✅ | ✅ | ✅ |
+| Spese variabili | ✅ | ✅ | ✅ |
+| Budget mensile | ✅ | ✅ | ✅ |
+| Rollover | ✅ | ✅ | ✅ |
 | Statistiche | — | ⬜ | ⬜ |
 | Obiettivi | 🚧 | ⬜ | 🚧 |
 | Allocazione obiettivi | ⬜ | ⬜ | ⬜ |
-| Split a N membri | ⬜ | ⬜ | ⬜ |
+| Split a N membri | ✅ | ✅ | ⬜ |
 | Pareggio conti | ⬜ | ⬜ | ⬜ |
-| Notifiche finance | 🚧 | ⬜ | ⬜ |
+| Notifiche finance | ✅ | ✅ | ✅ |
 
 **Legenda:** ✅ completo · 🚧 parziale (esiste ma va evoluto) · ⬜ da fare · — non applicabile
+
+---
+
+## Stato dell'implementazione
+
+Le Fasi 0–3 sono implementate (migrazioni `007`–`010`, più `011` per i messaggi
+in inglese). Le verifiche della Fase 0.3 e della Fase 2.4 vivono in
+`supabase/tests/budget_os_test.sql`: 22 controlli, tutti verdi su PostgreSQL 16.
+
+**Scostamenti rispetto alle specifiche**, entrambi deliberati:
+
+1. **Chiave di idempotenza delle ricorrenti.** Le specifiche indicano
+   `unique (recurring_expense_id, period_key)`. L'indice implementato è
+   `unique (recurring_expense_id, occurrence_date)`: con `period_key` una
+   ricorrenza `WEEKLY` non potrebbe generare più di un'occorrenza nello stesso
+   mese di budget. Per ogni altra frequenza le due chiavi coincidono.
+2. **Lingua dell'interfaccia.** L'app è in inglese, non in italiano
+   (specs.md §10 «Localizzazione»): valuta formattata con
+   `Intl.NumberFormat('en-IE')` e date con `en-GB`, centralizzate in
+   `apps/mobile/lib/format.ts`.
+
+Restano da fare le Fasi 4 (statistiche), 5 (obiettivi legati al budget),
+6 (interfaccia dello split a N membri e pareggio — lo strato dati e di calcolo
+è già pronto dalla Fase 0) e 7 (pulizia del debito di transizione).
 
 ---
 
