@@ -80,14 +80,33 @@ Se il dominio non è in questa lista, il login torna indietro senza sessione.
 
 ## 4. Vercel
 
+> ⚠️ **Root Directory deve restare la radice del repository, non `apps/mobile`.**
+> È un monorepo con npm workspaces: il `package-lock.json` sta solo nella radice.
+> Puntando la Root Directory a `apps/mobile`, `npm install` gira lì dentro, senza
+> lockfile, e risolve un albero di dipendenze diverso da quello testato — in
+> particolare `babel-preset-expo` finisce annidato sotto `expo/node_modules`, dove
+> Babel non lo trova, e il build muore con `Cannot find module 'babel-preset-expo'`.
+
 Import del repository, poi:
 
 | Impostazione | Valore |
 |---|---|
-| Root Directory | `apps/mobile` |
-| Framework Preset | Other (la configurazione è in `apps/mobile/vercel.json`) |
-| Build Command | `npm run build` (già in `vercel.json`) |
-| Output Directory | `dist` (già in `vercel.json`) |
+| Root Directory | **`.`** (la radice del repo — lasciala vuota/predefinita) |
+| Framework Preset | Other |
+| Install / Build / Output | già definiti in `vercel.json` nella radice |
+
+Il `vercel.json` di radice fa tutto:
+
+```json
+{
+  "installCommand": "npm ci",
+  "buildCommand": "npm run build --workspace @couple-os/mobile",
+  "outputDirectory": "apps/mobile/dist"
+}
+```
+
+`npm ci` usa il lockfile committato: stesse versioni a ogni build, nessuna
+sorpresa fra la tua macchina e Vercel.
 
 **Environment Variables** (Production e Preview):
 
