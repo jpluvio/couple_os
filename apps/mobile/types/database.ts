@@ -1032,7 +1032,16 @@ export type PantryCategory = Enums<"pantry_category">;
 export type CheckinPeriod = Enums<"checkin_period">;
 export type PromptSource = Enums<"prompt_source">;
 // La colonna notifications.type è `text` nel DB; questi sono i valori emessi dai trigger.
-export type NotificationType = "post" | "event" | "expense" | "todo";
+// I primi quattro valori arrivano dai trigger su posts/events/expenses/todo_items,
+// gli ultimi tre dai promemoria giornalieri della Edge Function daily-cron.
+export type NotificationType =
+  | "post"
+  | "event"
+  | "expense"
+  | "todo"
+  | "pantry"
+  | "memory"
+  | "todo_due";
 
 // Tabelle
 export type User = Tables<"users">;

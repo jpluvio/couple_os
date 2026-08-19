@@ -21,8 +21,9 @@ Piattaforma per la gestione centralizzata della vita di coppia: bacheca messaggi
 - **Edge Functions:** `send-notification` (push via Expo) e `daily-cron` (scadenze dispensa, "on this day", todo in scadenza)
 - **App (Expo):** tutte e 7 le feature implementate + notifiche in-app, auth Google, onboarding coppia
 - **Realtime:** attivo su board, calendar, check-in, memories, notifiche
-- **Push notifications:** registrazione token e deep link implementati lato client; restano da configurare EAS project ID e certificati APNs/FCM
-- **Focus attuale:** qualità e preparazione al rilascio (fase 4)
+- **Notifiche:** in-app (campanella + badge non letti + realtime). I promemoria della `daily-cron` scrivono in `notifications`, non push: sul web le push non esistono
+- **Deploy:** pronto per Vercel — vedi `DEPLOY.md`. Config via `EXPO_PUBLIC_*`, hardening RLS applicato con la migrazione `007`
+- **Focus attuale:** pubblicazione web; poi il fix del reveal dei check-in
 
 ---
 
@@ -39,13 +40,15 @@ Piattaforma per la gestione centralizzata della vita di coppia: bacheca messaggi
 | Check-in | ✅ | ✅ |
 | Memories (foto su Storage privato) | ✅ | ✅ |
 | Notifiche in-app | ✅ | ✅ |
-| Push notifications | ✅ | 🚧 (serve EAS project ID + certificati) |
+| Promemoria giornalieri (dispensa, ricordi, scadenze) | ✅ | ✅ come notifiche in-app |
+| Push notifications | ✅ | ⬜ solo in una futura build nativa |
 
 ---
 
 ## Task attive
 
-- [ ] Configurare `extra.eas.projectId` in `app.json` e i certificati APNs/FCM (senza, la registrazione push viene saltata silenziosamente)
+- [ ] Seguire `DEPLOY.md`: applicare la migrazione `007`, schedulare la `daily-cron`, configurare Vercel + redirect OAuth
+- [ ] **Reveal dei check-in**: oggi è solo lato interfaccia, entrambe le risposte sono leggibili dal client prima di rispondere. Spostare le risposte in una tabella per utente con policy `user_id = auth.uid() or revealed`
 - [ ] Grafici finance (trend, categorie) — non ancora implementati
 - [ ] Skeleton loader al posto degli spinner
 - [ ] Swipe-to-delete su eventi, todo item, pantry item
@@ -62,3 +65,5 @@ Piattaforma per la gestione centralizzata della vita di coppia: bacheca messaggi
 | c86cc39 | Rimossi backend Fastify e web Next.js: il client parla direttamente con Supabase, sicurezza via RLS |
 | ad11b4a | Foto memories su bucket Storage privato con policy per coppia, non su R2 |
 | d49ea39 | Web servito come export Expo (`expo export --platform web`) su Vercel |
+| 007 | Hardening RLS prima dell'esposizione pubblica: couple_id congelato, RPC negate ad anon, codice invito a 10 caratteri con throttling |
+| — | Niente push sul web: i promemoria diventano notifiche in-app non lette |

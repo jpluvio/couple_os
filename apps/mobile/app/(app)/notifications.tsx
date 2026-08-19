@@ -10,6 +10,20 @@ const TYPE_EMOJI: Record<NotificationType, string> = {
   event: "📅",
   expense: "💰",
   todo: "✅",
+  pantry: "🥛",
+  memory: "📸",
+  todo_due: "⏰",
+};
+
+// Tab da aprire al tap sulla notifica
+const TYPE_ROUTE: Record<NotificationType, string> = {
+  post: "/(app)/board",
+  event: "/(app)/calendar",
+  expense: "/(app)/finance",
+  todo: "/(app)/todo",
+  pantry: "/(app)/pantry",
+  memory: "/(app)/memories",
+  todo_due: "/(app)/todo",
 };
 
 function timeAgo(iso: string): string {
@@ -32,6 +46,8 @@ export default function NotificationsScreen() {
     <Pressable
       onPress={() => {
         if (!item.read) markRead(item.id);
+        const route = TYPE_ROUTE[item.type as NotificationType];
+        if (route) router.push(route);
       }}
       className={`flex-row items-start px-4 py-3 border-b border-gray-100 ${
         item.read ? "bg-white" : "bg-blue-50"

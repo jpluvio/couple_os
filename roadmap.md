@@ -94,7 +94,7 @@
 ### 3.1 — Check-in
 - [x] Creazione check-in con prompt e mood selector
 - [x] Risposta libera con keyboard avoiding
-- [x] Reveal incrociato delle risposte solo dopo che entrambi hanno risposto
+- [x] Reveal incrociato delle risposte — **solo lato interfaccia**: la RLS lascia leggere l'intera riga `check_ins`, la risposta del partner è sul client prima di rispondere. Da spostare in una tabella per utente
 - [x] Storico check-in precedenti
 - [x] Real-time via Supabase
 - [ ] Gestione prompt custom (aggiungi/rimuovi)
@@ -124,9 +124,11 @@
 - [x] Tabella `users.push_tokens` + Edge Function `send-notification` (Expo Push API)
 - [x] Edge Function `daily-cron` (scadenze dispensa, "on this day", todo in scadenza)
 - [x] Notifiche in-app con trigger DB su post/eventi/spese/todo + campanella e realtime
-- [x] Registrazione del push token dopo il login e rimozione al logout (`lib/push.ts`)
+- [x] Registrazione del push token dopo il login e rimozione al logout (`lib/push.ts`) — attiva solo in build nativa
 - [x] Handling notifiche in foreground e deep link da notifica al tab corretto
-- [ ] Configurare `extra.eas.projectId` e i certificati APNs/FCM — finché mancano, la registrazione del token viene saltata
+- [x] Promemoria della `daily-cron` scritti in `notifications` invece che come push: sul web si vedono nella campanella
+- [x] Tap su una notifica → apre il tab corrispondente
+- [ ] Configurare `extra.eas.projectId` e i certificati APNs/FCM — servono solo per la build nativa
 - [ ] Impostazioni notifiche utente (enable/disable per tipo)
 
 ### 4.3 — Offline e robustezza
@@ -137,6 +139,10 @@
 ### 4.4 — Build e deploy
 - [x] `eas.json` presente
 - [x] Deploy web su Vercel (`expo export --platform web`)
+- [x] Configurazione via `EXPO_PUBLIC_*` in `app.config.ts` (staging/prod separabili)
+- [x] Hardening RLS per l'esposizione pubblica (`007_hardening.sql`)
+- [x] Guida al deploy (`DEPLOY.md`)
+- [ ] Eseguire il deploy: migrazione 007, schedulazione cron, progetto Vercel, redirect OAuth
 - [ ] Certificati APNs (iOS) e FCM (Android) in Expo Dashboard
 - [ ] Build iOS (TestFlight) e Android (Internal Testing)
 - [ ] EAS Update per OTA hotfix
