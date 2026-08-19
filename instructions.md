@@ -6,17 +6,15 @@ Questo file contiene istruzioni operative per guidare Claude durante la programm
 
 ## Contesto del progetto
 
-Le specifiche funzionali complete si trovano in `/planning/specs.md` (nella repo principale, non nel worktree). Leggile per capire il perché di ogni feature.
+Couple OS è un monorepo Turbo:
+- `apps/mobile` — Expo / React Native: **unica app**, gira su iOS, Android e web (react-native-web, deploy Vercel)
+- `packages/shared` — tipi e costanti condivise
+- `supabase/migrations` — schema, RLS, trigger, Storage
+- `supabase/functions` — Edge Function Deno (`send-notification`, `daily-cron`)
 
-Couple OS è un monorepo Turbo con tre app:
-- `apps/api` — Fastify backend, **già completo**
-- `apps/web` — Next.js web app, **già completa**
-- `apps/mobile` — Expo/React Native, **da costruire**
-- `packages/shared` — Zod schemas e tipi condivisi
+**Non esiste un backend applicativo.** Le app `apps/api` (Fastify) e `apps/web` (Next.js) sono state rimosse: il client parla direttamente con Supabase tramite `@supabase/supabase-js` e la sicurezza sta nelle **policy RLS**. Ogni volta che aggiungi una tabella o una colonna, aggiungi anche la migrazione e le relative policy.
 
-**Il backend non va toccato** salvo bug espliciti o feature richieste dal mobile che non esistono nell'API.
-
-Leggi `plan.md` per architettura e stack decisioni. Leggi `roadmap.md` per sapere cosa è già fatto e cosa resta.
+Leggi `dashboard.md` per lo stato attuale e `roadmap.md` per cosa resta da fare.
 
 ---
 
@@ -25,7 +23,7 @@ Leggi `plan.md` per architettura e stack decisioni. Leggi `roadmap.md` per saper
 ### Prima di scrivere codice
 1. Leggi i file rilevanti — non fare assunzioni su cosa c'è già scritto
 2. Controlla `packages/shared/src/` per tipi e schemi esistenti — non ridefinire tipi già presenti
-3. Controlla l'API route corrispondente in `apps/api/src/routes/` per capire la struttura delle response
+3. Controlla lo schema e le policy in `supabase/migrations/` e i tipi in `apps/mobile/types/database.ts`
 4. Segui lo stesso pattern già usato in file simili nella stessa app
 
 ### Stile codice
@@ -39,19 +37,19 @@ Leggi `plan.md` per architettura e stack decisioni. Leggi `roadmap.md` per saper
 
 Queste discrepanze esistono tra le specs e il backend già costruito — tienile presenti:
 
-| Feature | Specs richiedono | Backend attuale | Azione |
-|---------|-----------------|-----------------|--------|
-| Finance categorie | Customizzabili | Array fisso `EXPENSE_CATEGORIES` | Gestire custom lato client o aggiungere endpoint |
-| Calendar reminder | 15min/1h/1gg configurabili per evento | Campo non presente in `Event` schema | Aggiungere campo `reminderMinutes` al model |
-| Memory location | Vista mappa con pin geografici | Nessun campo `location` su `Memory` | Aggiungere in fase 5, non ora |
-| Calendar colori partner | Blending colori dei due partner | Non implementato nel frontend | Solo UI, nessun cambio backend |
+| Feature | Specs richiedono | Stato attuale | Azione |
+|---------|-----------------|---------------|--------|
+| Calendar reminder | 15min/1h/1gg configurabili per evento | Nessun campo su `events` | Aggiungere colonna `reminder_minutes` con una migrazione |
+| Memory location | Vista mappa con pin geografici | Nessun campo `location` su `memories` | Fase 5, non ora |
+| Finance grafici | Trend, categorie, confronto mensile | Non implementati nell'app | Fase 4 |
+| Push notifications | Notifiche su device | Infrastruttura pronta (`users.push_tokens`, Edge Function, registrazione token lato client) | Configurare `extra.eas.projectId` + certificati APNs/FCM |
 
 ## Non fare
 - Non aggiungere feature non richieste ("potrebbe essere utile anche...")
 - Non refactorare codice funzionante non collegato al task corrente
 - Non aggiungere commenti ovvi o docstring a codice che si spiega da solo
 - Non creare utility functions per operazioni usate una volta sola
-- Non usare `console.log` — usa il logger di Fastify nell'API (`req.log`), niente log nel mobile
+- Non usare `console.log` nell'app
 - Non installare librerie senza una ragione specifica — controlla prima se Expo SDK ha già la funzionalità
 
 ---
@@ -59,7 +57,7 @@ Queste discrepanze esistono tra le specs e il backend già costruito — tienile
 ## Regole specifiche per il mobile (apps/mobile)
 
 ### Navigazione
-- Usa **Expo Router v4** con file-based routing
+- Usa **Expo Router** con file-based routing
 - Route autenticate in `app/(app)/`, route pubbliche in `app/(auth)/`
 - Il tab navigator sta in `app/(app)/_layout.tsx`
 - Deep link: usa `router.push()` e `router.replace()`, mai `navigation.navigate()`
@@ -71,11 +69,11 @@ Queste discrepanze esistono tra le specs e il backend già costruito — tienile
 - State locale (UI only): `useState` — non usare Context o store globali per stato UI
 - Auth state: `hooks/useAuth.ts` con Context — unica eccezione al punto sopra
 
-### API client
-- Tutto passa per `lib/api.ts` — mai `fetch` diretto nei componenti
-- Il client gestisce auto-refresh del token (401 → POST /auth/refresh → retry)
-- Token di accesso: in memoria (variabile del modulo) — non in AsyncStorage
-- Refresh token: in SecureStore via `lib/storage.ts`
+### Accesso ai dati
+- Tutto passa dal client Supabase in `lib/supabase.ts` — mai `fetch` diretto verso il database
+- Sessione e refresh token li gestisce `supabase.auth` (storage AsyncStorage, `autoRefreshToken`)
+- Real-time: canale `postgres_changes` filtrato per `couple_id`, `queryClient.invalidateQueries` nel callback e `supabase.removeChannel` nel cleanup
+- Le query si affidano alle policy RLS, ma filtra comunque per `couple_id` per non scaricare dati inutili
 
 ### UI e componenti
 - Componenti primitivi (Button, Input, Card) in `components/ui/` — riusabili e senza business logic
@@ -105,39 +103,30 @@ Queste discrepanze esistono tra le specs e il backend già costruito — tienile
 
 ### Immagini
 - Usa `expo-image` (non `Image` da React Native) per caching automatico
-- Upload foto (memories): expo-image-picker → presigned URL → PUT diretto a R2
+- Upload foto (memories): expo-image-picker → upload sul bucket privato `memories` di Supabase Storage → signed URL in lettura
 - Placeholder: blur hash o colore di sfondo durante loading
 
 ### Notifiche
-- Registra push token all'avvio in `useAuth.ts` dopo login
-- Handling notifiche ricevute in foreground: banner in-app custom
-- Deep link da notifica: gestito in `app/_layout.tsx` con `useNotificationResponse`
+- Registrazione e rimozione del push token: `lib/push.ts`, usato da `hooks/usePushNotifications.ts`
+- Notifiche in-app (tabella `notifications`): `hooks/useNotifications.ts` + campanella
+- Deep link da push: `data.screen` contiene il nome di un tab, gestito in `hooks/usePushNotifications.ts`
 
 ---
 
-## Regole specifiche per il backend (apps/api)
+## Regole specifiche per Supabase (`supabase/`)
 
-Tocca il backend solo se:
-- C'è un bug esplicito segnalato
-- La feature mobile richiede un endpoint che non esiste
-- Viene richiesta una modifica esplicita
-
-Se aggiungi un endpoint:
-- Segui il pattern degli altri route file (schema Zod request/response, `preHandler: [authenticate]`)
-- Aggiungi lo schema corrispondente in `packages/shared/src/schemas/`
-- Usa `fastify.prisma` — mai istanziare PrismaClient direttamente
-- Usa `broadcastToCouple()` se la mutazione deve sincronizzarsi in real-time
+Tocca lo schema solo se una feature lo richiede davvero. Se lo fai:
+- Aggiungi una **nuova** migrazione numerata (`00N_nome.sql`), non modificare quelle già applicate
+- Ogni nuova tabella deve avere `enable row level security` e policy per coppia, sul modello di `002_rls.sql`
+- Dopo un cambio di schema rigenera i tipi in `apps/mobile/types/database.ts`
+- Le Edge Function sono Deno: import via URL, nessun `node_modules`
 
 ---
 
-## Regole specifiche per il web (apps/web)
+## Web
 
-Tocca il web solo se:
-- C'è un bug esplicito
-- Viene richiesta una modifica esplicita
-- Serve allineamento con nuovi endpoint API
-
-Non cambiare il web per "miglioramenti" o refactoring non richiesti.
+Il web non è un'app separata: è l'export Expo di `apps/mobile` (`npm run build` → `expo export --platform web`).
+Verifica che le modifiche non rompano il web: le API native (notifiche push, SecureStore) non esistono nel browser, vanno protette con `Platform.OS`.
 
 ---
 
@@ -193,7 +182,7 @@ chore(shared): add TodoItem update schema
 
 - **Non usare `useEffect` per fetch** — usa TanStack Query `useQuery`
 - **Non mutare state direttamente** — usa setter o produce di immer
-- **Non hardcodare l'URL dell'API** — usa `Constants.expoConfig?.extra?.apiUrl`
+- **Non hardcodare le chiavi Supabase** — usa `Constants.expoConfig?.extra`
 - **Non usare `StyleSheet.create` con NativeWind** — scegli uno dei due
 - **Non dimenticare `coupleId`** — quasi ogni entity è scoped alla coppia
 - **Non fare fetch nel render** — mai side effect diretti nel body del componente

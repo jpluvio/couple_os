@@ -1,5 +1,7 @@
 # Couple OS — Piano di Sviluppo
 
+> **⚠️ Documento storico.** Descrive l'architettura originale (backend Fastify + web Next.js + Prisma + WebSocket + R2) che **non è più quella del progetto**: `apps/api` e `apps/web` sono state rimosse e l'app Expo parla direttamente con Supabase (Auth, Realtime, Storage, Edge Functions). Restano validi i principi di design mobile e l'analisi dei rischi. Per lo stato reale vedi `dashboard.md` e `roadmap.md`.
+
 ## Contesto
 
 Couple OS è una piattaforma mobile-first per la gestione centralizzata della vita di coppia. Il progetto è strutturato come monorepo Turbo con tre app (web, mobile, API) e un pacchetto shared.

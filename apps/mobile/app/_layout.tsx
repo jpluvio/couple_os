@@ -6,9 +6,11 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { queryClient, asyncStoragePersister } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 function AuthGuard() {
   const { session, loading } = useAuth();
+  usePushNotifications();
   const segments = useSegments();
   const router = useRouter();
 

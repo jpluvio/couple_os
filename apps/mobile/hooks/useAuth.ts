@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { unregisterPushToken } from "@/lib/push";
 import type { User } from "@/types/database";
 
 interface AuthState {
@@ -52,6 +53,11 @@ export function useAuth(): AuthState {
   }
 
   async function signOut() {
+    if (user) {
+      await unregisterPushToken(user.id).catch(() => {
+        // Il logout non deve fallire se la rimozione del token non riesce.
+      });
+    }
     await supabase.auth.signOut();
   }
 
