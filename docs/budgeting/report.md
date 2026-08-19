@@ -1,250 +1,250 @@
-# Budget OS — Report delle scelte progettuali
+# Budget OS — Design decisions report
 
-> Perché il modulo è progettato così, cosa ho scartato e a quali condizioni le decisioni andrebbero riviste.
-> Documenti collegati: [`specs.md`](./specs.md), [`roadmap.md`](./roadmap.md).
+> Why the module is designed this way, what I rejected, and the conditions under which each decision should be revisited.
+> Related documents: [`specs.md`](./specs.md), [`roadmap.md`](./roadmap.md).
 
 ---
 
-## 1. Il punto di partenza reale
+## 1. The real starting point
 
-Prima di progettare ho letto il codice. Due cose non corrispondono a ciò che la documentazione dichiara, ed entrambe cambiano il progetto.
+Before designing anything I read the code. Two things do not match what the documentation claims, and both of them change the project.
 
-### 1.1 Lo stack documentato non è lo stack implementato
+### 1.1 The documented stack is not the implemented stack
 
-`plan.md` e `dashboard.md` descrivono un monorepo con tre app — `apps/api` (Fastify + Prisma), `apps/web` (Next.js) e `apps/mobile` — e dichiarano API e web "già completi". `instructions.md` istruisce a controllare `apps/api/src/routes/` prima di scrivere codice.
+`plan.md` and `dashboard.md` describe a monorepo with three apps — `apps/api` (Fastify + Prisma), `apps/web` (Next.js) and `apps/mobile` — and declare the API and web "complete". `instructions.md` tells you to check `apps/api/src/routes/` before writing code.
 
-Nel repository esistono soltanto `apps/mobile`, `packages/shared` e `supabase/`. Non c'è nessun `apps/api`, nessun `apps/web`, nessuno schema Prisma. L'implementazione reale è **Supabase acceduto direttamente dal client**: i componenti chiamano `supabase.from("expenses").select(...)` e l'autorizzazione è affidata alle RLS di `002_rls.sql`.
+The repository contains only `apps/mobile`, `packages/shared` and `supabase/`. There is no `apps/api`, no `apps/web`, no Prisma schema. The real implementation is **Supabase accessed directly from the client**: components call `supabase.from("expenses").select(...)` and authorisation is delegated to the RLS policies in `002_rls.sql`.
 
-Non è un dettaglio: cambia dove vive la logica. Con un backend Fastify avrei messo il motore di calcolo in un servizio applicativo. Senza, le uniche due opzioni sono il client o il database — e per il denaro il client è la scelta sbagliata (§2.1).
+This is not a detail: it changes where logic lives. With a Fastify backend I would have put the calculation engine in an application service. Without one, the only two options are the client or the database — and for money, the client is the wrong choice (§2.1).
 
-**Ho progettato sullo stack reale.** La correzione dei tre documenti è un task esplicito in Fase 7.4: lasciarli divergenti significa che la prossima sessione di lavoro ripartirà dal presupposto sbagliato.
+**I designed against the real stack.** Correcting the three documents is an explicit task in Phase 7.4: leaving them divergent means the next working session will start from the wrong premise.
 
-### 1.2 Il modulo finance esiste già, e ha tre difetti strutturali
+### 1.2 The finance module already exists, and has three structural defects
 
-Ci sono `expenses`, `budgets`, `financial_goals` e tre tab funzionanti. Non partivo da zero. Ma il codice esistente ha tre problemi che non sono rifiniture mancanti — sono difetti che si aggraverebbero costruendoci sopra.
+There are `expenses`, `budgets`, `financial_goals` and three working tabs. I was not starting from zero. But the existing code has three problems that are not missing polish — they are defects that would compound if built upon.
 
-**Le categorie sono definite tre volte, con due vocabolari incompatibili.** `packages/shared/src/index.ts` esporta `EXPENSE_CATEGORIES = ["Affitto", "Bollette", "Spesa", …]`, che **nessun componente importa**. `ExpensesTab.tsx` e `BudgetTab.tsx` dichiarano ciascuno un array locale `CATEGORIES = ["casa", "cibo", "trasporti", …]`, identico e duplicato. La colonna `expenses.category` è `text` libero, quindi in produzione possono coesistere valori di entrambi i vocabolari — più eventuali valori scritti a mano. Questo è anche il motivo per cui la migrazione delle categorie (§4.4) è la parte più delicata del progetto.
+**Categories are defined three times, with two incompatible vocabularies.** `packages/shared/src/index.ts` exports `EXPENSE_CATEGORIES = ["Affitto", "Bollette", "Spesa", …]`, which **no component imports**. `ExpensesTab.tsx` and `BudgetTab.tsx` each declare a local `CATEGORIES = ["casa", "cibo", "trasporti", …]`, identical and duplicated. The `expenses.category` column is free text, so production data can hold values from both vocabularies — plus anything typed by hand. This is also why migrating categories (§4.4) is the most delicate part of the project.
 
-**Il partner viene dedotto dai dati anziché dall'anagrafica.** In `ExpensesTab.tsx`:
+**The partner is inferred from data rather than from a roster.** In `ExpensesTab.tsx`:
 
 ```ts
 expenses.find((e) => e.paid_by_id !== user.id)?.paid_by_id ?? ""
 ```
 
-L'identità dell'altra persona si ricava dalla prima spesa che non ha pagato l'utente corrente. Finché il partner non ha registrato almeno una spesa, questa espressione restituisce stringa vuota — e viene usata sia per calcolare il saldo sia, in `addExpense()`, come `paid_by_id` di una nuova spesa attribuita al partner. Il dato corretto è già disponibile in `useCouple()`, che espone `partner`, ma non viene passato al componente per quello scopo.
+The other person's identity is derived from the first expense the current user did not pay. Until the partner has recorded at least one expense, this expression returns an empty string — and it is used both to compute the balance and, in `addExpense()`, as the `paid_by_id` of a new expense attributed to the partner. The correct value is already available from `useCouple()`, which exposes `partner`, but it is not passed to the component for that purpose.
 
-Con N membri questo approccio non è aggiustabile: non esiste "l'altro". Serve un'anagrafica esplicita dei partecipanti, che è la Fase 0.
+With N members this approach cannot be patched: there is no "the other one". It needs an explicit roster of participants, which is Phase 0.
 
-**Il calcolo del denaro sta nel client, duplicato.** `ExpensesTab.tsx` ha `computeBalance()`, che scarica tutte le spese del mese e le riduce in JavaScript. `BudgetTab.tsx` scarica di nuovo le stesse spese e le riaggrega con un `reduce` diverso. Due implementazioni indipendenti della stessa idea, entrambe in aritmetica floating-point.
-
----
-
-## 2. I due principi che guidano tutto il resto
-
-### 2.1 Il denaro si calcola in Postgres
-
-Ogni aggregazione, ripartizione e saldo è prodotta da viste o funzioni SQL. Il client riceve numeri già calcolati.
-
-**Precisione.** `numeric(12,2)` in Postgres è aritmetica decimale esatta. `number` in JavaScript è IEEE-754 binario: `0.1 + 0.2 !== 0.3`. Su una singola spesa non si vede; su una somma di trecento spese, o su una divisione in tre parti, produce centesimi che non tornano. E un'app di budget che sbaglia i centesimi perde la fiducia dell'utente su tutto il resto — anche sui numeri che sono corretti.
-
-**Coerenza.** Una sola implementazione della regola di split, invocabile da qualsiasi schermata. Oggi ce ne sono due che possono divergere.
-
-**Volume.** `get_budget_overview` restituisce una riga per categoria. Il codice attuale scarica ogni spesa del mese per calcolarne sei totali — e lo fa due volte, una per tab.
-
-**Il costo:** la logica finisce in SQL, che è meno familiare di TypeScript, più scomodo da testare e non ha type-checking condiviso col client. È un costo reale, che accetto perché su un dominio monetario la correttezza vale più della comodità. Le funzioni critiche hanno test dedicati ([`specs.md` §11](./specs.md#11-test)).
-
-### 2.2 Le garanzie stanno nel database, non nel codice applicativo
-
-Dove un'invariante può essere espressa come vincolo, la esprimo come vincolo.
-
-- Non-duplicazione delle spese ricorrenti → indice unico `(recurring_expense_id, period_key)`, non un `if` prima dell'insert
-- Una sola contribuzione automatica per obiettivo per periodo → indice unico parziale
-- Una categoria con spese collegate non si cancella → `on delete restrict` + trigger
-- La somma delle quote di una spesa personalizzata è esatta → trigger di validazione
-
-La ragione è che ci sono tre scrittori indipendenti sugli stessi dati: il client mobile, il cron giornaliero e il catch-up all'apertura dell'app. Un controllo applicativo va replicato in tutti e tre e può fallire in condizioni di concorrenza. Un vincolo di database vale per tutti, sempre.
+**Money is calculated in the client, twice.** `ExpensesTab.tsx` has `computeBalance()`, which downloads every expense of the month and reduces it in JavaScript. `BudgetTab.tsx` downloads the same expenses again and re-aggregates them with a different `reduce`. Two independent implementations of the same idea, both in floating-point arithmetic.
 
 ---
 
-## 3. Le tre decisioni che hai preso, e come le ho tradotte
+## 2. The two principles that drive everything else
 
-### 3.1 Nucleo di N membri
+### 2.1 Money is calculated in Postgres
 
-Hai scelto "N membri del nucleo (famiglia/coinquilini)" invece dei due partner.
+Every aggregation, split and balance is produced by SQL views or functions. The client receives numbers that are already computed.
 
-La tensione con la seconda scelta ("estendere ed evolvere") è evidente: N membri sembra richiedere di sostituire `couple_id` con `household_id` ovunque — cioè migrare le altre otto feature di Couple OS per una funzione sola. La soluzione è in §4.1.
+**Precision.** `numeric(12,2)` in Postgres is exact decimal arithmetic. `number` in JavaScript is binary IEEE-754: `0.1 + 0.2 !== 0.3`. On a single expense this is invisible; across a sum of three hundred expenses, or a three-way division, it produces cents that don't add up. And a budgeting app that gets cents wrong loses the user's trust in everything else — including the numbers that are correct.
 
-### 3.2 Estendere il modulo esistente
+**Consistency.** One implementation of the split rule, callable from any screen. Today there are two, and they can drift.
 
-Hai scelto di evolvere `expenses`, `budgets` e `financial_goals` invece di riscrivere.
+**Volume.** `get_budget_overview` returns one row per category. The current code downloads every expense of the month to compute six totals — and does it twice, once per tab.
 
-Concordo, e la ragione principale non è il risparmio di lavoro: è che i dati esistenti sono già in quelle tabelle e una riscrittura richiede comunque una migrazione — quindi paghi il costo della migrazione *e* quello della riscrittura. Estendere significa che ogni fase è rilasciabile, che i tre tab attuali continuano a funzionare durante tutta la transizione, e che se il progetto si ferma a metà l'app resta usabile.
+**The cost:** logic ends up in SQL, which is less familiar than TypeScript, more awkward to test, and has no type-checking shared with the client. That is a real cost, which I accept because in a monetary domain correctness outweighs convenience. The critical functions have dedicated tests ([`specs.md` §11](./specs.md#11-tests)).
 
-Il costo: **debito di transizione**. Per diverse fasi convivono `expenses.category` (text) e `expenses.category_id` (FK), `paid_by_id` e `paid_by_member_id`. È duplicazione, ed è confusa da leggere. La gestisco con trigger che mantengono allineate le colonne legacy, e con una fase esplicita di rimozione (7.1). **Il debito è accettabile solo perché ha una data di scadenza scritta nella roadmap** — senza, resterebbe lì per anni.
+### 2.2 Guarantees belong in the database, not in application code
 
-### 3.3 Essenziale, più obiettivi legati al budget
+Wherever an invariant can be expressed as a constraint, I express it as a constraint.
 
-Hai chiesto il perimetro essenziale, più la possibilità di creare obiettivi come "Vacanza a Bali" a cui destinare una parte del budget.
+- No duplicate recurring expenses → a unique index on `(recurring_expense_id, period_key)`, not an `if` before the insert
+- One automatic contribution per goal per period → a partial unique index
+- A category with linked expenses cannot be deleted → `on delete restrict` + trigger
+- The shares of a customised expense sum exactly → a validation trigger
 
-L'ho trattato come un requisito di modellazione, non come una funzione a sé: **un obiettivo è una voce di budget come una categoria di spesa**. Dettagli in §4.5.
+The reason is that three independent writers touch the same data: the mobile client, the daily cron, and the catch-up on app open. An application-level check has to be replicated in all three and can fail under concurrency. A database constraint holds for all of them, always.
 
 ---
 
-## 4. Le scelte tecniche
+## 3. The three decisions you made, and how I translated them
 
-### 4.1 N membri senza riscrivere la tenancy
+### 3.1 A household of N members
 
-**Scelta:** `couple_id` resta la chiave di tenancy; i partecipanti alle spese vivono in una tabella `household_members` separata da `users`.
+You chose "N members of the household (family/flatmates)" over two partners.
 
-Ho considerato tre strade.
+The tension with the second decision ("extend and evolve") is obvious: N members appears to require replacing `couple_id` with `household_id` everywhere — meaning a migration of the other eight Couple OS features for the sake of one. The resolution is in §4.1.
 
-*Rinominare `couples` in `households` e propagare ovunque.* Semanticamente pulito. Ma tocca ogni tabella, ogni policy RLS, ogni indice e ogni componente delle otto feature di Couple OS, incluse board, memories e check-in — che sono intrinsecamente pensate per due persone (un check-in ha `user1_id`, `user2_id`, `mood1`, `mood2`). Rischio enorme, beneficio confinato al modulo finance.
+### 3.2 Extend the existing module
 
-*Aggiungere un `household_id` parallelo solo alle tabelle finance.* Due chiavi di tenancy nello stesso database, due helper RLS, due possibili fonti di verità su chi appartiene a cosa. Confusione permanente.
+You chose to evolve `expenses`, `budgets` and `financial_goals` rather than rewrite them.
 
-*Mantenere `couple_id` e aggiungere un'anagrafica dei partecipanti.* È quella che ho scelto.
+I agree, and the main reason is not saved effort: the existing data is already in those tables, and a rewrite still requires a migration — so you pay for the migration *and* the rewrite. Extending means every phase is shippable, the three current tabs keep working throughout the transition, and if the project stalls halfway the app is still usable.
 
-La chiave è che `users.couple_id` **già oggi ammette N utenti sullo stesso nucleo** — è una FK semplice, non un vincolo di cardinalità. Il limite a due persone è un'assunzione del codice applicativo, non dello schema. Non serve cambiare la tenancy: serve smettere di assumere che i membri siano due.
+The cost: **transition debt**. For several phases, `expenses.category` (text) coexists with `expenses.category_id` (FK), and `paid_by_id` with `paid_by_member_id`. That is duplication, and it is confusing to read. I manage it with triggers that keep the legacy columns aligned, and with an explicit removal phase (7.1). **The debt is acceptable only because it has an expiry date written into the roadmap** — without one, it would sit there for years.
 
-La scelta ha portato un beneficio che non stavo cercando. Separando `household_members` da `users`, un partecipante può non avere un account: `user_id` è nullable. Questo permette di gestire un coinquilino che non usa l'app, un figlio, un genitore che contribuisce alle spese — casi realistici in un nucleo domestico, dove non tutti installeranno un'app di coppia. **Separa chi accede da chi partecipa alle spese**, che sono davvero due cose diverse. Risolve anche il difetto §1.2: `paid_by_member_id` è sempre risolvibile dall'anagrafica, senza dedurlo dai dati.
+### 3.3 Essential scope, plus goals linked to the budget
 
-Il costo è di leggibilità: nel database la tenancy si chiama `couple_id` ma nel dominio si chiama nucleo. Un nome che non corrisponde al concetto è un debito cognitivo permanente. L'ho accettato perché l'alternativa è un rename globale, e l'ho mitigato con un glossario esplicito ([`specs.md` §12](./specs.md#12-glossario)).
+You asked for the essential scope, plus the ability to create goals like "Bali trip" and direct part of the budget towards them.
 
-**Quando riconsiderare:** se Couple OS decidesse di supportare nuclei non-coppia come caso di primo livello — famiglie, gruppi di coinquilini come prodotto — allora il rename globale diventerebbe giustificato, e andrebbe fatto in un'operazione dedicata, non dentro il modulo finance.
+I treated this as a modelling requirement rather than a bolt-on feature: **a goal is a budget line, just like a spending category**. Details in §4.5.
 
-### 4.2 Categorie come dati, con preset di sistema clonati
+---
 
-**Scelta:** tabella `expense_categories`, preset di sistema con `couple_id is null`, clonati per ogni nucleo alla creazione.
+## 4. The technical choices
 
-L'alternativa era mantenere i preset come sola lettura condivisa e permettere solo aggiunte. Più semplice, ma impedisce di rinominare "Svago" in "Divertimento" o di cambiarne l'emoji — e la richiesta era categorie *personalizzabili*. Clonare costa 12 righe per nucleo, cifra irrilevante, e rende ogni categoria modificabile senza casi speciali nel codice: non esiste una categoria "di sistema" che il client debba trattare diversamente.
+### 4.1 N members without rewriting tenancy
 
-**`kind` (FIXED/VARIABLE) è un attributo della categoria, non della singola spesa.** Ho valutato di metterlo sulla spesa, che sarebbe più flessibile. Ma nella pratica una categoria è fissa o variabile per natura — l'affitto non diventa una spesa variabile — e metterlo sulla spesa significa chiedere all'utente una decisione in più a ogni inserimento, sul percorso che voglio più veloce di tutti. La distinzione serve alla statistica "quanto del nostro budget è incomprimibile", e a quel livello l'aggregazione per categoria è sufficiente.
+**Choice:** `couple_id` stays the tenancy key; the participants in expenses live in a `household_members` table separate from `users`.
 
-**Le categorie si archiviano, non si cancellano.** Cancellare una categoria con spese collegate significa perdere la classificazione dello storico o riassegnarlo arbitrariamente ad "Altro" — che falsa le statistiche in modo silenzioso, il tipo di errore peggiore. `archived = true` la toglie dai selettori e la lascia nello storico.
+I considered three routes.
 
-**Niente sottocategorie in v1.** Sono la richiesta più frequente in ogni app di budget, e le ho escluse comunque: raddoppiano la complessità di ogni query di aggregazione (rollup dei figli sul padre), di ogni grafico e dell'interfaccia di gestione. Con dodici categorie ben scelte la maggior parte dei nuclei non ne ha bisogno. Lo schema non le impedisce: aggiungere `parent_id` in seguito è una migrazione additiva.
+*Rename `couples` to `households` and propagate everywhere.* Semantically clean. But it touches every table, every RLS policy, every index and every component across all eight Couple OS features — including board, memories and check-in, which are intrinsically built for two people (a check-in has `user1_id`, `user2_id`, `mood1`, `mood2`). Enormous risk, benefit confined to the finance module.
 
-### 4.3 Spese fisse: cron più catch-up, entrambi idempotenti
+*Add a parallel `household_id` to the finance tables only.* Two tenancy keys in the same database, two RLS helpers, two possible sources of truth about who belongs to what. Permanent confusion.
 
-**Scelta:** doppio meccanismo di generazione, con l'idempotenza garantita da un indice unico.
+*Keep `couple_id` and add a roster of participants.* This is the one I chose.
 
-Il solo cron giornaliero fallisce nei casi limite: un nucleo creato dopo l'esecuzione, un'esecuzione fallita, un'app aperta dopo mesi di inattività. Il solo catch-up all'apertura fallisce se nessuno apre l'app — e le notifiche di spesa registrata non partirebbero mai.
+The key insight is that `users.couple_id` **already admits N users on the same household** — it is a plain foreign key, not a cardinality constraint. The two-person limit is an assumption in the application code, not in the schema. Tenancy does not need to change: what needs to change is the assumption that there are exactly two members.
 
-Entrambi chiamano la stessa funzione `post_due_recurring()`, e possono girare in qualsiasi ordine e quante volte vogliono: l'indice unico `(recurring_expense_id, period_key)` rende la doppia generazione impossibile a livello di database. Questa è l'applicazione più importante del principio §2.2: se l'idempotenza dipendesse da un controllo applicativo, due scrittori concorrenti (cron e client all'apertura, alle 09:00 di lunedì) potrebbero superarlo entrambi.
+The choice brought a benefit I was not looking for. By separating `household_members` from `users`, a participant can have no account: `user_id` is nullable. That covers a flatmate who doesn't use the app, a child, a parent who contributes to expenses — realistic cases in a household, where not everyone will install a couples app. **It separates who has access from who participates in expenses**, which really are two different things. It also fixes the defect in §1.2: `paid_by_member_id` is always resolvable from the roster, with no inference from data.
 
-**`variable_amount` è una funzione, non un caso limite.** La bolletta della luce ha una data prevedibile e un importo che non lo è. Un sistema che genera automaticamente un importo sbagliato è peggio di uno che non genera nulla: introduce dati falsi che l'utente deve accorgersi di correggere. Con `variable_amount = true` il sistema propone l'importo dell'ultima occorrenza e aspetta conferma — la data la sa lui, la cifra la sai tu.
+The cost is legibility: in the database, tenancy is called `couple_id` while in the domain it is called a household. A name that doesn't match its concept is permanent cognitive debt. I accepted it because the alternative is a global rename, and I mitigated it with an explicit glossary ([`specs.md` §12](./specs.md#12-glossary)).
 
-### 4.4 Migrazione delle categorie: mappare, non normalizzare
+**When to revisit:** if Couple OS ever decides to support non-couple households as a first-class case — families, flatshares as a product — then the global rename becomes justified, and it should be done as a dedicated operation, not inside the finance module.
 
-Il passaggio più rischioso del progetto. `expenses.category` è testo libero e può contenere valori di due vocabolari diversi (§1.2).
+### 4.2 Categories as data, with cloned system presets
 
-**Scelta:** mapping esplicito per i valori noti; per ogni valore sconosciuto, creazione di una categoria del nucleo con la label originale.
+**Choice:** an `expense_categories` table, system presets with `couple_id is null`, cloned for each household at creation.
 
-La scorciatoia sarebbe mandare tutto ciò che non si riconosce in "Altro". È inaccettabile: falsa lo storico in modo silenzioso e irreversibile, e l'utente scopre mesi dopo che le sue statistiche non tornano — senza poter ricostruire il dato. Meglio ritrovarsi con qualche categoria in più da riordinare a mano che con dati sbagliati e nessun modo di accorgersene.
+The alternative was keeping the presets as shared read-only rows and allowing additions only. Simpler, but it prevents renaming "Entertainment" to "Fun" or changing its emoji — and the requirement was *customisable* categories. Cloning costs 12 rows per household, an irrelevant amount, and makes every category editable with no special cases in the code: there is no "system" category the client has to treat differently.
 
-La migrazione termina con un'assertion in transazione: se anche una sola spesa resta senza `category_id`, l'intera migrazione fallisce e non viene applicata. **Una migrazione parziale su dati monetari è peggio di una migrazione fallita.**
+**`kind` (FIXED/VARIABLE) is an attribute of the category, not of the individual expense.** I considered putting it on the expense, which would be more flexible. But in practice a category is fixed or variable by nature — rent does not become a variable expense — and putting it on the expense means asking the user for one more decision on every entry, on the path I want to be the fastest of all. The distinction exists to serve the "how much of our budget is non-negotiable" statistic, and at that level aggregating by category is sufficient.
 
-### 4.5 Un obiettivo è una voce di budget
+**Categories are archived, not deleted.** Deleting a category with linked expenses means either losing the historical classification or reassigning it arbitrarily to "Other" — which falsifies statistics silently, the worst kind of error. `archived = true` removes it from pickers and leaves it in history.
 
-La tua richiesta: creare "Vacanza a Bali" e destinarci una parte del budget.
+**No subcategories in v1.** They are the most requested feature in every budgeting app, and I excluded them anyway: they double the complexity of every aggregation query (rolling children up into the parent), of every chart, and of the management interface. With twelve well-chosen categories, most households don't need them. The schema does not preclude them: adding `parent_id` later is an additive migration.
 
-**Scelta:** `monthly_allocation` sull'obiettivo entra nell'equazione del budget accanto alle categorie di spesa.
+### 4.3 Fixed expenses: cron plus catch-up, both idempotent
+
+**Choice:** two generation mechanisms, with idempotency guaranteed by a unique index.
+
+A daily cron alone fails at the edges: a household created after the run, a failed run, an app opened after months of inactivity. A catch-up on app open alone fails if nobody opens the app — and the "expense recorded" notifications would never fire.
+
+Both call the same `post_due_recurring()` function, and they can run in any order and any number of times: the unique index on `(recurring_expense_id, period_key)` makes double generation impossible at the database level. This is the most important application of the §2.2 principle: if idempotency depended on an application check, two concurrent writers (the cron and a client opening the app, at 09:00 on a Monday) could both pass it.
+
+**`variable_amount` is a feature, not an edge case.** The electricity bill has a predictable date and an unpredictable amount. A system that automatically generates the wrong amount is worse than one that generates nothing: it introduces false data the user has to notice and correct. With `variable_amount = true` the system proposes the previous occurrence's amount and waits for confirmation — it knows the date, you know the figure.
+
+### 4.4 Migrating categories: map, don't normalise
+
+The riskiest step in the project. `expenses.category` is free text and can hold values from two vocabularies (§1.2).
+
+**Choice:** an explicit mapping for known values; for every unknown value, create a household category carrying the original label.
+
+The shortcut would be to send anything unrecognised to "Other". That is unacceptable: it falsifies history silently and irreversibly, and the user discovers months later that their statistics don't add up — with no way to reconstruct the data. Better to end up with a few extra categories to tidy by hand than with wrong data and no way to notice.
+
+The migration ends with an assertion inside its transaction: if even one expense is left without a `category_id`, the whole migration fails and is not applied. **A partial migration on monetary data is worse than a failed one.**
+
+### 4.5 A goal is a budget line
+
+Your request: create "Bali trip" and direct part of the budget towards it.
+
+**Choice:** `monthly_allocation` on the goal enters the budget equation alongside the spending categories.
 
 ```
-Disponibile = entrate previste − budget fissi − budget variabili − allocazioni obiettivi
+Available = expected income − fixed budgets − variable budgets − goal allocations
 ```
 
-La modellazione alternativa era una categoria speciale "Risparmio" con un budget, collegata all'obiettivo. Funziona, ma confonde due concetti: una categoria di spesa registra denaro uscito, un obiettivo accumula denaro messo da parte. Se "Bali" fosse una categoria, comparirebbe nel donut delle spese accanto a "Ristoranti", e la domanda "quanto abbiamo speso questo mese" avrebbe una risposta ambigua.
+The alternative modelling was a special "Savings" category with a budget, linked to the goal. It works, but it conflates two concepts: a spending category records money that left, a goal accumulates money set aside. If "Bali" were a category, it would appear in the spending donut next to "Eating out", and the question "how much did we spend this month" would have an ambiguous answer.
 
-Tenendoli separati ma sommandoli nel calcolo del disponibile, si ottiene la proprietà che serve davvero: **il risparmio compete con le spese per lo stesso denaro**. Se destini 200 € al mese a Bali, sono 200 € che non puoi spendere altrove, e il budget te lo dice prima che tu li spenda — non a fine mese.
+Keeping them separate but summing them into the available calculation yields the property that actually matters: **savings compete with spending for the same money**. If you direct €200 a month to Bali, that's €200 you cannot spend elsewhere, and the budget tells you before you spend it — not at the end of the month.
 
-**`goal_contributions` invece del solo `saved_amount`.** La colonna `saved_amount` esiste già ed è usata da `GoalsTab.tsx`. Aggiungendo una tabella di contribuzioni si ottiene lo storico ("da dove vengono questi 1.400 €"), la distinzione tra versamenti manuali e allocazioni automatiche, e l'attribuzione al membro che ha versato. `saved_amount` resta come valore denormalizzato mantenuto da trigger: il componente esistente continua a funzionare senza modifiche, ma smette di essere la fonte di verità.
+**`goal_contributions` instead of just `saved_amount`.** The `saved_amount` column already exists and is used by `GoalsTab.tsx`. Adding a contributions table gives you history ("where did this €1,400 come from"), the distinction between manual deposits and automatic allocations, and attribution to the member who paid in. `saved_amount` remains as a denormalised value maintained by trigger: the existing component keeps working unchanged, but stops being the source of truth.
 
-L'indice unico parziale su `(goal_id, budget_period_id) where source = 'BUDGET_ALLOCATION'` impedisce che una doppia chiusura di periodo raddoppi i risparmi. Stesso principio delle ricorrenti.
+The partial unique index on `(goal_id, budget_period_id) where source = 'BUDGET_ALLOCATION'` prevents a double period-close from doubling the savings. Same principle as the recurring expenses.
 
-### 4.6 Libreria grafici
+### 4.6 Charting library
 
-**Scelta:** `victory-native` XL con `@shopify/react-native-skia`.
+**Choice:** `victory-native` XL with `@shopify/react-native-skia`.
 
-`plan.md` indica già Victory Native, ma nessuna delle due librerie è installata. Victory Native XL richiede Skia, che pesa sul bundle (alcuni MB) ma è ben supportato su Expo 55 e RN 0.83, ed è la stessa base che userebbero le alternative serie.
+`plan.md` already names Victory Native, but neither library is installed. Victory Native XL requires Skia, which adds a few MB to the bundle but is well supported on Expo 55 and RN 0.83, and is the same foundation the serious alternatives would use.
 
-Le alternative valutate: `react-native-gifted-charts` (più leggera, niente Skia, ma meno controllo sullo stile e API meno stabile) e SVG a mano con `react-native-svg` (controllo totale, nessuna dipendenza nuova, ma donut e linee con assi e tooltip sono più lavoro di quanto sembri).
+Alternatives considered: `react-native-gifted-charts` (lighter, no Skia, but less styling control and a less stable API) and hand-rolled SVG with `react-native-svg` (total control, no new dependency, but donuts and line charts with axes and tooltips are more work than they look).
 
-**Decisione da verificare in Fase 4**, misurando l'impatto reale sul bundle. Se Skia risultasse sproporzionato per quattro grafici, i tipi di grafico scelti (donut, linea, barre, gauge) sono tutti realizzabili con `react-native-svg` — è un cambio confinato a `components/finance/charts/`, che ho isolato apposta in una directory dedicata.
+**A decision to verify in Phase 4**, by measuring the real bundle impact. If Skia turns out to be disproportionate for four charts, the chosen chart types (donut, line, bars, gauge) are all achievable with `react-native-svg` — a change confined to `components/finance/charts/`, which I isolated in a dedicated directory for exactly this reason.
 
-### 4.7 Ruoli applicati nelle RPC, non nelle RLS
+### 4.7 Roles enforced in RPCs, not in RLS
 
-**Scelta:** `member_role` (OWNER/MEMBER/VIEWER) è verificato dentro le funzioni RPC, non da policy RLS.
+**Choice:** `member_role` (OWNER/MEMBER/VIEWER) is checked inside the RPC functions, not by RLS policies.
 
-Esprimere i ruoli in RLS significherebbe una policy per operazione per tabella con una subquery su `household_members` in ogni `using` e ogni `with check` — moltiplicando le policy e aggiungendo un join a ogni riga letta. Le RLS diventano il punto in cui si sbagliano i permessi in modo difficile da diagnosticare.
+Expressing roles in RLS would mean one policy per operation per table, each with a subquery against `household_members` in every `using` and every `with check` — multiplying the policies and adding a join to every row read. RLS becomes the place where permissions go wrong in ways that are hard to diagnose.
 
-Poiché **tutte le scritture del modulo passano da RPC** (conseguenza del principio §2.1), il controllo di ruolo in cima a ogni funzione è sufficiente e sta in un posto solo. Le RLS continuano a fare l'unica cosa che devono fare in modo assoluto: **isolare i nuclei tra loro**. Quella è la garanzia di sicurezza vera; i ruoli sono una regola di prodotto.
+Because **every write in the module goes through an RPC** (a consequence of the §2.1 principle), a role check at the top of each function is sufficient and lives in one place. RLS keeps doing the one thing it must do absolutely: **isolate households from one another**. That is the real security guarantee; roles are a product rule.
 
-**Condizione di validità:** regge finché nessuna scrittura bypassa le RPC andando diretta in `supabase.from(...).insert()`. Va verificato in code review, ed è la ragione per cui la Fase 6.3 include un test esplicito che un `VIEWER` non riesca a scrivere attraverso nessun percorso.
+**Validity condition:** this holds as long as no write bypasses the RPCs by going straight to `supabase.from(...).insert()`. It needs checking in code review, and it is why Phase 6.3 includes an explicit test that a `VIEWER` cannot write through any path.
 
-### 4.8 Rollover disattivato di default
+### 4.8 Rollover off by default
 
-**Scelta:** `rollover_enabled = false` come default, attivabile per singola categoria.
+**Choice:** `rollover_enabled = false` by default, enabled per category.
 
-Il rollover è utile su categorie con spesa irregolare — se questo mese non hai fatto manutenzione, i 100 € non spesi ha senso che restino disponibili il mese prossimo. È fuorviante su categorie regolari: se ogni mese avanzano 30 € sui trasporti, dopo un anno il budget mostra 360 € di margine che non riflettono nessuna intenzione reale, e la barra di progresso smette di significare qualcosa.
+Rollover is useful on categories with irregular spending — if you did no maintenance this month, the €100 unspent reasonably stays available next month. It is misleading on regular categories: if €30 is left over on transport every month, after a year the budget shows €360 of headroom that reflects no real intention, and the progress bar stops meaning anything.
 
-Default disattivato, attivabile dove serve, con il residuo (positivo o negativo) in una colonna distinta `carried_amount` — così l'utente vede sempre "budget 500 € + 80 € riportati" invece di un misterioso 580 €.
+Off by default, enabled where it helps, with the remainder (positive or negative) in a distinct `carried_amount` column — so the user always sees "budget €500 + €80 carried" rather than a mysterious €580.
 
-### 4.9 Aritmetica in centesimi interi per gli split
+### 4.9 Integer-cent arithmetic for splits
 
-Una divisione in tre parti di 100 € non ha soluzione esatta in decimali a due cifre. Arrotondando ogni quota indipendentemente si ottiene 33,33 × 3 = 99,99 €: manca un centesimo, e su un mese di spese condivise i centesimi mancanti diventano decine.
+A three-way split of €100 has no exact solution in two-decimal currency. Rounding each share independently gives 33.33 × 3 = €99.99: one cent short, and across a month of shared expenses the missing cents become tens.
 
-`split_expense_cents()` converte in centesimi interi, calcola le parti intere e distribuisce i resti uno per uno ai membri con la frazione più alta (metodo dei resti maggiori), con ordinamento stabile a parità. **La somma delle quote è esattamente l'importo, per costruzione** — non per approssimazione accettabile. Con `n = 2` degenera nel comportamento corrente, quindi non introduce regressioni.
+`split_expense_cents()` converts to integer cents, computes the integer parts, and distributes the remainders one at a time to the members with the largest fraction (largest remainder method), with a stable tie-break. **The shares sum to exactly the amount** — not to an acceptable approximation. With `n = 2` it degenerates to the current behaviour, so it introduces no regression.
 
-### 4.10 Pareggio con min cash flow
+### 4.10 Settling up with min cash flow
 
-Con tre membri, i saldi possono richiedere che A paghi B che paga C. L'algoritmo greedy (abbina iterativamente il debitore maggiore al creditore maggiore) produce al massimo N−1 trasferimenti.
+With three members, balances can require A to pay B who pays C. The greedy algorithm (iteratively match the largest debtor to the largest creditor) produces at most N−1 transfers.
 
-Non è l'ottimo teorico — trovare il numero minimo assoluto di transazioni è NP-hard — ma su nuclei di 2-6 persone la differenza è nulla o di un trasferimento, e l'algoritmo è deterministico, spiegabile e istantaneo. Per N=2 restituisce esattamente il messaggio attuale ("Anna deve a Marco 42,50 €").
+It is not the theoretical optimum — finding the absolute minimum number of transactions is NP-hard — but for households of 2–6 people the difference is zero or one transfer, and the algorithm is deterministic, explainable and instant. For N=2 it returns exactly the current message ("Anna owes Marco €42.50").
 
-I `settlements` sono registrati come righe, non come azzeramento dei saldi. Serve lo storico: "abbiamo pareggiato il 3 agosto" è un'informazione che l'utente vuole poter rivedere, e senza traccia il saldo tornerebbe a crescere senza spiegazione.
+Settlements are recorded as rows, not as a zeroing of balances. History matters: "we settled up on 3 August" is something the user wants to be able to revisit, and without a trace the balance would start growing again with no explanation.
 
 ---
 
-## 5. Cosa abbiamo escluso, e perché
+## 5. What we excluded, and why
 
-Coerente con il perimetro "essenziale" che hai scelto. Ogni esclusione è una decisione, non una dimenticanza.
+Consistent with the "essential" scope you chose. Every exclusion is a decision, not an oversight.
 
-| Escluso | Ragione | Costo di aggiungerlo dopo |
+| Excluded | Reason | Cost of adding it later |
 |---|---|---|
-| **Import CSV / open banking** | È un progetto a sé: parsing di formati bancari eterogenei, deduplica, matching automatico sulle categorie. Vale solo dopo che l'inserimento manuale è a regime e sai quali categorie usi davvero. | Basso — additivo, nessun cambio di schema |
-| **Previsioni di fine mese** | Senza mesi di storico produce numeri arbitrari. Con le statistiche della Fase 4 in mano si può progettare qualcosa di fondato. | Basso — legge dati esistenti |
-| **Debiti e rate** | Modello diverso: capitale, interessi, piano di ammortamento. Una rata può essere modellata come spesa ricorrente con `end_date`, che copre il caso pratico. | Medio — tabelle nuove |
-| **Foto degli scontrini** | Richiede storage (già presente per le memories) e una UX di cattura. Utile ma non cambia la capacità di fare budget. | Basso — colonna + upload |
-| **Multivaluta** | Cambia ogni calcolo: ogni importo avrebbe bisogno di valuta e tasso alla data. Costo alto per un nucleo domestico che spende in una valuta. | **Alto** — tocca tutto lo schema |
-| **Sottocategorie** | §4.2 | Medio — rollup in ogni query |
-| **Investimenti e patrimonio** | Dominio diverso: valutazioni variabili nel tempo, rendimenti, non "quanto abbiamo speso". | Alto — modulo separato |
+| **CSV import / open banking** | A project in itself: parsing heterogeneous bank formats, deduplication, automatic category matching. Only worth it once manual entry is in steady state and you know which categories you actually use. | Low — additive, no schema change |
+| **End-of-month forecasting** | Without months of history it produces arbitrary numbers. With the Phase 4 statistics in hand you can design something grounded. | Low — reads existing data |
+| **Debt and instalments** | A different model: principal, interest, amortisation schedule. An instalment can be modelled as a recurring expense with an `end_date`, which covers the practical case. | Medium — new tables |
+| **Receipt photos** | Requires storage (already present for memories) and a capture flow. Useful, but it doesn't change the ability to budget. | Low — column + upload |
+| **Multi-currency** | Changes every calculation: every amount would need a currency and a rate at the date. High cost for a household that spends in one currency. | **High** — touches the whole schema |
+| **Subcategories** | §4.2 | Medium — rollups in every query |
+| **Investments and net worth** | A different domain: valuations that change over time, returns; not "how much did we spend". | High — separate module |
 
-Il multivaluta è l'unico la cui aggiunta successiva sarebbe davvero costosa. Vale la pena decidere consapevolmente ora: **se il nucleo vive tra due paesi o una parte delle spese è in valuta estera, va affrontato prima della Fase 3**, non dopo. In ogni altro caso, escluderlo è la scelta giusta.
-
----
-
-## 6. Come è ordinata la roadmap
-
-Quattro criteri, in ordine di priorità quando confliggono.
-
-**Il rischio maggiore per primo.** La migrazione delle categorie è il passaggio dove si possono perdere dati. È in Fase 1, quando i dati storici sono ancora pochi. Ogni mese di rinvio la rende più rischiosa.
-
-**Le fondamenta prima di ciò che ci poggia.** La Fase 0 non produce niente di visibile — è la fase che un piano orientato alla demo taglierebbe. Ma senza anagrafica dei membri e senza motore di split, ogni fase successiva reimplementerebbe pezzi di entrambi, e la Fase 6 diventerebbe una riscrittura invece di un'aggiunta.
-
-**Il valore quotidiano presto.** Categorie (Fase 1) e spese fisse (Fase 2) sono ciò che cambia di più l'uso reale. Le spese fisse in particolare tolgono l'attrito maggiore: registrare ogni mese affitto e bollette a mano è la ragione principale per cui si smette di usare un'app di budget.
-
-**Ogni fase rilasciabile.** Nessuna fase lascia il modulo rotto. Se il progetto si ferma dopo la Fase 3, quello che c'è funziona ed è utile.
-
-**Perché lo split a N membri è in Fase 6 e non prima**, visto che è la funzione che hai richiesto esplicitamente: le fondamenta (Fase 0) lo rendono già corretto sotto il cofano fin dall'inizio — spese, budget e statistiche funzionano con N membri da subito. La Fase 6 espone all'utente il *controllo* sulla divisione e aggiunge il pareggio dei conti, che ha senso solo quando c'è già uno storico di spese da pareggiare. Anticiparla significherebbe costruire l'interfaccia di una funzione che non ha ancora dati su cui operare.
+Multi-currency is the only one whose later addition would be genuinely expensive. It is worth deciding deliberately now: **if the household straddles two countries or part of the spending is in a foreign currency, it should be addressed before Phase 3**, not after. In every other case, excluding it is the right call.
 
 ---
 
-## 7. Su questi documenti
+## 6. How the roadmap is ordered
 
-**Perché in `docs/budgeting/` e non nella root.** La root contiene già un `roadmap.md` — la roadmap dell'app mobile di Couple OS, con lo stato di tutte e otto le feature. Scriverci sopra la roadmap del solo modulo budget avrebbe cancellato quel documento. I tre file stanno in una sottocartella dedicata; la roadmap principale andrà aggiornata (Fase 7.4) con una riga che rimanda a questa.
+Four criteria, in priority order when they conflict.
 
-**Cosa serve verificare prima di iniziare la Fase 1.** Due cose che dal codice non si vedono:
+**Biggest risk first.** Migrating categories is the step where data can be lost. It is in Phase 1, while historical data is still sparse. Every month of delay makes it riskier.
 
-1. **Quali valori esistono davvero in `expenses.category` in produzione.** La tabella di mapping in [`specs.md` §6](./specs.md#6-migrazione-dei-dati-esistenti) copre i due vocabolari presenti nel codice, ma solo un `select distinct category from expenses` sul database reale dice se ce ne sono altri. Da fare prima di scrivere la migrazione `008`.
-2. **Se `budgets` e `financial_goals` siano state aggiunte alla publication realtime.** In `002_rls.sql` non ci sono, ma il file stesso avverte che la publication va configurata anche da dashboard. Se non lo sono, oggi due membri non vedono in tempo reale le reciproche modifiche a budget e obiettivi.
+**Foundations before what rests on them.** Phase 0 produces nothing visible — it is the phase a demo-driven plan would cut. But without a member roster and a split engine, every later phase would reimplement pieces of both, and Phase 6 would become a rewrite instead of an addition.
+
+**Daily value early.** Categories (Phase 1) and fixed expenses (Phase 2) change real usage the most. Fixed expenses in particular remove the greatest friction: re-entering rent and utilities by hand every month is the main reason people stop using a budgeting app.
+
+**Every phase shippable.** No phase leaves the module broken. If the project stops after Phase 3, what exists works and is useful.
+
+**Why N-member splits sit in Phase 6 and not earlier**, given that it is the feature you explicitly asked for: the foundations (Phase 0) already make it correct under the hood from the start — expenses, budgets and statistics work with N members immediately. Phase 6 exposes the *controls* over the split to the user and adds settling up, which only makes sense once there is a history of expenses to settle. Bringing it forward would mean building the interface for a feature with no data to operate on.
+
+---
+
+## 7. About these documents
+
+**Why `docs/budgeting/` and not the repository root.** The root already contains a `roadmap.md` — the Couple OS mobile roadmap, tracking the state of all eight features. Writing the budget module's roadmap over it would have destroyed that document. The three files live in a dedicated subdirectory; the main roadmap should be updated (Phase 7.4) with a line pointing here.
+
+**What needs verifying before starting Phase 1.** Two things the code cannot tell you:
+
+1. **Which values actually exist in `expenses.category` in production.** The mapping table in [`specs.md` §6](./specs.md#6-migrating-existing-data) covers the two vocabularies present in the code, but only a `select distinct category from expenses` against the real database will say whether there are others. Do this before writing migration `008`.
+2. **Whether `budgets` and `financial_goals` were added to the realtime publication.** They are not in `002_rls.sql`, but that file itself warns that the publication also has to be configured from the dashboard. If they weren't, two members currently don't see each other's budget and goal changes in real time.

@@ -1,115 +1,115 @@
-# Budget OS — Specifiche tecniche e funzionali
+# Budget OS — Technical and functional specification
 
-> Modulo di budgeting domestico per Couple OS.
-> Versione 1.0 delle specifiche — agosto 2026.
-> Documenti collegati: [`roadmap.md`](./roadmap.md) (fasi di progettazione), [`report.md`](./report.md) (scelte motivate).
+> Household budgeting module for Couple OS.
+> Specification version 1.0 — August 2026.
+> Related documents: [`roadmap.md`](./roadmap.md) (design phases), [`report.md`](./report.md) (reasoned choices).
 
 ---
 
-## 1. Obiettivo e perimetro
+## 1. Goal and scope
 
-### 1.1 Cosa fa
+### 1.1 What it does
 
-Budget OS gestisce il denaro di un **nucleo domestico**: creare e calcolare budget mensili, tracciare spese fisse e variabili, ripartire i costi tra i membri, generare statistiche per categoria e alimentare obiettivi di risparmio con una quota del budget.
+Budget OS manages the money of a **household**: creating and calculating monthly budgets, tracking fixed and variable expenses, splitting costs between members, producing per-category statistics, and feeding savings goals with a share of the budget.
 
-Le cinque cose che deve fare bene:
+The five things it must do well:
 
-1. **Budget mensile** — pianificare quanto spendere per categoria, confrontare pianificato vs reale, riportare gli avanzi al mese successivo.
-2. **Spese fisse** — dichiarare una volta affitto, bollette e abbonamenti; il sistema li registra automaticamente ogni periodo senza reinserimento manuale.
-3. **Spese variabili** — inserimento rapido (importo, categoria, chi ha pagato) in meno di cinque secondi.
-4. **Statistiche** — dove finiscono i soldi, come cambia nel tempo, chi ha pagato cosa, quanto si rispetta il budget.
-5. **Obiettivi di risparmio** — un obiettivo ("Vacanza a Bali") assorbe una quota mensile del budget esattamente come una categoria di spesa, e cresce automaticamente ogni periodo.
+1. **Monthly budget** — plan how much to spend per category, compare planned against actual, carry leftovers into the next month.
+2. **Fixed expenses** — declare rent, utilities and subscriptions once; the system records them automatically every period with no re-entry.
+3. **Variable expenses** — quick entry (amount, category, who paid) in under five seconds.
+4. **Statistics** — where the money goes, how it changes over time, who paid for what, how closely the budget is respected.
+5. **Savings goals** — a goal ("Bali trip") absorbs a monthly share of the budget exactly like a spending category, and grows automatically every period.
 
-### 1.2 Cosa non fa (v1)
+### 1.2 What it does not do (v1)
 
-Esclusioni deliberate, motivate in [`report.md` §5](./report.md#5-cosa-abbiamo-escluso-e-perché):
+Deliberate exclusions, justified in [`report.md` §5](./report.md#5-what-we-excluded-and-why):
 
-- Import di estratti conto (CSV/OFX) o connessioni bancarie (PSD2/open banking)
-- Previsioni e proiezioni predittive di fine mese
-- Gestione di debiti, prestiti e piani di rientro rateali
-- Allegati/foto degli scontrini
-- Multivaluta e conversione cambi
-- Sottocategorie annidate
-- Investimenti e patrimonio netto
+- Bank statement import (CSV/OFX) or banking connections (PSD2/open banking)
+- Predictive end-of-month forecasting
+- Debt, loan and instalment repayment plans
+- Receipt attachments or photos
+- Multi-currency and exchange rate conversion
+- Nested subcategories
+- Investments and net worth
 
-### 1.3 Vincoli di progetto
+### 1.3 Project constraints
 
-| Vincolo | Implicazione |
+| Constraint | Implication |
 |---|---|
-| Deve integrarsi in Couple OS | Stesso monorepo, stesso stack, stessa tenancy, stesso design system |
-| Il modulo `finance` esiste già e contiene dati | Evoluzione incrementale via migrazioni, nessuna riscrittura distruttiva |
-| Nucleo di N membri (non solo 2 partner) | Split e saldi generalizzati a N, tabella membri esplicita |
-| Mobile-first, offline-tollerante | Calcoli deterministici lato server, cache lato client |
+| Must integrate into Couple OS | Same monorepo, same stack, same tenancy, same design system |
+| The `finance` module already exists and holds data | Incremental evolution through migrations, no destructive rewrite |
+| Household of N members (not just 2 partners) | Splits and balances generalised to N, explicit members table |
+| Mobile-first, offline-tolerant | Deterministic server-side calculation, client-side cache |
 
 ---
 
-## 2. Architettura
+## 2. Architecture
 
-### 2.1 Stato reale dello stack
+### 2.1 The stack as it actually is
 
-> ⚠️ **Nota di allineamento.** `plan.md` e `dashboard.md` nella root descrivono un backend Fastify + Prisma con `apps/api` e `apps/web` "completi". Nel repository quelle directory **non esistono**: l'implementazione reale è Supabase acceduto direttamente dal client, con RLS come livello di autorizzazione. Queste specifiche descrivono lo stack reale. Vedi [`report.md` §1](./report.md#1-il-punto-di-partenza-reale).
+> ⚠️ **Alignment note.** `plan.md` and `dashboard.md` in the repository root describe a Fastify + Prisma backend with `apps/api` and `apps/web` marked "complete". Those directories **do not exist** in the repository: the real implementation is Supabase accessed directly from the client, with RLS as the authorisation layer. This specification describes the real stack. See [`report.md` §1](./report.md#1-the-real-starting-point).
 
-| Layer | Tecnologia | Note |
+| Layer | Technology | Notes |
 |---|---|---|
-| Database | PostgreSQL (Supabase) | Migrazioni SQL in `supabase/migrations/` |
-| Autorizzazione | Row Level Security | Helper `public.get_couple_id()` già presente |
-| Logica di calcolo | Funzioni SQL + RPC (`security definer` dove serve) | Nessun server applicativo intermedio |
-| Job schedulati | Supabase Edge Functions + Cron | `daily-cron` già attiva alle 09:00 |
-| Realtime | Supabase Realtime (publication `supabase_realtime`) | |
+| Database | PostgreSQL (Supabase) | SQL migrations in `supabase/migrations/` |
+| Authorisation | Row Level Security | `public.get_couple_id()` helper already present |
+| Calculation logic | SQL functions + RPCs (`security definer` where needed) | No intermediate application server |
+| Scheduled jobs | Supabase Edge Functions + Cron | `daily-cron` already running at 09:00 |
+| Realtime | Supabase Realtime (`supabase_realtime` publication) | |
 | Client | Expo 55 / React Native 0.83 / Expo Router 5 | `apps/mobile` |
-| Stato server | TanStack Query v5 | Con persister AsyncStorage |
-| Styling | NativeWind v4 | Colore modulo finance: `#10b981` |
-| Form | React Hook Form + Zod | Schemi in `packages/shared` |
-| Grafici | `victory-native` XL + `@shopify/react-native-skia` | Da installare — vedi [`report.md` §4.6](./report.md#46-libreria-grafici) |
+| Server state | TanStack Query v5 | With AsyncStorage persister |
+| Styling | NativeWind v4 | Finance module colour: `#10b981` |
+| Forms | React Hook Form + Zod | Schemas in `packages/shared` |
+| Charts | `victory-native` XL + `@shopify/react-native-skia` | To be installed — see [`report.md` §4.6](./report.md#46-charting-library) |
 
-### 2.2 Principio architetturale portante
+### 2.2 The load-bearing architectural principle
 
-**Il denaro si calcola in Postgres, non in JavaScript.**
+**Money is calculated in Postgres, not in JavaScript.**
 
-Ogni aggregazione, ripartizione e saldo è prodotta da viste o funzioni SQL. Il client riceve numeri già calcolati e li visualizza. Tre ragioni:
+Every aggregation, split and balance is produced by SQL views or functions. The client receives numbers that are already computed and displays them. Three reasons:
 
-1. **Precisione** — `numeric(12,2)` in Postgres è aritmetica decimale esatta; `number` in JavaScript è IEEE-754 binario e accumula errore su somme ripetute.
-2. **Coerenza** — la stessa regola di split non va reimplementata in ogni componente. Oggi `ExpensesTab.tsx` calcola il saldo lato client e `BudgetTab.tsx` riaggrega le spese lato client, con due implementazioni indipendenti della stessa idea.
-3. **Volume** — il client oggi scarica tutte le spese del mese per calcolare sei totali. Una vista restituisce sei righe.
+1. **Precision** — `numeric(12,2)` in Postgres is exact decimal arithmetic; `number` in JavaScript is binary IEEE-754 and accumulates error across repeated sums.
+2. **Consistency** — the same split rule should not be reimplemented in every component. Today `ExpensesTab.tsx` computes the balance client-side and `BudgetTab.tsx` re-aggregates expenses client-side, two independent implementations of the same idea.
+3. **Volume** — the client currently downloads every expense of the month to compute six totals. A view returns six rows.
 
-### 2.3 Modello di tenancy
+### 2.3 Tenancy model
 
-La tenancy resta ancorata a `couple_id`: è la chiave già usata da tutte le RLS, da tutti gli indici e da tutte le altre otto feature di Couple OS. Cambiarla significherebbe migrare l'intera applicazione per una feature sola.
+Tenancy stays anchored to `couple_id`: it is the key already used by every RLS policy, every index and all eight other Couple OS features. Changing it would mean migrating the entire application for the sake of one feature.
 
-Il supporto a N membri si ottiene con una tabella **`household_members`** che elenca i partecipanti finanziari del nucleo. Un partecipante può essere:
+Support for N members comes from a **`household_members`** table listing the household's financial participants. A participant can be:
 
-- **collegato a un utente** (`user_id` valorizzato) — ha un account, accede all'app, vede i dati;
-- **non collegato** (`user_id` null) — è solo un'entità contabile: un coinquilino che non usa l'app, un figlio, un genitore che contribuisce.
+- **linked to a user** (`user_id` populated) — has an account, signs into the app, sees the data;
+- **unlinked** (`user_id` null) — purely an accounting entity: a flatmate who doesn't use the app, a child, a parent who contributes.
 
-Questo separa *chi accede* da *chi partecipa alle spese*. Motivazione estesa in [`report.md` §4.1](./report.md#41-n-membri-senza-riscrivere-la-tenancy).
+This separates *who has access* from *who participates in expenses*. Extended reasoning in [`report.md` §4.1](./report.md#41-n-members-without-rewriting-tenancy).
 
 ```
-couples (tenancy — invariata)
+couples (tenancy — unchanged)
    │
-   ├── users (chi ha un account, RLS ancorata qui)
+   ├── users (who has an account; RLS anchored here)
    │
-   └── household_members (chi partecipa alle spese, N righe)
+   └── household_members (who participates in expenses, N rows)
             │  user_id → users.id  (nullable)
             │
-            └── referenziato da expenses.paid_by_member_id,
+            └── referenced by expenses.paid_by_member_id,
                 expense_shares, settlements, recurring_expenses
 ```
 
 ---
 
-## 3. Modello dati
+## 3. Data model
 
-### 3.1 Cosa esiste già
+### 3.1 What already exists
 
-| Tabella | Colonne rilevanti | Destino |
+| Table | Relevant columns | Fate |
 |---|---|---|
-| `expenses` | `amount`, `category` (text libero), `note`, `date`, `paid_by_id`, `couple_id` | Estesa |
-| `budgets` | `category` (text), `amount`, `month`, `year`, `couple_id` — unique `(couple_id, category, month, year)` | Estesa |
-| `financial_goals` | `title`, `target_amount`, `saved_amount`, `couple_id` | Estesa |
-| `couples` | `split_mode` enum `EQUAL`/`PROPORTIONAL` | Estesa (`CUSTOM`) |
-| `users` | `salary numeric(12,2)` | Invariata, letta da `household_members` |
+| `expenses` | `amount`, `category` (free text), `note`, `date`, `paid_by_id`, `couple_id` | Extended |
+| `budgets` | `category` (text), `amount`, `month`, `year`, `couple_id` — unique `(couple_id, category, month, year)` | Extended |
+| `financial_goals` | `title`, `target_amount`, `saved_amount`, `couple_id` | Extended |
+| `couples` | `split_mode` enum `EQUAL`/`PROPORTIONAL` | Extended (`CUSTOM`) |
+| `users` | `salary numeric(12,2)` | Unchanged, read by `household_members` |
 
-### 3.2 Nuovi enum
+### 3.2 New enums
 
 ```sql
 create type expense_kind        as enum ('FIXED', 'VARIABLE');
@@ -120,11 +120,11 @@ create type budget_period_status as enum ('DRAFT', 'ACTIVE', 'CLOSED');
 create type goal_status         as enum ('ACTIVE', 'REACHED', 'PAUSED', 'ARCHIVED');
 create type contribution_source as enum ('MANUAL', 'BUDGET_ALLOCATION');
 
--- Estensione dell'enum esistente
+-- Extension of the existing enum
 alter type split_mode add value 'CUSTOM';
 ```
 
-### 3.3 `household_members` — partecipanti del nucleo
+### 3.3 `household_members` — household participants
 
 ```sql
 create table public.household_members (
@@ -133,10 +133,10 @@ create table public.household_members (
     user_id       uuid references public.users(id) on delete set null,
     display_name  text not null,
     avatar_emoji  text,
-    color         text,                       -- identità visiva nei grafici
+    color         text,                       -- visual identity in charts
     role          member_role not null default 'MEMBER',
-    monthly_income numeric(12,2),             -- per split PROPORTIONAL
-    custom_share  numeric(6,5),               -- per split CUSTOM, 0..1
+    monthly_income numeric(12,2),             -- for PROPORTIONAL split
+    custom_share  numeric(6,5),               -- for CUSTOM split, 0..1
     active        boolean not null default true,
     created_at    timestamptz not null default now(),
     updated_at    timestamptz not null default now()
@@ -149,18 +149,18 @@ create unique index household_members_user_unique
 create index on public.household_members (couple_id, active);
 ```
 
-**Regole:**
-- Ogni utente del nucleo ha esattamente una riga con `user_id` valorizzato (creata automaticamente da trigger, §3.12).
-- `custom_share` è validato solo quando `couples.split_mode = 'CUSTOM'`: la somma delle quote dei membri attivi deve essere 1 ± 0.00001. Validazione in `validate_custom_shares()`, invocata dalla RPC di salvataggio.
-- `monthly_income` sovrascrive `users.salary` quando presente; permette di dichiarare un reddito per un partecipante senza account.
-- Disattivare un membro (`active = false`) lo esclude dagli split futuri ma preserva lo storico.
+**Rules:**
+- Every household user has exactly one row with `user_id` populated (created automatically by trigger, §3.12).
+- `custom_share` is validated only when `couples.split_mode = 'CUSTOM'`: the shares of active members must sum to 1 ± 0.00001. Validation lives in `validate_custom_shares()`, invoked by the save RPC.
+- `monthly_income` overrides `users.salary` when present; it allows declaring an income for a participant with no account.
+- Deactivating a member (`active = false`) excludes them from future splits while preserving history.
 
-### 3.4 `expense_categories` — categorie personalizzabili
+### 3.4 `expense_categories` — customisable categories
 
 ```sql
 create table public.expense_categories (
     id          uuid primary key default gen_random_uuid(),
-    couple_id   uuid references public.couples(id) on delete cascade,  -- null = preset di sistema
+    couple_id   uuid references public.couples(id) on delete cascade,  -- null = system preset
     slug        text not null,
     label       text not null,
     emoji       text,
@@ -178,30 +178,30 @@ create unique index expense_categories_slug_unique
 create index on public.expense_categories (couple_id, archived, sort_order);
 ```
 
-**Regole:**
-- `couple_id is null` identifica i **preset di sistema**, leggibili da tutti, modificabili da nessuno. Alla creazione di un nucleo vengono clonati come categorie del nucleo (trigger §3.12), così ogni nucleo può rinominarle o cancellarle senza toccare i preset.
-- `slug` è la chiave stabile usata per la migrazione dei dati storici e per i riferimenti in codice; `label` è ciò che l'utente vede e può cambiare liberamente.
-- `kind` distingue **fisso** da **variabile**. È un attributo della categoria, non della singola spesa: serve a produrre la statistica "quanto del nostro budget è incomprimibile".
-- **Non si cancella una categoria con spese collegate**: si archivia (`archived = true`). Sparisce dai selettori, resta nello storico e nelle statistiche. Il tentativo di `delete` con spese collegate è bloccato dalla FK (`on delete restrict`).
+**Rules:**
+- `couple_id is null` identifies **system presets**, readable by everyone and editable by no one. When a household is created they are cloned as that household's own categories (trigger §3.12), so each household can rename or delete them without touching the presets.
+- `slug` is the stable key used for migrating historical data and for references in code; `label` is what the user sees and can freely change.
+- `kind` distinguishes **fixed** from **variable**. It is an attribute of the category, not of the individual expense: it exists to produce the "how much of our budget is non-negotiable" statistic.
+- **A category with linked expenses is never deleted**: it is archived (`archived = true`). It disappears from pickers and remains in history and statistics. Attempting to `delete` one with linked expenses is blocked by the foreign key (`on delete restrict`).
 
-**Preset di sistema seminati:**
+**Seeded system presets:**
 
 | slug | label | emoji | kind |
 |---|---|---|---|
-| `rent` | Affitto / Mutuo | 🏠 | FIXED |
-| `utilities` | Bollette | 💡 | FIXED |
-| `subscriptions` | Abbonamenti | 📺 | FIXED |
-| `insurance` | Assicurazioni | 🛡️ | FIXED |
-| `groceries` | Spesa | 🛒 | VARIABLE |
-| `dining` | Ristoranti e bar | 🍕 | VARIABLE |
-| `transport` | Trasporti | 🚗 | VARIABLE |
-| `health` | Salute | 💊 | VARIABLE |
-| `entertainment` | Svago | 🎉 | VARIABLE |
+| `rent` | Rent / Mortgage | 🏠 | FIXED |
+| `utilities` | Utilities | 💡 | FIXED |
+| `subscriptions` | Subscriptions | 📺 | FIXED |
+| `insurance` | Insurance | 🛡️ | FIXED |
+| `groceries` | Groceries | 🛒 | VARIABLE |
+| `dining` | Eating out | 🍕 | VARIABLE |
+| `transport` | Transport | 🚗 | VARIABLE |
+| `health` | Health | 💊 | VARIABLE |
+| `entertainment` | Entertainment | 🎉 | VARIABLE |
 | `shopping` | Shopping | 👕 | VARIABLE |
-| `home` | Casa e manutenzione | 🔧 | VARIABLE |
-| `other` | Altro | 📦 | VARIABLE |
+| `home` | Home and maintenance | 🔧 | VARIABLE |
+| `other` | Other | 📦 | VARIABLE |
 
-### 3.5 `expenses` — estensione
+### 3.5 `expenses` — extension
 
 ```sql
 alter table public.expenses
@@ -209,11 +209,11 @@ alter table public.expenses
     add column paid_by_member_id     uuid references public.household_members(id) on delete restrict,
     add column source                expense_source not null default 'MANUAL',
     add column recurring_expense_id  uuid references public.recurring_expenses(id) on delete set null,
-    add column period_key            date,          -- primo giorno del mese di competenza
+    add column period_key            date,          -- first day of the accounting month
     add column updated_at            timestamptz not null default now();
 
--- Competenza: normalmente il mese di `date`, ma sovrascrivibile
--- (es. bolletta di dicembre pagata a gennaio)
+-- Accounting period: normally the month of `date`, but overridable
+-- (e.g. a December utility bill paid in January)
 create index on public.expenses (couple_id, period_key, category_id);
 create index on public.expenses (couple_id, paid_by_member_id, date desc);
 create unique index expenses_recurring_period_unique
@@ -221,11 +221,11 @@ create unique index expenses_recurring_period_unique
     where recurring_expense_id is not null;
 ```
 
-`category` (text) e `paid_by_id` (uuid → users) restano in tabella durante la transizione e vengono popolate in parallelo dai trigger per non rompere il codice esistente. Rimozione pianificata in Fase 6.
+`category` (text) and `paid_by_id` (uuid → users) stay in the table throughout the transition and are populated in parallel by triggers so existing code keeps working. Removal is scheduled for Phase 7.
 
-L'indice unico su `(recurring_expense_id, period_key)` è la garanzia di **idempotenza** della generazione ricorrente: cron e catch-up possono girare quante volte vogliono senza duplicare.
+The unique index on `(recurring_expense_id, period_key)` is the **idempotency** guarantee for recurring generation: the cron job and the catch-up can run as often as they like without duplicating.
 
-### 3.6 `expense_shares` — ripartizione non standard
+### 3.6 `expense_shares` — non-standard splits
 
 ```sql
 create table public.expense_shares (
@@ -236,9 +236,9 @@ create table public.expense_shares (
 );
 ```
 
-**Assenza di righe = ripartizione secondo la regola del nucleo.** Le righe esistono solo quando l'utente personalizza la divisione di una singola spesa (una cena divisa tra due dei tre coinquilini). Un trigger verifica che `sum(share_amount) = expenses.amount` per ogni spesa che abbia almeno una riga.
+**No rows = split according to the household rule.** Rows exist only when the user customises the division of a single expense (a dinner split between two of three flatmates). A trigger verifies that `sum(share_amount) = expenses.amount` for any expense that has at least one row.
 
-### 3.7 `recurring_expenses` — spese fisse
+### 3.7 `recurring_expenses` — fixed expenses
 
 ```sql
 create table public.recurring_expenses (
@@ -249,8 +249,8 @@ create table public.recurring_expenses (
     category_id         uuid not null references public.expense_categories(id) on delete restrict,
     paid_by_member_id   uuid references public.household_members(id) on delete set null,
     frequency           recurrence_freq not null default 'MONTHLY',
-    day_of_month        integer check (day_of_month between -1 and 31),  -- -1 = ultimo giorno
-    day_of_week         integer check (day_of_week between 0 and 6),     -- solo WEEKLY
+    day_of_month        integer check (day_of_month between -1 and 31),  -- -1 = last day
+    day_of_week         integer check (day_of_week between 0 and 6),     -- WEEKLY only
     start_date          date not null,
     end_date            date,
     auto_post           boolean not null default true,
@@ -265,21 +265,21 @@ create table public.recurring_expenses (
 create index on public.recurring_expenses (couple_id, active, frequency);
 ```
 
-**Semantica dei flag:**
+**Flag semantics:**
 
-- `auto_post = true` → la spesa viene creata automaticamente alla data prevista.
-- `auto_post = false` → il sistema crea una **proposta** che l'utente conferma (utile per importi che cambiano).
-- `variable_amount = true` → forza `auto_post = false` e propone l'importo dell'ultima occorrenza come default modificabile. È il caso della bolletta della luce: la data è certa, l'importo no.
+- `auto_post = true` → the expense is created automatically on the due date.
+- `auto_post = false` → the system creates a **proposal** for the user to confirm (useful for amounts that change).
+- `variable_amount = true` → forces `auto_post = false` and proposes the previous occurrence's amount as an editable default. This is the electricity bill case: the date is certain, the amount is not.
 
-**Gestione dei giorni impossibili:** `day_of_month = 31` a febbraio si risolve nell'ultimo giorno del mese. La funzione `resolve_due_date(period, day_of_month)` applica `least(day_of_month, days_in_month)`; `-1` significa esplicitamente "ultimo giorno".
+**Handling impossible days:** `day_of_month = 31` in February resolves to the last day of the month. The `resolve_due_date(period, day_of_month)` function applies `least(day_of_month, days_in_month)`; `-1` explicitly means "last day".
 
-### 3.8 `budget_periods` — il mese di budget
+### 3.8 `budget_periods` — the budget month
 
 ```sql
 create table public.budget_periods (
     id                uuid primary key default gen_random_uuid(),
     couple_id         uuid not null references public.couples(id) on delete cascade,
-    period_key        date not null,              -- sempre il giorno 1 del mese
+    period_key        date not null,              -- always the 1st of the month
     expected_income   numeric(12,2) not null default 0,
     status            budget_period_status not null default 'ACTIVE',
     rollover_enabled  boolean not null default false,
@@ -291,9 +291,9 @@ create table public.budget_periods (
 );
 ```
 
-`period_key` come `date` normalizzata al primo del mese sostituisce la coppia `(month, year)`: è ordinabile, confrontabile con `date_trunc('month', expenses.date)` e permette range query native.
+`period_key` as a `date` normalised to the first of the month replaces the `(month, year)` pair: it is sortable, comparable with `date_trunc('month', expenses.date)`, and supports native range queries.
 
-### 3.9 `budgets` — righe di budget per categoria
+### 3.9 `budgets` — per-category budget lines
 
 ```sql
 alter table public.budgets
@@ -309,11 +309,11 @@ create unique index budgets_period_category_unique
     on public.budgets (budget_period_id, category_id);
 ```
 
-- `amount` = importo pianificato per il periodo.
-- `carried_amount` = residuo riportato dal periodo precedente (positivo se avanzato, negativo se sforato). Calcolato alla chiusura del periodo precedente, mai in tempo reale.
-- **Budget effettivo** = `amount + carried_amount`.
+- `amount` = the amount planned for the period.
+- `carried_amount` = the remainder carried over from the previous period (positive if under budget, negative if over). Computed when the previous period is closed, never in real time.
+- **Effective budget** = `amount + carried_amount`.
 
-### 3.10 `financial_goals` — estensione e legame col budget
+### 3.10 `financial_goals` — extension and the link to the budget
 
 ```sql
 alter table public.financial_goals
@@ -343,22 +343,22 @@ create unique index goal_contributions_period_unique
     where source = 'BUDGET_ALLOCATION';
 ```
 
-**Il legame obiettivo ↔ budget.** `monthly_allocation` è la quota di budget che l'obiettivo assorbe ogni mese. Nell'equazione del budget un obiettivo si comporta esattamente come una categoria di spesa:
+**The goal ↔ budget link.** `monthly_allocation` is the share of budget the goal absorbs each month. In the budget equation a goal behaves exactly like a spending category:
 
 ```
-Disponibile = expected_income
-            − Σ(budget fissi)
-            − Σ(budget variabili)
-            − Σ(monthly_allocation degli obiettivi ACTIVE)
+Available = expected_income
+          − Σ(fixed budgets)
+          − Σ(variable budgets)
+          − Σ(monthly_allocation of ACTIVE goals)
 ```
 
-Alla chiusura del periodo (o al passaggio di mese) viene creata una `goal_contribution` di `source = 'BUDGET_ALLOCATION'` per ogni obiettivo attivo con allocazione > 0. L'indice unico parziale garantisce **una sola contribuzione automatica per obiettivo per periodo**.
+When the period closes (or the month rolls over) a `goal_contribution` with `source = 'BUDGET_ALLOCATION'` is created for every active goal with a non-zero allocation. The partial unique index guarantees **one automatic contribution per goal per period**.
 
-`saved_amount` su `financial_goals` diventa un valore denormalizzato mantenuto da trigger (`sum(goal_contributions.amount)`): resta leggibile dal `GoalsTab.tsx` esistente senza modifiche, ma smette di essere la fonte di verità.
+`saved_amount` on `financial_goals` becomes a denormalised value maintained by trigger (`sum(goal_contributions.amount)`): it stays readable by the existing `GoalsTab.tsx` without changes, but stops being the source of truth.
 
-Quando `saved_amount >= target_amount` un trigger porta `status` a `REACHED` e genera una notifica.
+When `saved_amount >= target_amount` a trigger moves `status` to `REACHED` and raises a notification.
 
-### 3.11 `settlements` — pareggio dei conti
+### 3.11 `settlements` — settling up
 
 ```sql
 create table public.settlements (
@@ -376,52 +376,52 @@ create table public.settlements (
 create index on public.settlements (couple_id, date desc);
 ```
 
-Registra un rimborso effettivo tra due membri. Il saldo di un membro è:
+Records an actual reimbursement between two members. A member's balance is:
 
 ```
-balance(m) = Σ(pagato da m) − Σ(quota dovuta da m) − Σ(rimborsi versati da m) + Σ(rimborsi ricevuti da m)
+balance(m) = Σ(paid by m) − Σ(share owed by m) − Σ(reimbursements paid by m) + Σ(reimbursements received by m)
 ```
 
-### 3.12 Trigger di provisioning e coerenza
+### 3.12 Provisioning and consistency triggers
 
-| Trigger | Su | Effetto |
+| Trigger | On | Effect |
 |---|---|---|
-| `seed_household_on_couple` | `after insert on couples` | Clona i 12 preset di sistema come categorie del nucleo |
-| `sync_member_on_user_couple` | `after insert or update of couple_id on users` | Crea/aggiorna la riga `household_members` dell'utente |
-| `sync_legacy_expense_fields` | `before insert or update on expenses` | Popola `category` (text) e `paid_by_id` dai nuovi campi, per compatibilità |
+| `seed_household_on_couple` | `after insert on couples` | Clones the 12 system presets as household categories |
+| `sync_member_on_user_couple` | `after insert or update of couple_id on users` | Creates/updates the user's `household_members` row |
+| `sync_legacy_expense_fields` | `before insert or update on expenses` | Populates `category` (text) and `paid_by_id` from the new fields, for compatibility |
 | `set_expense_period_key` | `before insert or update on expenses` | `period_key := coalesce(period_key, date_trunc('month', date))` |
-| `validate_expense_shares` | `after insert/update/delete on expense_shares` | Verifica `sum(share_amount) = expenses.amount` |
-| `refresh_goal_saved_amount` | `after insert/update/delete on goal_contributions` | Ricalcola `financial_goals.saved_amount`, promuove a `REACHED` |
-| `guard_category_delete` | `before delete on expense_categories` | Blocca la cancellazione se esistono spese o budget collegati |
-| `set_updated_at` | tutte le nuove tabelle | Pattern già esistente in `003_triggers.sql` |
+| `validate_expense_shares` | `after insert/update/delete on expense_shares` | Verifies `sum(share_amount) = expenses.amount` |
+| `refresh_goal_saved_amount` | `after insert/update/delete on goal_contributions` | Recomputes `financial_goals.saved_amount`, promotes to `REACHED` |
+| `guard_category_delete` | `before delete on expense_categories` | Blocks deletion when linked expenses or budgets exist |
+| `set_updated_at` | all new tables | Pattern already established in `003_triggers.sql` |
 
 ---
 
-## 4. Motore di calcolo
+## 4. Calculation engine
 
-### 4.1 Ripartizione di una spesa
+### 4.1 Splitting an expense
 
-Data una spesa di importo `A` e i membri attivi `M₁…Mₙ`:
+Given an expense of amount `A` and active members `M₁…Mₙ`:
 
-| Modalità | Quota di `Mᵢ` |
+| Mode | Share of `Mᵢ` |
 |---|---|
 | `EQUAL` | `A / n` |
-| `PROPORTIONAL` | `A × redditoᵢ / Σ redditi` — se un reddito manca o la somma è 0, degrada a `EQUAL` |
+| `PROPORTIONAL` | `A × incomeᵢ / Σ incomes` — if an income is missing or the sum is 0, degrades to `EQUAL` |
 | `CUSTOM` | `A × custom_shareᵢ` |
-| Override | `expense_shares.share_amount` quando esistono righe per quella spesa |
+| Override | `expense_shares.share_amount` when rows exist for that expense |
 
-**Arrotondamento — metodo dei resti maggiori.** Le quote non si arrotondano indipendentemente, perché `n` arrotondamenti separati non ricompongono il totale (100 € tra 3 persone → 33,33 × 3 = 99,99 €). L'algoritmo:
+**Rounding — largest remainder method.** Shares are not rounded independently, because `n` separate roundings do not reconstitute the total (€100 across 3 people → 33.33 × 3 = €99.99). The algorithm:
 
-1. Converti tutto in centesimi interi.
-2. Calcola la quota esatta di ciascun membro, prendi la parte intera.
-3. Distribuisci i centesimi residui, uno ciascuno, ai membri con la parte frazionaria più alta; a parità, ordine stabile per `household_members.id`.
+1. Convert everything to integer cents.
+2. Compute each member's exact share and take the integer part.
+3. Distribute the leftover cents, one each, to the members with the largest fractional part; ties broken by a stable order on `household_members.id`.
 
-Implementato una sola volta in `split_expense_cents(p_amount_cents bigint, p_members uuid[], p_weights numeric[])`. **La somma delle quote è sempre esattamente uguale all'importo, per costruzione.**
+Implemented exactly once in `split_expense_cents(p_amount_cents bigint, p_members uuid[], p_weights numeric[])`. **The shares always sum to exactly the amount, by construction.**
 
-### 4.2 Viste
+### 4.2 Views
 
 ```sql
--- Spesa effettiva per periodo e categoria
+-- Actual spend per period and category
 create view public.v_period_category_spend as
 select
     e.couple_id,
@@ -434,59 +434,59 @@ select
 from public.expenses e
 group by e.couple_id, e.period_key, e.category_id;
 
--- Quota dovuta da ciascun membro (override se presente, altrimenti regola del nucleo)
+-- Share owed by each member (override when present, otherwise the household rule)
 create view public.v_expense_member_shares as ...
 
--- Saldo per membro
+-- Balance per member
 create view public.v_member_balances as ...
 ```
 
-### 4.3 RPC esposte al client
+### 4.3 RPCs exposed to the client
 
-| Funzione | Input | Output |
+| Function | Input | Output |
 |---|---|---|
-| `get_budget_overview(p_period date)` | mese | Per categoria: `planned`, `carried`, `spent`, `remaining`, `progress_ratio`, `status` (`OK`/`WARNING`/`OVER`) + totali + allocazioni obiettivi + disponibile |
-| `get_category_stats(p_from date, p_to date)` | intervallo | Totale, percentuale sul totale, media mensile, numero di spese, variazione vs periodo precedente |
-| `get_monthly_trend(p_months int)` | numero di mesi | Serie temporale: totale, fisso, variabile, budget, reddito |
-| `get_member_balances(p_from date, p_to date)` | intervallo | Per membro: `paid`, `owed`, `settled`, `balance` |
-| `suggest_settlements()` | — | Lista minima di trasferimenti che azzera tutti i saldi |
-| `close_budget_period(p_period date)` | mese | Calcola i rollover, crea le contribuzioni agli obiettivi, marca `CLOSED`, apre il periodo successivo |
-| `create_next_period(p_period date, p_copy_from date)` | mese | Crea il periodo copiando le righe di budget dal precedente |
-| `post_due_recurring(p_couple_id uuid, p_up_to date)` | — | Genera le spese ricorrenti scadute (idempotente) |
-| `upsert_category(...)`, `archive_category(...)` | — | Gestione categorie con validazione |
+| `get_budget_overview(p_period date)` | month | Per category: `planned`, `carried`, `spent`, `remaining`, `progress_ratio`, `status` (`OK`/`WARNING`/`OVER`) + totals + goal allocations + available |
+| `get_category_stats(p_from date, p_to date)` | range | Total, share of overall total, monthly average, expense count, change vs previous period |
+| `get_monthly_trend(p_months int)` | number of months | Time series: total, fixed, variable, budget, income |
+| `get_member_balances(p_from date, p_to date)` | range | Per member: `paid`, `owed`, `settled`, `balance` |
+| `suggest_settlements()` | — | Minimal list of transfers that zeroes every balance |
+| `close_budget_period(p_period date)` | month | Computes rollovers, creates goal contributions, marks `CLOSED`, opens the next period |
+| `create_next_period(p_period date, p_copy_from date)` | month | Creates the period, copying budget lines from the previous one |
+| `post_due_recurring(p_couple_id uuid, p_up_to date)` | — | Generates due recurring expenses (idempotent) |
+| `upsert_category(...)`, `archive_category(...)` | — | Category management with validation |
 
-Tutte `security definer` con `search_path = public`, e ognuna verifica `couple_id = public.get_couple_id()` come prima istruzione.
+All are `security definer` with `search_path = public`, and each verifies `couple_id = public.get_couple_id()` as its first statement.
 
-### 4.4 Algoritmo di pareggio (min cash flow)
+### 4.4 Settlement algorithm (min cash flow)
 
-Con N membri, azzerare i saldi con il minor numero di bonifici:
+With N members, zeroing balances with the fewest transfers:
 
-1. Separa i membri in creditori (`balance > 0`) e debitori (`balance < 0`).
-2. Ordina entrambi per valore assoluto decrescente.
-3. Abbina iterativamente il debitore maggiore al creditore maggiore, trasferendo `min(|debito|, credito)`.
-4. Ripeti finché tutti i saldi sono sotto 1 centesimo.
+1. Split members into creditors (`balance > 0`) and debtors (`balance < 0`).
+2. Sort both by absolute value, descending.
+3. Iteratively match the largest debtor to the largest creditor, transferring `min(|debt|, credit)`.
+4. Repeat until every balance is below one cent.
 
-Produce al massimo `N−1` trasferimenti. Per N=2 degenera nel comportamento attuale ("Anna deve a Marco 42,50 €").
+Produces at most `N−1` transfers. For N=2 it degenerates to the current behaviour ("Anna owes Marco €42.50").
 
-### 4.5 Generazione delle spese ricorrenti
+### 4.5 Generating recurring expenses
 
-Doppio meccanismo, entrambi idempotenti grazie all'indice unico `(recurring_expense_id, period_key)`:
+Two mechanisms, both idempotent thanks to the unique index on `(recurring_expense_id, period_key)`:
 
-1. **Cron giornaliero** — `daily-cron` (già schedulata alle 09:00) chiama `post_due_recurring()` per ogni nucleo attivo.
-2. **Catch-up all'apertura dell'app** — l'hook `useRecurringCatchUp()` chiama la stessa RPC per il nucleo corrente. Copre i nuclei creati dopo l'ultima esecuzione del cron e i casi di cron fallito.
+1. **Daily cron** — `daily-cron` (already scheduled at 09:00) calls `post_due_recurring()` for every active household.
+2. **Catch-up on app open** — the `useRecurringCatchUp()` hook calls the same RPC for the current household. This covers households created after the last cron run, and cron failures.
 
-Per `auto_post = false` la funzione non crea una spesa ma una riga in `recurring_expenses` con `pending_since`, che il client mostra come card "Da confermare" in cima alla lista spese.
+For `auto_post = false` the function creates no expense but a row in `recurring_expenses` with `pending_since`, which the client surfaces as a "To confirm" card at the top of the expense list.
 
 ---
 
-## 5. Sicurezza (RLS)
+## 5. Security (RLS)
 
-Ogni nuova tabella segue il pattern già stabilito in `002_rls.sql`.
+Every new table follows the pattern already established in `002_rls.sql`.
 
 ```sql
 alter table public.expense_categories enable row level security;
 
--- Preset di sistema in sola lettura + categorie del proprio nucleo
+-- System presets read-only + own household's categories
 create policy "expense_categories: read system or own"
   on public.expense_categories for select
   using (couple_id is null or couple_id = public.get_couple_id());
@@ -501,29 +501,29 @@ create policy "expense_categories: update own couple"
   with check (couple_id = public.get_couple_id());
 ```
 
-Analogamente per `household_members`, `recurring_expenses`, `budget_periods`, `goal_contributions`, `settlements` (tutte `for all using (couple_id = public.get_couple_id())`), e `expense_shares` con controllo via `exists` sulla spesa collegata — stesso pattern di `recipe_ingredients`.
+Likewise for `household_members`, `recurring_expenses`, `budget_periods`, `goal_contributions`, `settlements` (all `for all using (couple_id = public.get_couple_id())`), and `expense_shares` with an `exists` check against the linked expense — the same pattern as `recipe_ingredients`.
 
-**Ruoli.** `member_role` è applicato a livello di RPC, non di RLS: un `VIEWER` può leggere ma le RPC di scrittura rifiutano con `raise exception` se il chiamante ha ruolo `VIEWER`. Motivazione in [`report.md` §4.7](./report.md#47-ruoli-applicati-nelle-rpc-non-nelle-rls).
+**Roles.** `member_role` is enforced at the RPC level, not in RLS: a `VIEWER` can read, but write RPCs reject with `raise exception` when the caller has the `VIEWER` role. Reasoning in [`report.md` §4.7](./report.md#47-roles-enforced-in-rpcs-not-in-rls).
 
-**Realtime.** Aggiungere alla publication: `budgets`, `budget_periods`, `expense_categories`, `recurring_expenses`, `financial_goals`, `goal_contributions`, `settlements`, `household_members`. (`expenses` è già presente.)
+**Realtime.** Add to the publication: `budgets`, `budget_periods`, `expense_categories`, `recurring_expenses`, `financial_goals`, `goal_contributions`, `settlements`, `household_members`. (`expenses` is already there.)
 
 ---
 
-## 6. Migrazione dei dati esistenti
+## 6. Migrating existing data
 
-Il rischio principale: `expenses.category` è testo libero e nel codice convivono **due vocabolari incompatibili**.
+The main risk: `expenses.category` is free text, and **two incompatible vocabularies** coexist in the code.
 
-- `packages/shared/src/index.ts` esporta `EXPENSE_CATEGORIES` = `["Affitto", "Bollette", "Spesa", …]` — **non importata da nessun componente**.
-- `ExpensesTab.tsx` e `BudgetTab.tsx` definiscono ciascuno il proprio array locale `CATEGORIES` = `["casa", "cibo", "trasporti", "intrattenimento", "salute", "altro"]`.
+- `packages/shared/src/index.ts` exports `EXPENSE_CATEGORIES` = `["Affitto", "Bollette", "Spesa", …]` — **imported by no component**.
+- `ExpensesTab.tsx` and `BudgetTab.tsx` each define their own local array `CATEGORIES` = `["casa", "cibo", "trasporti", "intrattenimento", "salute", "altro"]`.
 
-I dati reali contengono quindi valori del secondo vocabolario, e potenzialmente del primo.
+Real data therefore holds values from the second vocabulary, and potentially from the first. (The historical values below are Italian because that is what is stored in the database today.)
 
-**Procedura (migrazione `008`):**
+**Procedure (migration `008`):**
 
-1. Crea le categorie di sistema e clonale per ogni nucleo esistente.
-2. Applica una tabella di mapping esplicita:
+1. Create the system categories and clone them for every existing household.
+2. Apply an explicit mapping table:
 
-   | valore storico | slug di destinazione |
+   | historical value | target slug |
    |---|---|
    | `casa` | `home` |
    | `cibo` | `groceries` |
@@ -540,40 +540,40 @@ I dati reali contengono quindi valori del secondo vocabolario, e potenzialmente 
    | `Intrattenimento` | `entertainment` |
    | `Altro` | `other` |
 
-3. Qualsiasi valore non mappato genera una categoria del nucleo con `label` = valore originale, `slug` = versione slugificata, `kind = 'VARIABLE'`. **Nessun dato viene perso o riassegnato ad "Altro" arbitrariamente.**
-4. Crea una riga `household_members` per ogni utente con `couple_id` non nullo, `display_name = coalesce(users.name, email)`, `monthly_income = users.salary`, ruolo `OWNER` al primo membro creato del nucleo.
-5. Popola `expenses.paid_by_member_id` dal `paid_by_id`, `expenses.period_key` da `date`.
-6. Crea un `budget_periods` per ogni combinazione distinta `(couple_id, month, year)` presente in `budgets` e collega le righe.
-7. Verifica finale: `select count(*) from expenses where category_id is null` deve restituire 0. La migrazione fallisce in transazione se non è così.
+3. Any unmapped value produces a household category with `label` = the original value, `slug` = a slugified version, `kind = 'VARIABLE'`. **No data is lost or arbitrarily reassigned to "Other".**
+4. Create a `household_members` row for every user with a non-null `couple_id`, `display_name = coalesce(users.name, email)`, `monthly_income = users.salary`, role `OWNER` for the household's first created member.
+5. Populate `expenses.paid_by_member_id` from `paid_by_id`, and `expenses.period_key` from `date`.
+6. Create one `budget_periods` row per distinct `(couple_id, month, year)` present in `budgets` and link the rows.
+7. Final check: `select count(*) from expenses where category_id is null` must return 0. The migration fails inside its transaction if it does not.
 
-Le colonne legacy `expenses.category` e `expenses.paid_by_id` restano popolate dai trigger fino alla Fase 6, così i componenti attuali continuano a funzionare durante tutta la transizione.
+The legacy `expenses.category` and `expenses.paid_by_id` columns stay populated by triggers until Phase 7, so the current components keep working throughout the transition.
 
 ---
 
-## 7. Interfaccia mobile
+## 7. Mobile interface
 
-### 7.1 Struttura
+### 7.1 Structure
 
-Il tab Finanze passa da 3 a 4 sezioni. `app/(app)/finance/index.tsx` mantiene il segmented control esistente:
+The Finance tab grows from 3 to 4 sections. `app/(app)/finance/index.tsx` keeps its existing segmented control:
 
 ```
 app/(app)/finance/
-├── index.tsx              # Segmented control: Spese · Budget · Statistiche · Obiettivi
-├── categories.tsx         # Gestione categorie (push da Budget)
-├── recurring.tsx          # Gestione spese fisse (push da Budget)
-├── members.tsx            # Membri del nucleo e regola di divisione
-└── settle.tsx             # Pareggio dei conti (push da Spese)
+├── index.tsx              # Segmented control: Expenses · Budget · Statistics · Goals
+├── categories.tsx         # Category management (pushed from Budget)
+├── recurring.tsx          # Fixed-expense management (pushed from Budget)
+├── members.tsx            # Household members and split rule
+└── settle.tsx             # Settling up (pushed from Expenses)
 ```
 
 ```
 components/finance/
-├── ExpensesTab.tsx        # esistente — rifattorizzato su RPC
-├── BudgetTab.tsx          # esistente — rifattorizzato su get_budget_overview
-├── StatsTab.tsx           # nuovo
-├── GoalsTab.tsx           # esistente — esteso con allocazione mensile
-├── CategoryPicker.tsx     # nuovo — selettore condiviso, sostituisce i 3 array hardcoded
+├── ExpensesTab.tsx        # existing — refactored onto RPCs
+├── BudgetTab.tsx          # existing — refactored onto get_budget_overview
+├── StatsTab.tsx           # new
+├── GoalsTab.tsx           # existing — extended with monthly allocation
+├── CategoryPicker.tsx     # new — the single picker, replacing the 3 hardcoded arrays
 ├── CategoryChip.tsx
-├── ExpenseSheet.tsx       # bottom sheet crea/modifica spesa
+├── ExpenseSheet.tsx       # create/edit expense bottom sheet
 ├── RecurringCard.tsx
 ├── PendingRecurringBanner.tsx
 ├── BudgetLineRow.tsx
@@ -588,72 +588,72 @@ components/finance/
     └── BudgetGauge.tsx
 ```
 
-### 7.2 Schermata Budget
+### 7.2 Budget screen
 
 ```
 ┌─────────────────────────────────────┐
-│  ‹ Agosto 2026 ›            ⚙️      │  navigazione tra mesi
+│  ‹ August 2026 ›            ⚙️      │  month navigation
 ├─────────────────────────────────────┤
-│  Entrate previste      3.200,00 €   │
-│  Pianificato           2.850,00 €   │
-│  Speso                 1.940,50 €   │
+│  Expected income       € 3,200.00   │
+│  Planned               € 2,850.00   │
+│  Spent                 € 1,940.50   │
 │  ████████████░░░░░░░  68%           │
-│  Disponibile             350,00 €   │
+│  Available               € 350.00   │
 ├─────────────────────────────────────┤
-│  FISSE                  980,00 €    │
-│  🏠 Affitto      800 / 800    100%  │
-│  💡 Bollette     180 / 200     90%  │
+│  FIXED                   € 980.00   │
+│  🏠 Rent         800 / 800    100%  │
+│  💡 Utilities    180 / 200     90%  │
 │                                     │
-│  VARIABILI            1.520,00 €    │
-│  🛒 Spesa        480 / 500  ▓▓▓░ 96%│
-│  🍕 Ristoranti   210 / 150  ▓▓▓▓ ⚠ │
-│  🚗 Trasporti     95 / 120  ▓▓░░ 79%│
+│  VARIABLE              € 1,520.00   │
+│  🛒 Groceries    480 / 500  ▓▓▓░ 96%│
+│  🍕 Eating out   210 / 150  ▓▓▓▓ ⚠ │
+│  🚗 Transport     95 / 120  ▓▓░░ 79%│
 │                                     │
-│  OBIETTIVI              350,00 €    │
-│  🏝️ Bali          200 /mese  ✓      │
-│  🚗 Auto nuova    150 /mese  ✓      │
+│  GOALS                   € 350.00   │
+│  🏝️ Bali          200 /month ✓      │
+│  🚗 New car       150 /month ✓      │
 └─────────────────────────────────────┘
 ```
 
-Interazioni: tap su riga → modifica importo; long-press → rimuovi budget; `⚙️` → categorie, spese fisse, membri, regola di divisione; swipe orizzontale o frecce → cambio mese; azione "Copia dal mese precedente" quando il periodo è vuoto.
+Interactions: tap a row → edit the amount; long-press → remove the budget; `⚙️` → categories, fixed expenses, members, split rule; horizontal swipe or arrows → change month; a "Copy from previous month" action when the period is empty.
 
-### 7.3 Schermata Statistiche
+### 7.3 Statistics screen
 
-Selettore di intervallo (mese corrente · 3 mesi · 6 mesi · anno · personalizzato), poi:
+A range picker (current month · 3 months · 6 months · year · custom), then:
 
-1. **Donut per categoria** con legenda e percentuali, tap su spicchio → dettaglio categoria
-2. **Top 5 categorie** con variazione rispetto al periodo precedente (`↑ +12%`)
-3. **Trend mensile** — linea con tre serie: totale, fisse, variabili
-4. **Confronto mese su mese** — barre affiancate
-5. **Fisse vs variabili** — barra impilata con percentuale di spesa incomprimibile
-6. **Aderenza al budget** — quanti mesi chiusi in budget su quelli osservati
-7. **Chi ha pagato** — ripartizione per membro e saldo corrente
+1. **Category donut** with legend and percentages; tap a slice → category detail
+2. **Top 5 categories** with change versus the previous period (`↑ +12%`)
+3. **Monthly trend** — a line chart with three series: total, fixed, variable
+4. **Month-over-month comparison** — side-by-side bars
+5. **Fixed vs variable** — stacked bar with the share of non-negotiable spend
+6. **Budget adherence** — how many closed months came in under budget
+7. **Who paid** — breakdown per member and current balance
 
-### 7.4 Aggiunta rapida di una spesa
+### 7.4 Quick expense entry
 
-Il percorso più frequente dell'app, ottimizzato per la velocità:
+The app's most frequent path, optimised for speed:
 
-- FAB → bottom sheet con tastierino numerico aperto e focus sull'importo
-- Categoria: chip in riga singola scorrevole, **ordinati per frequenza d'uso recente** del nucleo
-- "Pagato da": default sull'utente corrente, avatar dei membri in riga
-- Data: default oggi, con scorciatoie "Ieri" / selettore
-- Nota: opzionale, ultimo campo
-- **Un solo tap obbligatorio oltre all'importo** (la categoria); tutto il resto ha default sensati
+- FAB → bottom sheet with the numeric keypad open and focus on the amount
+- Category: chips in a single scrollable row, **ordered by the household's recent usage frequency**
+- "Paid by": defaults to the current user, member avatars in a row
+- Date: defaults to today, with a "Yesterday" shortcut and a picker
+- Note: optional, last field
+- **Exactly one required tap beyond the amount** (the category); everything else has a sensible default
 
-### 7.5 Stati dell'interfaccia
+### 7.5 Interface states
 
-| Stato | Trattamento |
+| State | Treatment |
 |---|---|
-| Loading | Skeleton loader, mai spinner su contenuto strutturato |
-| Vuoto — nessuna spesa | Illustrazione + CTA "Aggiungi la prima spesa" |
-| Vuoto — nessun budget | CTA doppia: "Crea budget" / "Copia dal mese scorso" |
-| Budget oltre l'80% | Riga ambra |
-| Budget sforato | Riga rossa, barra piena, badge di eccedenza |
-| Ricorrente da confermare | Banner in cima alla lista spese con conferma inline |
-| Obiettivo raggiunto | Card con coriandoli e CTA "Segna come completato" |
-| Errore di rete | Toast + retry, dati in cache restano visibili |
+| Loading | Skeleton loader, never a spinner over structured content |
+| Empty — no expenses | Illustration + CTA "Add your first expense" |
+| Empty — no budget | Two CTAs: "Create budget" / "Copy from last month" |
+| Budget above 80% | Amber row |
+| Budget exceeded | Red row, full bar, excess badge |
+| Recurring to confirm | Banner at the top of the expense list with inline confirmation |
+| Goal reached | Card with confetti and a "Mark as complete" CTA |
+| Network error | Toast + retry; cached data stays visible |
 
-### 7.6 Chiavi TanStack Query
+### 7.6 TanStack Query keys
 
 ```ts
 ['finance', 'overview', coupleId, periodKey]
@@ -666,19 +666,19 @@ Il percorso più frequente dell'app, ottimizzato per la velocità:
 ['finance', 'members', coupleId]
 ```
 
-`staleTime`: 5 minuti per liste e statistiche, 1 minuto per l'overview del budget. Invalidazione a cascata su mutazione di spesa: `overview`, `expenses`, `stats`, `balances`.
+`staleTime`: 5 minutes for lists and statistics, 1 minute for the budget overview. Cascading invalidation on an expense mutation: `overview`, `expenses`, `stats`, `balances`.
 
-Ottimistic update su: aggiunta spesa, conferma ricorrente, modifica importo di budget.
+Optimistic updates on: adding an expense, confirming a recurring expense, editing a budget amount.
 
 ---
 
-## 8. Schemi condivisi
+## 8. Shared schemas
 
-Nuovi file in `packages/shared/src/`, rispettando il pattern esistente (uno schema per file, named export, ri-esportati da `index.ts`):
+New files in `packages/shared/src/`, following the existing pattern (one schema per file, named exports, re-exported from `index.ts`):
 
 ```ts
 export const CreateCategorySchema = z.object({
-  label: z.string().min(1, "Il nome è obbligatorio").max(60),
+  label: z.string().min(1, "Name is required").max(60),
   emoji: z.string().max(8).optional(),
   color: z.string().regex(/^#[0-9a-f]{6}$/i).optional(),
   kind: z.enum(["FIXED", "VARIABLE"]).default("VARIABLE"),
@@ -686,7 +686,7 @@ export const CreateCategorySchema = z.object({
 
 export const CreateRecurringExpenseSchema = z.object({
   label: z.string().min(1).max(120),
-  amount: z.number().positive("L'importo deve essere positivo"),
+  amount: z.number().positive("Amount must be positive"),
   category_id: z.string().uuid(),
   paid_by_member_id: z.string().uuid().optional(),
   frequency: z.enum(["WEEKLY","MONTHLY","BIMONTHLY","QUARTERLY","SEMIANNUAL","ANNUAL"]).default("MONTHLY"),
@@ -697,80 +697,82 @@ export const CreateRecurringExpenseSchema = z.object({
   variable_amount: z.boolean().default(false),
 });
 
-export const CreateGoalSchema = z.object({           // esteso
-  title: z.string().min(1, "Il titolo è obbligatorio").max(200),
-  target_amount: z.number().positive("L'obiettivo deve essere positivo"),
+export const CreateGoalSchema = z.object({           // extended
+  title: z.string().min(1, "Title is required").max(200),
+  target_amount: z.number().positive("Target must be positive"),
   target_date: z.string().optional(),
   monthly_allocation: z.number().min(0).default(0),
   emoji: z.string().max(8).optional(),
 });
 ```
 
-`EXPENSE_CATEGORIES` viene **deprecato** e sostituito da `DEFAULT_EXPENSE_CATEGORIES` (i 12 preset con slug, label, emoji, kind), usato solo per il seeding e come fallback offline.
+`EXPENSE_CATEGORIES` is **deprecated** and replaced by `DEFAULT_EXPENSE_CATEGORIES` (the 12 presets with slug, label, emoji, kind), used only for seeding and as an offline fallback.
+
+> Validation messages and category labels are written here in English. The shipping app is Italian, so these strings pass through the localisation layer; the English text is the source copy, not what the user reads.
 
 ---
 
-## 9. Notifiche
+## 9. Notifications
 
-Il trigger `notify_partner()` in `005_notifications.sql` seleziona **un solo** destinatario (`limit 1`) — corretto per due partner, sbagliato per N membri. Va generalizzato a un `insert … select` su tutti i membri diversi dall'attore.
+The `notify_partner()` trigger in `005_notifications.sql` selects **a single** recipient (`limit 1`) — correct for two partners, wrong for N members. It must be generalised to an `insert … select` across all members other than the actor.
 
-Nuovi eventi:
+New events:
 
-| Evento | Destinatari | Testo |
+| Event | Recipients | Copy |
 |---|---|---|
-| Budget all'80% | Tutti i membri | "Budget Spesa: 80% consumato, restano 100 €" |
-| Budget superato | Tutti i membri | "Budget Ristoranti superato di 60 €" |
-| Ricorrente registrata | Tutti i membri | "Affitto — 800 € registrati automaticamente" |
-| Ricorrente da confermare | Tutti i membri | "Bolletta luce: conferma l'importo di questo mese" |
-| Obiettivo raggiunto | Tutti i membri | "🏝️ Vacanza a Bali: obiettivo raggiunto!" |
-| Promemoria chiusura mese | Tutti i membri | "Il budget di agosto si chiude domani" |
+| Budget at 80% | All members | "Groceries budget: 80% used, €100 left" |
+| Budget exceeded | All members | "Eating out budget exceeded by €60" |
+| Recurring posted | All members | "Rent — €800 recorded automatically" |
+| Recurring to confirm | All members | "Electricity bill: confirm this month's amount" |
+| Goal reached | All members | "🏝️ Bali trip: goal reached!" |
+| Month-close reminder | All members | "The August budget closes tomorrow" |
 
-Le soglie di budget sono valutate da trigger `after insert on expenses`, con guardia anti-ripetizione: la notifica di soglia viene emessa una sola volta per `(budget_period_id, category_id, soglia)`.
+Budget thresholds are evaluated by an `after insert on expenses` trigger, with an anti-repeat guard: a threshold notification is emitted only once per `(budget_period_id, category_id, threshold)`.
 
 ---
 
-## 10. Requisiti non funzionali
+## 10. Non-functional requirements
 
-| Requisito | Target |
+| Requirement | Target |
 |---|---|
-| Apertura tab Finanze (dati in cache) | < 300 ms al primo frame |
-| `get_budget_overview` | < 150 ms a 5.000 spese |
-| Salvataggio spesa (ottimistico) | Feedback immediato, conferma < 1 s |
-| Precisione monetaria | Errore zero: aritmetica `numeric` in SQL, centesimi interi negli split |
-| Funzionamento offline | Lettura da cache persistita; scritture in coda con retry |
-| Idempotenza ricorrenti | Garantita da indice unico, non da logica applicativa |
-| Isolamento tra nuclei | RLS su ogni tabella, verificata da test dedicati |
-| Accessibilità | Contrasto AA; l'informazione non è mai veicolata dal solo colore (sempre affiancata da testo o icona) |
-| Localizzazione | Testi italiani in costanti; formattazione valuta via `Intl.NumberFormat('it-IT')` |
+| Finance tab open (cached data) | < 300 ms to first frame |
+| `get_budget_overview` | < 150 ms at 5,000 expenses |
+| Expense save (optimistic) | Immediate feedback, confirmation < 1 s |
+| Monetary precision | Zero error: `numeric` arithmetic in SQL, integer cents in splits |
+| Offline behaviour | Reads from the persisted cache; writes queued with retry |
+| Recurring idempotency | Guaranteed by a unique index, not by application logic |
+| Isolation between households | RLS on every table, verified by dedicated tests |
+| Accessibility | AA contrast; information is never carried by colour alone (always paired with text or an icon) |
+| Localisation | User-facing strings kept in constants; currency formatted via `Intl.NumberFormat('it-IT')` |
 
 ---
 
-## 11. Test
+## 11. Tests
 
-I test sono richiesti **solo** dove un errore produce numeri sbagliati senza essere visibile:
+Tests are required **only** where an error produces wrong numbers without being visible:
 
-1. **`split_expense_cents`** — la somma delle quote uguaglia sempre il totale, per ogni N da 1 a 10 e ogni modalità di split
-2. **Rollover** — un residuo positivo e uno negativo si propagano correttamente al periodo successivo
-3. **Idempotenza ricorrenti** — `post_due_recurring` eseguita tre volte produce una sola spesa
-4. **Min cash flow** — i saldi risultanti sono tutti nulli e i trasferimenti sono al massimo N−1
-5. **RLS** — un utente del nucleo A non legge né scrive nulla del nucleo B (una asserzione per tabella)
-6. **Migrazione** — su un dump con entrambi i vocabolari di categoria, nessuna spesa resta orfana
+1. **`split_expense_cents`** — shares always sum to the total, for every N from 1 to 10 and every split mode
+2. **Rollover** — a positive and a negative remainder both propagate correctly to the next period
+3. **Recurring idempotency** — `post_due_recurring` run three times produces one expense
+4. **Min cash flow** — resulting balances are all zero and transfers are at most N−1
+5. **RLS** — a user of household A can neither read nor write anything of household B (one assertion per table)
+6. **Migration** — on a dump containing both category vocabularies, no expense is left orphaned
 
-Test SQL con `pgTAP` o script di verifica eseguiti sul database di staging.
+SQL tests with `pgTAP`, or verification scripts run against the staging database.
 
 ---
 
-## 12. Glossario
+## 12. Glossary
 
-| Termine | Significato |
+| Term | Meaning |
 |---|---|
-| **Nucleo** (household) | L'insieme delle persone che condividono il budget. Identificato da `couple_id`. |
-| **Membro** | Partecipante alle spese. Può avere un account (`user_id`) o essere solo un'entità contabile. |
-| **Periodo** | Un mese di budget, identificato da `period_key` (il giorno 1 del mese). |
-| **Spesa fissa** | Spesa ricorrente prevedibile, definita in `recurring_expenses` e materializzata in `expenses`. |
-| **Spesa variabile** | Spesa inserita manualmente. |
-| **Rollover** | Riporto del residuo di budget di una categoria al periodo successivo. |
-| **Quota** (share) | Parte di una spesa attribuita a un membro. |
-| **Saldo** (balance) | Differenza tra quanto un membro ha pagato e quanto doveva. |
-| **Pareggio** (settlement) | Trasferimento di denaro che riduce un saldo. |
-| **Allocazione** | Quota mensile di budget destinata a un obiettivo di risparmio. |
+| **Household** | The set of people sharing the budget. Identified by `couple_id`. |
+| **Member** | A participant in expenses. May have an account (`user_id`) or be purely an accounting entity. |
+| **Period** | A budget month, identified by `period_key` (the 1st of the month). |
+| **Fixed expense** | A predictable recurring expense, defined in `recurring_expenses` and materialised into `expenses`. |
+| **Variable expense** | A manually entered expense. |
+| **Rollover** | Carrying a category's budget remainder into the next period. |
+| **Share** | The portion of an expense attributed to a member. |
+| **Balance** | The difference between what a member paid and what they owed. |
+| **Settlement** | A money transfer that reduces a balance. |
+| **Allocation** | The monthly share of budget assigned to a savings goal. |
