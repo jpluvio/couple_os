@@ -1,4 +1,6 @@
-import { View, Text, Pressable, Alert } from "react-native";
+import { View, Text, Pressable} from "react-native";
+import { showAlert } from "@/lib/alert";
+import { SwipeToDelete } from "@/components/ui/SwipeToDelete";
 import Animated, { useSharedValue, withTiming, useAnimatedStyle } from "react-native-reanimated";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -69,16 +71,14 @@ export function TodoItem({ item, currentUserId, queryKey }: TodoItemProps) {
     queryClient.invalidateQueries({ queryKey });
   }
 
+  async function deleteItem() {
+    await supabase.from("todo_items").delete().eq("id", item.id);
+    queryClient.invalidateQueries({ queryKey });
+  }
+
   function handleLongPress() {
-    Alert.alert(item.title, undefined, [
-      {
-        text: "🗑️ Elimina",
-        style: "destructive",
-        onPress: async () => {
-          await supabase.from("todo_items").delete().eq("id", item.id);
-          queryClient.invalidateQueries({ queryKey });
-        },
-      },
+    showAlert(item.title, undefined, [
+      { text: "🗑️ Elimina", style: "destructive", onPress: deleteItem },
       { text: "Annulla", style: "cancel" },
     ]);
   }
@@ -86,6 +86,7 @@ export function TodoItem({ item, currentUserId, queryKey }: TodoItemProps) {
   const isOverdue = item.deadline && !isDone && new Date(item.deadline) < new Date();
 
   return (
+    <SwipeToDelete onDelete={deleteItem} confirmTitle="Eliminare il task?" confirmMessage={item.title}>
     <Pressable onLongPress={handleLongPress} onPress={toggleDone}>
       <Animated.View
         style={animStyle}
@@ -122,5 +123,6 @@ export function TodoItem({ item, currentUserId, queryKey }: TodoItemProps) {
         </View>
       </Animated.View>
     </Pressable>
+    </SwipeToDelete>
   );
 }

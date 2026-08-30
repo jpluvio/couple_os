@@ -8,13 +8,14 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
+import { showAlert } from "@/lib/alert";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { SkeletonRowList } from "@/components/ui/Skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useCouple } from "@/hooks/useCouple";
 import { TodoItem, type TodoItemType } from "@/components/todo/TodoItem";
@@ -105,7 +106,7 @@ export default function TodoScreen() {
       setListEmoji("📝");
       setShowCreateList(false);
     } catch {
-      Alert.alert("Errore", "Impossibile creare la lista.");
+      showAlert("Errore", "Impossibile creare la lista.");
     } finally {
       setListLoading(false);
     }
@@ -126,14 +127,14 @@ export default function TodoScreen() {
       setItemPriority("MEDIUM");
       setShowCreateItem(false);
     } catch {
-      Alert.alert("Errore", "Impossibile aggiungere il task.");
+      showAlert("Errore", "Impossibile aggiungere il task.");
     } finally {
       setItemLoading(false);
     }
   }
 
   async function deleteList(listId: string) {
-    Alert.alert("Elimina lista", "Elimina la lista e tutti i task? Non è reversibile.", [
+    showAlert("Elimina lista", "Elimina la lista e tutti i task? Non è reversibile.", [
       { text: "Annulla", style: "cancel" },
       {
         text: "Elimina",
@@ -219,7 +220,9 @@ export default function TodoScreen() {
             <RefreshControl refreshing={itemsLoading} onRefresh={refetchItems} tintColor="#22c55e" />
           }
         >
-          {(items ?? []).length === 0 && !itemsLoading ? (
+          {itemsLoading && (items ?? []).length === 0 ? (
+            <SkeletonRowList count={5} />
+          ) : (items ?? []).length === 0 ? (
             <View className="items-center py-16 px-8">
               <Text className="text-4xl mb-3">✅</Text>
               <Text className="text-base font-semibold text-gray-700 text-center">Lista vuota</Text>

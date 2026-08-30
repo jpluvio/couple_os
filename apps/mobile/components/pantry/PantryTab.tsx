@@ -8,12 +8,14 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
+import { showAlert } from "@/lib/alert";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { SkeletonRowList } from "@/components/ui/Skeleton";
+import { SwipeToDelete } from "@/components/ui/SwipeToDelete";
 import { useCouple } from "@/hooks/useCouple";
 import type { PantryCategory } from "@/types/database";
 
@@ -96,7 +98,7 @@ export function PantryTab() {
       resetForm();
       setShowAdd(false);
     } catch {
-      Alert.alert("Errore", "Impossibile aggiungere il prodotto.");
+      showAlert("Errore", "Impossibile aggiungere il prodotto.");
     } finally {
       setLoading(false);
     }
@@ -110,16 +112,14 @@ export function PantryTab() {
     setCategory("PANTRY");
   }
 
+  async function deleteItem(id: string) {
+    await supabase.from("pantry_items").delete().eq("id", id);
+    queryClient.invalidateQueries({ queryKey: qKey });
+  }
+
   function handleLongPress(item: PantryItem) {
-    Alert.alert(item.name, undefined, [
-      {
-        text: "🗑️ Elimina",
-        style: "destructive",
-        onPress: async () => {
-          await supabase.from("pantry_items").delete().eq("id", item.id);
-          queryClient.invalidateQueries({ queryKey: qKey });
-        },
-      },
+    showAlert(item.name, undefined, [
+      { text: "🗑️ Elimina", style: "destructive", onPress: () => deleteItem(item.id) },
       { text: "Annulla", style: "cancel" },
     ]);
   }
@@ -138,7 +138,9 @@ export function PantryTab() {
           <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#f97316" />
         }
       >
-        {grouped.length === 0 && !isLoading ? (
+        {isLoading && grouped.length === 0 ? (
+          <SkeletonRowList count={5} />
+        ) : grouped.length === 0 ? (
           <View className="items-center py-20 px-8">
             <Text className="text-5xl mb-4">🛒</Text>
             <Text className="text-base font-semibold text-gray-700 text-center">Dispensa vuota</Text>
@@ -159,8 +161,13 @@ export function PantryTab() {
               {group.items.map((item) => {
                 const expiry = item.expires_at ? formatExpiry(item.expires_at) : null;
                 return (
-                  <Pressable
+                  <SwipeToDelete
                     key={item.id}
+                    onDelete={() => deleteItem(item.id)}
+                    confirmTitle="Eliminare il prodotto?"
+                    confirmMessage={item.name}
+                  >
+                  <Pressable
                     onLongPress={() => handleLongPress(item)}
                     className="bg-white mx-4 mb-2 rounded-xl px-4 py-3 flex-row items-center justify-between"
                   >
@@ -182,6 +189,7 @@ export function PantryTab() {
                       )}
                     </View>
                   </Pressable>
+                  </SwipeToDelete>
                 );
               })}
             </View>

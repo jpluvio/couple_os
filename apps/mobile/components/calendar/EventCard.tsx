@@ -1,4 +1,6 @@
-import { View, Text, Pressable, Alert } from "react-native";
+import { View, Text, Pressable} from "react-native";
+import { showAlert } from "@/lib/alert";
+import { SwipeToDelete } from "@/components/ui/SwipeToDelete";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
@@ -31,30 +33,20 @@ export function EventCard({ event, currentUserId, queryKey, partnerColor }: Even
   const isOwn = event.creator_id === currentUserId;
   const dotColor = isOwn ? "#0e82ea" : partnerColor;
 
+  async function deleteEvent() {
+    await supabase.from("events").delete().eq("id", event.id);
+    queryClient.invalidateQueries({ queryKey });
+  }
+
   function handleLongPress() {
     if (!isOwn) return;
-    Alert.alert(event.title, undefined, [
-      {
-        text: "🗑️ Elimina",
-        style: "destructive",
-        onPress: () =>
-          Alert.alert("Elimina evento", "Sei sicuro?", [
-            { text: "Annulla", style: "cancel" },
-            {
-              text: "Elimina",
-              style: "destructive",
-              onPress: async () => {
-                await supabase.from("events").delete().eq("id", event.id);
-                queryClient.invalidateQueries({ queryKey });
-              },
-            },
-          ]),
-      },
+    showAlert(event.title, undefined, [
+      { text: "🗑️ Elimina", style: "destructive", onPress: deleteEvent },
       { text: "Annulla", style: "cancel" },
     ]);
   }
 
-  return (
+  const card = (
     <Pressable
       onLongPress={handleLongPress}
       className="bg-white mx-4 mb-2 rounded-xl px-4 py-3 flex-row items-center"
@@ -72,5 +64,15 @@ export function EventCard({ event, currentUserId, queryKey, partnerColor }: Even
         {event.location ? <Text className="text-xs text-gray-400 mt-0.5">📍 {event.location}</Text> : null}
       </View>
     </Pressable>
+  );
+
+  // Lo swipe elimina, quindi lo espone solo chi possiede l'evento:
+  // sugli eventi del partner resterebbe un gesto che fallisce sulla RLS.
+  if (!isOwn) return card;
+
+  return (
+    <SwipeToDelete onDelete={deleteEvent} confirmTitle="Eliminare l'evento?" confirmMessage={event.title}>
+      {card}
+    </SwipeToDelete>
   );
 }

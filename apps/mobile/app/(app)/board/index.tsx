@@ -1,14 +1,16 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { View, Text, RefreshControl, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useTableSubscription } from "@/lib/realtime";
 import { useAuth } from "@/hooks/useAuth";
 import { useCouple } from "@/hooks/useCouple";
 import { PostCard, type PostWithRelations } from "@/components/board/PostCard";
 import { CreatePostModal } from "@/components/board/CreatePostModal";
 import { NotificationBell } from "@/components/ui/NotificationBell";
+import { SkeletonCardList } from "@/components/ui/Skeleton";
 
 const QUERY_KEY = (coupleId: string) => ["posts", coupleId];
 
@@ -37,26 +39,15 @@ export default function BoardScreen() {
     },
   });
 
-  // Real-time subscription
-  useEffect(() => {
-    if (!coupleId) return;
-
-    const channel = supabase
-      .channel(`board-${coupleId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "posts", filter: `couple_id=eq.${coupleId}` },
-        () => { queryClient.invalidateQueries({ queryKey: qKey }); }
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "reactions" },
-        () => { queryClient.invalidateQueries({ queryKey: qKey }); }
-      )
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
-  }, [coupleId]);
+  // Real-time: i post della coppia e le reaction (che non hanno couple_id).
+  useTableSubscription(
+    coupleId ? `board-${coupleId}` : null,
+    [
+      { table: "posts", filter: `couple_id=eq.${coupleId}` },
+      { table: "reactions" },
+    ],
+    () => queryClient.invalidateQueries({ queryKey: qKey })
+  );
 
   if (!user || !couple) return null;
 
@@ -83,7 +74,9 @@ export default function BoardScreen() {
           <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#0e82ea" />
         }
         ListEmptyComponent={
-          !isLoading ? (
+          isLoading ? (
+            <SkeletonCardList count={4} showAvatar />
+          ) : (
             <View className="items-center justify-center py-24 px-8">
               <Text className="text-5xl mb-4">📋</Text>
               <Text className="text-lg font-semibold text-gray-700 text-center">
@@ -93,7 +86,7 @@ export default function BoardScreen() {
                 Sii il primo a condividere qualcosa con il tuo partner!
               </Text>
             </View>
-          ) : null
+          )
         }
       />
 

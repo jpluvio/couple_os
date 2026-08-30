@@ -9,6 +9,7 @@ import { MemoryCard } from "@/components/memories/MemoryCard";
 import { CreateMemoryModal } from "@/components/memories/CreateMemoryModal";
 import { MemoryDetailModal } from "@/components/memories/MemoryDetailModal";
 import { NotificationBell } from "@/components/ui/NotificationBell";
+import { SkeletonCardList } from "@/components/ui/Skeleton";
 
 export default function MemoriesScreen() {
   const { user } = useAuth();
@@ -44,7 +45,9 @@ export default function MemoriesScreen() {
           <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#0e82ea" />
         }
         ListEmptyComponent={
-          !isLoading ? (
+          isLoading ? (
+            <SkeletonCardList count={3} />
+          ) : (
             <View className="items-center justify-center py-24 px-8">
               <Text className="text-5xl mb-4">📸</Text>
               <Text className="text-lg font-semibold text-gray-700 text-center">
@@ -54,7 +57,7 @@ export default function MemoriesScreen() {
                 Salvate insieme i vostri momenti più belli!
               </Text>
             </View>
-          ) : null
+          )
         }
       />
 
