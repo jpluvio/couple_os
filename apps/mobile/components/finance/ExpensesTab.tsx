@@ -8,27 +8,21 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
+import { showAlert } from "@/lib/alert";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useCouple } from "@/hooks/useCouple";
 import { useAuth } from "@/hooks/useAuth";
+import { EXPENSE_CATEGORIES, categoryInfo } from "@/constants/finance";
 import type { Expense, SplitMode } from "@/types/database";
 
-const CATEGORIES: { value: string; label: string; emoji: string }[] = [
-  { value: "casa", label: "Casa", emoji: "🏠" },
-  { value: "cibo", label: "Cibo", emoji: "🍕" },
-  { value: "trasporti", label: "Trasporti", emoji: "🚗" },
-  { value: "intrattenimento", label: "Svago", emoji: "🎉" },
-  { value: "salute", label: "Salute", emoji: "💊" },
-  { value: "altro", label: "Altro", emoji: "📦" },
-];
+const CATEGORIES = EXPENSE_CATEGORIES;
 
 function catEmoji(cat: string) {
-  return CATEGORIES.find((c) => c.value === cat)?.emoji ?? "📦";
+  return categoryInfo(cat).emoji;
 }
 
 function formatDate(dateStr: string) {
@@ -123,7 +117,7 @@ export function ExpensesTab({ partnerName, partnerSalary }: Props) {
     if (!amount.trim() || !coupleId || !user) return;
     const parsed = parseFloat(amount.replace(",", "."));
     if (isNaN(parsed) || parsed <= 0) {
-      Alert.alert("Errore", "Inserisci un importo valido.");
+      showAlert("Errore", "Inserisci un importo valido.");
       return;
     }
     setLoading(true);
@@ -141,7 +135,7 @@ export function ExpensesTab({ partnerName, partnerSalary }: Props) {
       resetForm();
       setShowAdd(false);
     } catch {
-      Alert.alert("Errore", "Impossibile aggiungere la spesa.");
+      showAlert("Errore", "Impossibile aggiungere la spesa.");
     } finally {
       setLoading(false);
     }
@@ -156,7 +150,7 @@ export function ExpensesTab({ partnerName, partnerSalary }: Props) {
   }
 
   function handleLongPress(expense: Expense) {
-    Alert.alert(
+    showAlert(
       `${catEmoji(expense.category)} ${expense.note ?? expense.category}`,
       `€${expense.amount.toFixed(2)}`,
       [

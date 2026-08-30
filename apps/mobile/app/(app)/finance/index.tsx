@@ -6,11 +6,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { ExpensesTab } from "@/components/finance/ExpensesTab";
 import { BudgetTab } from "@/components/finance/BudgetTab";
 import { GoalsTab } from "@/components/finance/GoalsTab";
+import { StatsTab } from "@/components/finance/StatsTab";
 
-type Tab = "expenses" | "budget" | "goals";
+type Tab = "expenses" | "stats" | "budget" | "goals";
 
 const TABS: { key: Tab; label: string; emoji: string }[] = [
   { key: "expenses", label: "Spese", emoji: "💸" },
+  { key: "stats", label: "Analisi", emoji: "📈" },
   { key: "budget", label: "Budget", emoji: "📊" },
   { key: "goals", label: "Obiettivi", emoji: "🎯" },
 ];
@@ -67,6 +69,7 @@ export default function FinanceScreen() {
           partnerSalary={partner?.salary ?? null}
         />
       )}
+      {activeTab === "stats" && <StatsTab />}
       {activeTab === "budget" && <BudgetTab />}
       {activeTab === "goals" && <GoalsTab />}
     </SafeAreaView>

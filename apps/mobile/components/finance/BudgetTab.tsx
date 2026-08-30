@@ -8,27 +8,19 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
+import { showAlert } from "@/lib/alert";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useCouple } from "@/hooks/useCouple";
+import { EXPENSE_CATEGORIES, categoryInfo } from "@/constants/finance";
 import type { Budget, Expense } from "@/types/database";
 
-const CATEGORIES: { value: string; label: string; emoji: string }[] = [
-  { value: "casa", label: "Casa", emoji: "🏠" },
-  { value: "cibo", label: "Cibo", emoji: "🍕" },
-  { value: "trasporti", label: "Trasporti", emoji: "🚗" },
-  { value: "intrattenimento", label: "Svago", emoji: "🎉" },
-  { value: "salute", label: "Salute", emoji: "💊" },
-  { value: "altro", label: "Altro", emoji: "📦" },
-];
+const CATEGORIES = EXPENSE_CATEGORIES;
 
-function catInfo(cat: string) {
-  return CATEGORIES.find((c) => c.value === cat) ?? { label: cat, emoji: "📦" };
-}
+const catInfo = categoryInfo;
 
 function ProgressBar({ ratio, color }: { ratio: number; color: string }) {
   const clamped = Math.min(ratio, 1);
@@ -101,7 +93,7 @@ export function BudgetTab() {
   async function saveBudget() {
     const parsed = parseFloat(budgetAmount.replace(",", "."));
     if (isNaN(parsed) || parsed <= 0) {
-      Alert.alert("Errore", "Inserisci un importo valido.");
+      showAlert("Errore", "Inserisci un importo valido.");
       return;
     }
     setLoading(true);
@@ -126,7 +118,7 @@ export function BudgetTab() {
       resetForm();
       setShowAdd(false);
     } catch {
-      Alert.alert("Errore", "Impossibile salvare il budget.");
+      showAlert("Errore", "Impossibile salvare il budget.");
     } finally {
       setLoading(false);
     }
@@ -149,7 +141,7 @@ export function BudgetTab() {
   function handleLongPress(cat: string) {
     const b = budgets?.find((b) => b.category === cat);
     if (!b) return;
-    Alert.alert("Budget", `Rimuovere il budget per ${catInfo(cat).label}?`, [
+    showAlert("Budget", `Rimuovere il budget per ${catInfo(cat).label}?`, [
       {
         text: "🗑️ Rimuovi",
         style: "destructive",
