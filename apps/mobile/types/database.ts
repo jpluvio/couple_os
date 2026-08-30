@@ -897,6 +897,7 @@ export type Database = {
         Returns: number
       }
       stock_purchased_items: { Args: { p_scadenze?: Json }; Returns: number }
+      save_recipe_ingredients: { Args: { p_recipe_id: string; p_items: Json }; Returns: number }
     }
     Enums: {
       checkin_period: "weekly" | "monthly" | "yearly"

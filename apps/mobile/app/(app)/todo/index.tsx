@@ -15,6 +15,7 @@ import { showAlert } from "@/lib/alert";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useTableSubscription } from "@/lib/realtime";
 import { SkeletonRowList } from "@/components/ui/Skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useCouple } from "@/hooks/useCouple";
@@ -73,6 +74,18 @@ export default function TodoScreen() {
 
   const activeListId = selectedListId ?? lists?.[0]?.id ?? null;
   const itemsKey = ITEMS_KEY(activeListId ?? "");
+
+  // Realtime: le liste e gli item cambiano anche dall'altra parte.
+  // `todo_items` non ha couple_id, quindi si ascolta tutta la tabella e si
+  // lascia filtrare alla RLS: arrivano solo le righe della propria coppia.
+  useTableSubscription(
+    coupleId ? `todo-${coupleId}` : null,
+    [{ table: "todo_lists", filter: `couple_id=eq.${coupleId}` }, { table: "todo_items" }],
+    () => {
+      queryClient.invalidateQueries({ queryKey: listsKey });
+      queryClient.invalidateQueries({ queryKey: itemsKey });
+    }
+  );
 
   const { data: items, isLoading: itemsLoading, refetch: refetchItems } = useQuery({
     queryKey: itemsKey,

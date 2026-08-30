@@ -12,8 +12,10 @@ import {
   RefreshControl,
 } from "react-native";
 import { showAlert } from "@/lib/alert";
+import { parseDateOnly, todayISO } from "@/lib/date";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useTableSubscription } from "@/lib/realtime";
 import { useCouple } from "@/hooks/useCouple";
 import { useAuth } from "@/hooks/useAuth";
 import { EXPENSE_CATEGORIES, categoryInfo } from "@/constants/finance";
@@ -117,7 +119,15 @@ export function ExpensesTab({ partnerName, partnerSalary }: Props) {
     if (!amount.trim() || !coupleId || !user) return;
     const parsed = parseFloat(amount.replace(",", "."));
     if (isNaN(parsed) || parsed <= 0) {
-      showAlert("Errore", "Inserisci un importo valido.");
+      showAlert("Importo non valido", "Scrivi una cifra maggiore di zero.");
+      return;
+    }
+
+    // Postgres rifiuterebbe comunque una data malformata, ma con un errore
+    // incomprensibile: meglio dirlo qui, indicando il formato atteso.
+    const dataValida = parseDateOnly(date);
+    if (!dataValida) {
+      showAlert("Data non valida", "Scrivi la data come AAAA-MM-GG, per esempio " + todayISO() + ".");
       return;
     }
     setLoading(true);
@@ -126,7 +136,7 @@ export function ExpensesTab({ partnerName, partnerSalary }: Props) {
         amount: parsed,
         category,
         note: note.trim() || null,
-        date,
+        date: dataValida,
         paid_by_id: paidByMe ? user.id : (expenses?.find((e) => e.paid_by_id !== user.id)?.paid_by_id ?? user.id),
         couple_id: coupleId,
       });
@@ -142,6 +152,13 @@ export function ExpensesTab({ partnerName, partnerSalary }: Props) {
   }
 
   function resetForm() {
+  // Realtime: il partner aggiunge qualcosa e lo vedi senza ricaricare.
+  useTableSubscription(
+    coupleId ? `expenses-${coupleId}` : null,
+    [{ table: "expenses", filter: `couple_id=eq.${coupleId}` }],
+    () => queryClient.invalidateQueries({ queryKey: qKey })
+  );
+
     setAmount("");
     setCategory("altro");
     setNote("");

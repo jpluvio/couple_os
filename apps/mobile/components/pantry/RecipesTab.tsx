@@ -6,6 +6,7 @@ import { useCouple } from "@/hooks/useCouple";
 import { showAlert } from "@/lib/alert";
 import { Card, Label, Icon, Badge, Button, Empty } from "@/components/kit";
 import { SkeletonRowList } from "@/components/ui/Skeleton";
+import { RecipeEditor } from "./RecipeEditor";
 import type { RecipeIngredient } from "@/types/database";
 
 type Recipe = {
@@ -56,6 +57,7 @@ export function RecipesTab() {
   const [porzioni, setPorzioni] = useState<Record<string, number>>({});
   const [escluse, setEscluse] = useState<Record<string, boolean>>({});
   const [invio, setInvio] = useState(false);
+  const [editor, setEditor] = useState<Recipe | null | undefined>(undefined);
 
   const { data: recipes, isLoading, refetch } = useQuery({
     queryKey: ["recipes", coupleId],
@@ -131,12 +133,26 @@ export function RecipesTab() {
   if (isLoading && !recipes) return <SkeletonRowList count={4} />;
 
   if (!recipes || recipes.length === 0) {
-    return <Empty title="Nessuna ricetta" hint="Salvane una e potrai mandarne gli ingredienti nella lista della spesa." />;
+    return (
+      <View className="flex-1">
+        <Empty
+          title="Nessuna ricetta"
+          hint="Salvane una e potrai mandarne gli ingredienti nella lista della spesa."
+        />
+        <View className="mx-6">
+          <Button icon="plus" label="Nuova ricetta" onPress={() => setEditor(null)} />
+        </View>
+        {editor !== undefined && (
+          <RecipeEditor visible onClose={() => setEditor(undefined)} recipe={editor} />
+        )}
+      </View>
+    );
   }
 
   return (
+    <View className="flex-1">
     <ScrollView
-      contentContainerStyle={{ paddingBottom: 120 }}
+      contentContainerStyle={{ paddingBottom: 140 }}
       refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#a8562e" />}
     >
       {recipes.map((r) => {
@@ -159,6 +175,12 @@ export function RecipesTab() {
               </View>
               <Icon name={on ? "chevronUp" : "chevronDown"} size={20} color="#a49a8e" />
             </Pressable>
+
+            {on && (
+              <Pressable onPress={() => setEditor(r)} className="mt-2 self-start">
+                <Text className="text-[13px] font-semibold text-accent">Modifica ricetta</Text>
+              </Pressable>
+            )}
 
             {on && (
               <View className="mt-4">
@@ -245,5 +267,19 @@ export function RecipesTab() {
         );
       })}
     </ScrollView>
+
+      <Pressable
+        onPress={() => setEditor(null)}
+        accessibilityLabel="Nuova ricetta"
+        className="absolute bottom-8 right-6 h-14 w-14 items-center justify-center rounded-full bg-accent"
+        style={{ shadowColor: "#a8562e", shadowOpacity: 0.35, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 6 }}
+      >
+        <Icon name="plus" size={24} color="#ffffff" width={2} />
+      </Pressable>
+
+      {editor !== undefined && (
+        <RecipeEditor visible onClose={() => setEditor(undefined)} recipe={editor} />
+      )}
+    </View>
   );
 }

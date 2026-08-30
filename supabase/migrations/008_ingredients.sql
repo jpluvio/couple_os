@@ -442,3 +442,115 @@ revoke execute on function public.normalize_ingredient_name(text) from public, a
 grant execute on function public.add_recipe_to_shopping_list(uuid, integer, boolean, uuid[]) to authenticated;
 grant execute on function public.stock_purchased_items(jsonb) to authenticated;
 grant execute on function public.normalize_ingredient_name(text) to authenticated;
+
+
+-- ─────────────────────────────────────────
+-- 10. Salvataggio degli ingredienti di una ricetta
+--
+-- Il client manda le righe già strutturate; qui si crea (o si ritrova)
+-- l'ingrediente in anagrafica e si riscrive l'elenco in un colpo solo.
+-- In una funzione perché il find-or-create per riga costerebbe due
+-- round trip a ingrediente, e perché la sostituzione dell'elenco deve
+-- essere atomica: a metà strada la ricetta resterebbe monca.
+--
+-- p_items: [{"name":"Melanzane","quantity_num":1,"unit":null,"quantity_text":null}, ...]
+--          L'ordine dell'array è l'ordine degli ingredienti.
+-- ─────────────────────────────────────────
+
+create or replace function public.save_recipe_ingredients(
+  p_recipe_id uuid,
+  p_items     jsonb
+)
+returns integer
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  v_couple_id uuid;
+  v_n         integer := 0;
+  elem        jsonb;
+  v_nome      text;
+  v_norm      text;
+  v_unit      text;
+  v_ing_id    uuid;
+begin
+  select couple_id into v_couple_id from public.recipes where id = p_recipe_id;
+  if v_couple_id is null then
+    raise exception 'ricetta non trovata';
+  end if;
+
+  delete from public.recipe_ingredients where recipe_id = p_recipe_id;
+
+  for elem in select * from jsonb_array_elements(coalesce(p_items, '[]'::jsonb))
+  loop
+    v_nome := trim(elem->>'name');
+    v_norm := public.normalize_ingredient_name(v_nome);
+    continue when v_norm is null;
+
+    v_unit := nullif(trim(coalesce(elem->>'unit', '')), '');
+
+    -- find-or-create in anagrafica
+    select id into v_ing_id
+      from public.ingredients
+     where couple_id = v_couple_id and name_norm = v_norm;
+
+    if v_ing_id is null then
+      insert into public.ingredients (name, name_norm, couple_id, default_unit)
+      values (v_nome, v_norm, v_couple_id, v_unit)
+      returning id into v_ing_id;
+    elsif v_unit is not null then
+      -- si impara l'unità usata più di recente, senza sovrascrivere con nulla
+      update public.ingredients set default_unit = v_unit where id = v_ing_id;
+    end if;
+
+    v_n := v_n + 1;
+
+    insert into public.recipe_ingredients
+      (recipe_id, name, ingredient_id, quantity_num, unit, quantity_text, sort_order)
+    values (
+      p_recipe_id,
+      v_nome,
+      v_ing_id,
+      nullif(elem->>'quantity_num', '')::numeric,
+      v_unit,
+      nullif(trim(coalesce(elem->>'quantity_text', '')), ''),
+      v_n
+    );
+  end loop;
+
+  return v_n;
+end;
+$$;
+
+revoke execute on function public.save_recipe_ingredients(uuid, jsonb) from public, anon;
+grant  execute on function public.save_recipe_ingredients(uuid, jsonb) to authenticated;
+
+
+-- ─────────────────────────────────────────
+-- 11. Realtime sulle tabelle che ne erano rimaste fuori
+--
+-- La publication conteneva posts, reactions, events, todo_items,
+-- shopping_items, expenses, check_ins, memories e notifications, ma non
+-- pantry_items né todo_lists: dispensa e liste non si aggiornavano da sole
+-- quando il partner le cambiava.
+-- ─────────────────────────────────────────
+
+do $$
+begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    if not exists (
+      select 1 from pg_publication_tables
+       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'pantry_items'
+    ) then
+      alter publication supabase_realtime add table public.pantry_items;
+    end if;
+
+    if not exists (
+      select 1 from pg_publication_tables
+       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'todo_lists'
+    ) then
+      alter publication supabase_realtime add table public.todo_lists;
+    end if;
+  end if;
+end $$;

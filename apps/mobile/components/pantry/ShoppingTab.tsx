@@ -16,6 +16,7 @@ import { Button } from "@/components/kit";
 import Animated, { useSharedValue, withTiming, useAnimatedStyle } from "react-native-reanimated";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useTableSubscription } from "@/lib/realtime";
 import { useCouple } from "@/hooks/useCouple";
 import type { PantryCategory } from "@/types/database";
 
@@ -205,6 +206,13 @@ export function ShoppingTab() {
   }
 
   const checkedCount = (items ?? []).filter((i) => i.checked).length;
+  // Realtime: il partner aggiunge qualcosa e lo vedi senza ricaricare.
+  useTableSubscription(
+    coupleId ? `shopping-${coupleId}` : null,
+    [{ table: "shopping_items", filter: `couple_id=eq.${coupleId}` }],
+    () => queryClient.invalidateQueries({ queryKey: qKey })
+  );
+
   const totalCount = items?.length ?? 0;
 
   return (

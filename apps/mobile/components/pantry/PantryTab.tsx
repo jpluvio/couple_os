@@ -12,8 +12,10 @@ import {
   RefreshControl,
 } from "react-native";
 import { showAlert } from "@/lib/alert";
+import { parseDateOnly, todayISO } from "@/lib/date";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useTableSubscription } from "@/lib/realtime";
 import { SkeletonRowList } from "@/components/ui/Skeleton";
 import { SwipeToDelete } from "@/components/ui/SwipeToDelete";
 import { useCouple } from "@/hooks/useCouple";
@@ -83,6 +85,14 @@ export function PantryTab() {
   });
 
   async function addItem() {
+    // Una data scritta male non deve sparire in silenzio: senza questo
+    // controllo l'utente scrive "30/06/2026" e la scadenza non viene salvata.
+    const scadenzaValida = expiresAt.trim() ? parseDateOnly(expiresAt) : null;
+    if (expiresAt.trim() && !scadenzaValida) {
+      showAlert("Data non valida", "Scrivi la scadenza come AAAA-MM-GG, per esempio " + todayISO() + ".");
+      return;
+    }
+
     if (!name.trim() || !coupleId) return;
     setLoading(true);
     try {
@@ -90,7 +100,7 @@ export function PantryTab() {
         name: name.trim(),
         quantity: quantity ? parseFloat(quantity) : null,
         unit: unit.trim() || null,
-        expires_at: expiresAt.trim() ? new Date(expiresAt.trim()).toISOString() : null,
+        expires_at: scadenzaValida,
         category,
         couple_id: coupleId,
       });
@@ -113,6 +123,13 @@ export function PantryTab() {
   }
 
   async function deleteItem(id: string) {
+  // Realtime: il partner aggiunge qualcosa e lo vedi senza ricaricare.
+  useTableSubscription(
+    coupleId ? `pantry-${coupleId}` : null,
+    [{ table: "pantry_items", filter: `couple_id=eq.${coupleId}` }],
+    () => queryClient.invalidateQueries({ queryKey: qKey })
+  );
+
     await supabase.from("pantry_items").delete().eq("id", id);
     queryClient.invalidateQueries({ queryKey: qKey });
   }
