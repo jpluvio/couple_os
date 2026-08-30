@@ -5,7 +5,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { queryClient, asyncStoragePersister } from "@/lib/queryClient";
-import { useAuth } from "@/hooks/useAuth";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useOAuthCallback } from "@/hooks/useOAuthCallback";
 
@@ -44,8 +44,10 @@ export default function RootLayout() {
           client={queryClient}
           persistOptions={{ persister: asyncStoragePersister }}
         >
-          <AuthGuard />
-          <Stack screenOptions={{ headerShown: false }} />
+          <AuthProvider>
+            <AuthGuard />
+            <Stack screenOptions={{ headerShown: false }} />
+          </AuthProvider>
         </PersistQueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

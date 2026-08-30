@@ -35,6 +35,9 @@ export function useOAuthCallback() {
         } else if (errorDescription) {
           console.warn("[auth] il provider ha risposto con un errore:", errorDescription);
         }
+      } catch (err) {
+        // Es. un lock dell'auth rubato: l'utente resta sul login, l'app non muore.
+        console.warn("[auth] callback OAuth fallita:", (err as Error)?.message ?? err);
       } finally {
         if (!cancelled) {
           cleanUrl();
