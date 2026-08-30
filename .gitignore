@@ -8,3 +8,17 @@ web-build/
 .env.local
 .DS_Store
 .claude/
+
+# Build native (rigenerate da `expo prebuild`; ios/ pesa ~1 GB)
+ios/
+android/
+
+# Deploy
+.vercel/
+
+# Materiale di lavoro non versionato
+/planning
+.env.example
+
+# Canvas di design: rigenerato da design/*.dc.html con seed-canvas
+design/couple-os-ui.html
