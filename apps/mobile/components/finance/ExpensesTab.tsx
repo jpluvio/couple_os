@@ -175,21 +175,21 @@ export function ExpensesTab({ partnerName, partnerSalary }: Props) {
     <View className="flex-1">
       {/* Balance card */}
       {balance !== null && (
-        <View className="mx-4 mb-3 bg-white rounded-2xl px-4 py-3">
+        <View className="mx-4 mb-3 bg-card rounded-card px-4 py-3">
           {Math.abs(balance) < 0.01 ? (
-            <Text className="text-sm text-gray-600 text-center">✅ Siete in pari questo mese</Text>
+            <Text className="text-sm text-muted text-center">✅ Siete in pari questo mese</Text>
           ) : balance > 0 ? (
-            <Text className="text-sm text-gray-600 text-center">
+            <Text className="text-sm text-muted text-center">
               {theirName} deve a {myName}{" "}
-              <Text className="font-bold text-emerald-600">€{balance.toFixed(2)}</Text>
+              <Text className="font-bold text-accent">€{balance.toFixed(2)}</Text>
             </Text>
           ) : (
-            <Text className="text-sm text-gray-600 text-center">
+            <Text className="text-sm text-muted text-center">
               {myName} deve a {theirName}{" "}
               <Text className="font-bold text-red-500">€{Math.abs(balance).toFixed(2)}</Text>
             </Text>
           )}
-          <Text className="text-xs text-gray-400 text-center mt-0.5">
+          <Text className="text-xs text-soft text-center mt-0.5">
             Basato su divisione {couple?.split_mode === "PROPORTIONAL" ? "proporzionale" : "equa"}
           </Text>
         </View>
@@ -199,34 +199,34 @@ export function ExpensesTab({ partnerName, partnerSalary }: Props) {
         className="flex-1"
         contentContainerStyle={{ paddingTop: 4, paddingBottom: 120 }}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#10b981" />
+          <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#a8562e" />
         }
       >
         {(!expenses || expenses.length === 0) && !isLoading ? (
           <View className="items-center py-20 px-8">
             <Text className="text-5xl mb-4">💸</Text>
-            <Text className="text-base font-semibold text-gray-700 text-center">Nessuna spesa questo mese</Text>
-            <Text className="text-sm text-gray-400 text-center mt-1">Aggiungi la prima spesa del mese!</Text>
+            <Text className="text-base font-semibold text-ink text-center">Nessuna spesa questo mese</Text>
+            <Text className="text-sm text-soft text-center mt-1">Aggiungi la prima spesa del mese!</Text>
           </View>
         ) : (
           expenses?.map((expense) => (
             <Pressable
               key={expense.id}
               onLongPress={() => handleLongPress(expense)}
-              className="bg-white mx-4 mb-2 rounded-xl px-4 py-3 flex-row items-center justify-between"
+              className="bg-card mx-4 mb-2 rounded-card px-4 py-3 flex-row items-center justify-between"
             >
               <View className="flex-row items-center flex-1" style={{ gap: 10 }}>
                 <Text className="text-2xl">{catEmoji(expense.category)}</Text>
                 <View className="flex-1">
-                  <Text className="text-sm font-medium text-gray-800" numberOfLines={1}>
+                  <Text className="text-sm font-medium text-ink" numberOfLines={1}>
                     {expense.note ?? CATEGORIES.find((c) => c.value === expense.category)?.label ?? expense.category}
                   </Text>
-                  <Text className="text-xs text-gray-400 mt-0.5">
+                  <Text className="text-xs text-soft mt-0.5">
                     {formatDate(expense.date)} · {expense.paid_by_id === user?.id ? myName : theirName}
                   </Text>
                 </View>
               </View>
-              <Text className="text-base font-semibold text-gray-900">€{expense.amount.toFixed(2)}</Text>
+              <Text className="text-base font-semibold text-ink">€{expense.amount.toFixed(2)}</Text>
             </Pressable>
           ))
         )}
@@ -235,7 +235,7 @@ export function ExpensesTab({ partnerName, partnerSalary }: Props) {
       {/* FAB */}
       <Pressable
         onPress={() => setShowAdd(true)}
-        className="absolute bottom-8 right-6 w-14 h-14 bg-emerald-500 rounded-full items-center justify-center"
+        className="absolute bottom-8 right-6 w-14 h-14 bg-accent rounded-full items-center justify-center"
         style={{ shadowColor: "#10b981", shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 6 }}
       >
         <Text className="text-white text-3xl" style={{ lineHeight: 36 }}>+</Text>
@@ -247,21 +247,21 @@ export function ExpensesTab({ partnerName, partnerSalary }: Props) {
         presentationStyle="pageSheet"
         onRequestClose={() => { resetForm(); setShowAdd(false); }}
       >
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-white">
-          <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-card">
+          <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-line">
             <Pressable onPress={() => { resetForm(); setShowAdd(false); }} className="py-1 px-2">
-              <Text className="text-base text-gray-500">Annulla</Text>
+              <Text className="text-base text-muted">Annulla</Text>
             </Pressable>
-            <Text className="text-base font-semibold text-gray-900">Nuova spesa</Text>
+            <Text className="text-base font-semibold text-ink">Nuova spesa</Text>
             <Pressable
               onPress={addExpense}
               disabled={!amount.trim() || loading}
-              className={`py-1.5 px-4 rounded-full ${amount.trim() && !loading ? "bg-emerald-500" : "bg-gray-200"}`}
+              className={`py-1.5 px-4 rounded-full ${amount.trim() && !loading ? "bg-accent" : "bg-line"}`}
             >
               {loading ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <Text className={`text-sm font-semibold ${amount.trim() ? "text-white" : "text-gray-400"}`}>Aggiungi</Text>
+                <Text className={`text-sm font-semibold ${amount.trim() ? "text-white" : "text-soft"}`}>Aggiungi</Text>
               )}
             </Pressable>
           </View>
@@ -269,11 +269,11 @@ export function ExpensesTab({ partnerName, partnerSalary }: Props) {
           <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 20 }}>
             {/* Amount */}
             <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Importo (€)</Text>
+              <Text className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Importo (€)</Text>
               <TextInput
-                className="text-3xl font-bold text-gray-900 border-b border-gray-100 pb-2"
+                className="text-3xl font-bold text-ink border-b border-line pb-2"
                 placeholder="0.00"
-                placeholderTextColor="#d1d5db"
+                placeholderTextColor="#c7bdb1"
                 value={amount}
                 onChangeText={setAmount}
                 keyboardType="decimal-pad"
@@ -283,11 +283,11 @@ export function ExpensesTab({ partnerName, partnerSalary }: Props) {
 
             {/* Note */}
             <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Descrizione</Text>
+              <Text className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Descrizione</Text>
               <TextInput
-                className="text-base text-gray-800 bg-gray-50 rounded-xl px-3 py-2"
+                className="text-base text-ink bg-paper rounded-card px-3 py-2"
                 placeholder="es. Spesa al supermercato"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor="#a49a8e"
                 value={note}
                 onChangeText={setNote}
               />
@@ -295,19 +295,19 @@ export function ExpensesTab({ partnerName, partnerSalary }: Props) {
 
             {/* Category */}
             <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Categoria</Text>
+              <Text className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Categoria</Text>
               <View className="flex-row flex-wrap" style={{ gap: 8 }}>
                 {CATEGORIES.map((cat) => (
                   <Pressable
                     key={cat.value}
                     onPress={() => setCategory(cat.value)}
-                    className={`flex-row items-center px-3 py-2 rounded-xl border ${
-                      category === cat.value ? "bg-emerald-500 border-emerald-500" : "bg-white border-gray-200"
+                    className={`flex-row items-center px-3 py-2 rounded-card border ${
+                      category === cat.value ? "bg-accent border-accent" : "bg-card border-line"
                     }`}
                     style={{ gap: 4 }}
                   >
                     <Text>{cat.emoji}</Text>
-                    <Text className={`text-sm font-medium ${category === cat.value ? "text-white" : "text-gray-700"}`}>
+                    <Text className={`text-sm font-medium ${category === cat.value ? "text-white" : "text-ink"}`}>
                       {cat.label}
                     </Text>
                   </Pressable>
@@ -317,7 +317,7 @@ export function ExpensesTab({ partnerName, partnerSalary }: Props) {
 
             {/* Paid by */}
             <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Pagato da</Text>
+              <Text className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Pagato da</Text>
               <View className="flex-row" style={{ gap: 8 }}>
                 {[
                   { label: myName, value: true },
@@ -326,11 +326,11 @@ export function ExpensesTab({ partnerName, partnerSalary }: Props) {
                   <Pressable
                     key={String(opt.value)}
                     onPress={() => setPaidByMe(opt.value)}
-                    className={`flex-1 py-2.5 rounded-xl border items-center ${
-                      paidByMe === opt.value ? "bg-emerald-500 border-emerald-500" : "bg-white border-gray-200"
+                    className={`flex-1 py-2.5 rounded-card border items-center ${
+                      paidByMe === opt.value ? "bg-accent border-accent" : "bg-card border-line"
                     }`}
                   >
-                    <Text className={`text-sm font-semibold ${paidByMe === opt.value ? "text-white" : "text-gray-700"}`}>
+                    <Text className={`text-sm font-semibold ${paidByMe === opt.value ? "text-white" : "text-ink"}`}>
                       {opt.label}
                     </Text>
                   </Pressable>
@@ -340,11 +340,11 @@ export function ExpensesTab({ partnerName, partnerSalary }: Props) {
 
             {/* Date */}
             <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Data (AAAA-MM-GG)</Text>
+              <Text className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Data (AAAA-MM-GG)</Text>
               <TextInput
-                className="text-base text-gray-800 bg-gray-50 rounded-xl px-3 py-2"
+                className="text-base text-ink bg-paper rounded-card px-3 py-2"
                 placeholder="es. 2026-04-19"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor="#a49a8e"
                 value={date}
                 onChangeText={setDate}
               />

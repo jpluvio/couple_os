@@ -90,12 +90,12 @@ export function TodoItem({ item, currentUserId, queryKey }: TodoItemProps) {
     <Pressable onLongPress={handleLongPress} onPress={toggleDone}>
       <Animated.View
         style={animStyle}
-        className={`bg-white mx-4 mb-2 rounded-xl px-4 py-3 flex-row items-center ${isDone ? "opacity-50" : ""}`}
+        className={`bg-card mx-4 mb-2 rounded-card px-4 py-3 flex-row items-center ${isDone ? "opacity-50" : ""}`}
       >
         {/* Checkbox */}
         <View
           className={`w-6 h-6 rounded-full border-2 mr-3 items-center justify-center ${
-            isDone ? "bg-green-500 border-green-500" : "border-gray-300"
+            isDone ? "bg-green-500 border-green-500" : "border-line"
           }`}
         >
           {isDone && <Text className="text-white text-xs font-bold">✓</Text>}
@@ -103,21 +103,21 @@ export function TodoItem({ item, currentUserId, queryKey }: TodoItemProps) {
 
         {/* Content */}
         <View className="flex-1">
-          <Text className={`text-sm font-medium ${isDone ? "line-through text-gray-400" : "text-gray-800"}`}>
+          <Text className={`text-sm font-medium ${isDone ? "line-through text-soft" : "text-ink"}`}>
             {item.title}
           </Text>
           <View className="flex-row items-center mt-0.5" style={{ gap: 8 }}>
             <View className="flex-row items-center" style={{ gap: 3 }}>
               <View className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: PRIORITY_COLORS[item.priority] }} />
-              <Text className="text-xs text-gray-400">{PRIORITY_LABELS[item.priority]}</Text>
+              <Text className="text-xs text-soft">{PRIORITY_LABELS[item.priority]}</Text>
             </View>
             {item.deadline && (
-              <Text className={`text-xs font-medium ${isOverdue ? "text-red-500" : "text-gray-400"}`}>
+              <Text className={`text-xs font-medium ${isOverdue ? "text-red-500" : "text-soft"}`}>
                 {formatDeadline(item.deadline)}
               </Text>
             )}
             {item.assignee?.name && (
-              <Text className="text-xs text-gray-400">@{item.assignee.name.split(" ")[0]}</Text>
+              <Text className="text-xs text-soft">@{item.assignee.name.split(" ")[0]}</Text>
             )}
           </View>
         </View>

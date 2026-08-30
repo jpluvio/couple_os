@@ -68,23 +68,23 @@ export function CreatePostModal({ visible, onClose, coupleId, authorId, queryKey
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={handleClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1 bg-white"
+        className="flex-1 bg-card"
       >
         {/* Header */}
-        <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
+        <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-line">
           <Pressable onPress={handleClose} className="py-1 px-2">
-            <Text className="text-base text-gray-500">Annulla</Text>
+            <Text className="text-base text-muted">Annulla</Text>
           </Pressable>
-          <Text className="text-base font-semibold text-gray-900">Nuovo post</Text>
+          <Text className="text-base font-semibold text-ink">Nuovo post</Text>
           <Pressable
             onPress={submit}
             disabled={!content.trim() || loading}
-            className={`py-1.5 px-4 rounded-full ${content.trim() && !loading ? "bg-blue-500" : "bg-gray-200"}`}
+            className={`py-1.5 px-4 rounded-full ${content.trim() && !loading ? "bg-accent" : "bg-line"}`}
           >
             {loading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Text className={`text-sm font-semibold ${content.trim() ? "text-white" : "text-gray-400"}`}>
+              <Text className={`text-sm font-semibold ${content.trim() ? "text-white" : "text-soft"}`}>
                 Pubblica
               </Text>
             )}
@@ -94,9 +94,9 @@ export function CreatePostModal({ visible, onClose, coupleId, authorId, queryKey
         <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled">
           {/* Text input */}
           <TextInput
-            className="text-base text-gray-800 min-h-28 leading-relaxed"
+            className="text-base text-ink min-h-28 leading-relaxed"
             placeholder="Cosa vuoi condividere con il tuo partner?"
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor="#a49a8e"
             value={content}
             onChangeText={setContent}
             multiline
@@ -104,12 +104,12 @@ export function CreatePostModal({ visible, onClose, coupleId, authorId, queryKey
             autoFocus
             textAlignVertical="top"
           />
-          <Text className="text-xs text-gray-400 text-right mt-1 mb-5">
+          <Text className="text-xs text-soft text-right mt-1 mb-5">
             {content.length}/500
           </Text>
 
           {/* Tag selector */}
-          <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+          <Text className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">
             Tag (opzionale)
           </Text>
           <View className="flex-row flex-wrap" style={{ gap: 8 }}>
@@ -120,10 +120,10 @@ export function CreatePostModal({ visible, onClose, coupleId, authorId, queryKey
                   key={tag}
                   onPress={() => toggleTag(tag)}
                   className={`px-3 py-1.5 rounded-full border ${
-                    selected ? "bg-blue-500 border-blue-500" : "bg-white border-gray-200"
+                    selected ? "bg-accent border-accent" : "bg-card border-line"
                   }`}
                 >
-                  <Text className={`text-sm font-medium ${selected ? "text-white" : "text-gray-600"}`}>
+                  <Text className={`text-sm font-medium ${selected ? "text-white" : "text-muted"}`}>
                     {tag}
                   </Text>
                 </Pressable>

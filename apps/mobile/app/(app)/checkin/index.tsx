@@ -24,12 +24,12 @@ export default function CheckinScreen() {
   const coupleId = couple.id;
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-paper">
       {/* Header */}
       <View className="flex-row items-start justify-between px-4 pt-2 pb-3">
         <View>
-          <Text className="text-2xl font-bold text-gray-900">Check-in</Text>
-          <Text className="text-sm text-gray-500 mt-0.5">Il rituale di coppia</Text>
+          <Text className="text-2xl font-bold text-ink">Check-in</Text>
+          <Text className="text-sm text-muted mt-0.5">Il rituale di coppia</Text>
         </View>
         <NotificationBell />
       </View>
@@ -47,16 +47,16 @@ export default function CheckinScreen() {
         estimatedItemSize={140}
         contentContainerStyle={{ paddingTop: 4, paddingBottom: 120 }}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#0e82ea" />
+          <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#a8562e" />
         }
         ListEmptyComponent={
           !isLoading ? (
             <View className="items-center justify-center py-24 px-8">
               <Text className="text-5xl mb-4">💬</Text>
-              <Text className="text-lg font-semibold text-gray-700 text-center">
+              <Text className="text-lg font-semibold text-ink text-center">
                 Nessun check-in ancora
               </Text>
-              <Text className="text-sm text-gray-400 text-center mt-1">
+              <Text className="text-sm text-soft text-center mt-1">
                 Inizia un check-in: rispondete entrambi e poi scoprite le vostre risposte.
               </Text>
             </View>
@@ -67,7 +67,7 @@ export default function CheckinScreen() {
       {/* FAB */}
       <Pressable
         onPress={() => setShowCreate(true)}
-        className="absolute bottom-8 right-6 w-14 h-14 bg-blue-500 rounded-full items-center justify-center"
+        className="absolute bottom-8 right-6 w-14 h-14 bg-accent rounded-full items-center justify-center"
         style={{
           shadowColor: "#0e82ea",
           shadowOpacity: 0.4,

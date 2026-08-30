@@ -61,13 +61,13 @@ export function MemoryDetailModal({ memory, currentUserId, coupleId, onClose }: 
 
   return (
     <Modal visible={!!memory} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View className="flex-1 bg-white">
+      <View className="flex-1 bg-card">
         {/* Header */}
-        <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
+        <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-line">
           <Pressable onPress={onClose} className="py-1 px-2">
-            <Text className="text-base text-gray-500">Chiudi</Text>
+            <Text className="text-base text-muted">Chiudi</Text>
           </Pressable>
-          <Text className="text-base font-semibold text-gray-900">Memoria</Text>
+          <Text className="text-base font-semibold text-ink">Memoria</Text>
           {isAuthor ? (
             <Pressable onPress={confirmDelete} className="py-1 px-2">
               <Text className="text-base text-red-500">Elimina</Text>
@@ -103,7 +103,7 @@ export function MemoryDetailModal({ memory, currentUserId, coupleId, onClose }: 
                   {photos.map((_, i) => (
                     <View
                       key={i}
-                      className={`w-1.5 h-1.5 rounded-full ${i === activePhoto ? "bg-blue-500" : "bg-gray-300"}`}
+                      className={`w-1.5 h-1.5 rounded-full ${i === activePhoto ? "bg-accent" : "bg-line"}`}
                     />
                   ))}
                 </View>
@@ -114,28 +114,28 @@ export function MemoryDetailModal({ memory, currentUserId, coupleId, onClose }: 
           <View className="p-4">
             {/* Autore + data */}
             <View className="flex-row items-center mb-3" style={{ gap: 8 }}>
-              <View className="w-8 h-8 rounded-full bg-blue-100 items-center justify-center">
-                <Text className="text-xs font-bold text-blue-600">{initials}</Text>
+              <View className="w-8 h-8 rounded-full bg-tint items-center justify-center">
+                <Text className="text-xs font-bold text-accent">{initials}</Text>
               </View>
               <View>
-                <Text className="text-sm font-semibold text-gray-800">
+                <Text className="text-sm font-semibold text-ink">
                   {memory.author?.name ?? "Utente"}
                 </Text>
-                <Text className="text-xs text-gray-400">{formatDate(memory.date)}</Text>
+                <Text className="text-xs text-soft">{formatDate(memory.date)}</Text>
               </View>
             </View>
 
             {/* Contenuto */}
             {memory.content ? (
-              <Text className="text-gray-800 text-base leading-relaxed">{memory.content}</Text>
+              <Text className="text-ink text-base leading-relaxed">{memory.content}</Text>
             ) : null}
 
             {/* Tag */}
             {memory.tags.length > 0 && (
               <View className="flex-row flex-wrap mt-4" style={{ gap: 6 }}>
                 {memory.tags.map((tag) => (
-                  <View key={tag} className="bg-blue-50 px-2.5 py-1 rounded-full">
-                    <Text className="text-xs text-blue-600 font-medium">{tag}</Text>
+                  <View key={tag} className="bg-tint px-2.5 py-1 rounded-full">
+                    <Text className="text-xs text-accent font-medium">{tag}</Text>
                   </View>
                 ))}
               </View>

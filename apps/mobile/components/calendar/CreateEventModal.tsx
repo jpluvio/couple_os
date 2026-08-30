@@ -101,23 +101,23 @@ export function CreateEventModal({
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={handleClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1 bg-white"
+        className="flex-1 bg-card"
       >
         {/* Header */}
-        <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
+        <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-line">
           <Pressable onPress={handleClose} className="py-1 px-2">
-            <Text className="text-base text-gray-500">Annulla</Text>
+            <Text className="text-base text-muted">Annulla</Text>
           </Pressable>
-          <Text className="text-base font-semibold text-gray-900">Nuovo evento</Text>
+          <Text className="text-base font-semibold text-ink">Nuovo evento</Text>
           <Pressable
             onPress={submit}
             disabled={!title.trim() || loading}
-            className={`py-1.5 px-4 rounded-full ${title.trim() && !loading ? "bg-blue-500" : "bg-gray-200"}`}
+            className={`py-1.5 px-4 rounded-full ${title.trim() && !loading ? "bg-accent" : "bg-line"}`}
           >
             {loading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Text className={`text-sm font-semibold ${title.trim() ? "text-white" : "text-gray-400"}`}>
+              <Text className={`text-sm font-semibold ${title.trim() ? "text-white" : "text-soft"}`}>
                 Salva
               </Text>
             )}
@@ -126,21 +126,21 @@ export function CreateEventModal({
 
         <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled">
           {/* Date display */}
-          <Text className="text-sm text-blue-500 font-medium mb-4 capitalize">{displayDate}</Text>
+          <Text className="text-sm text-accent font-medium mb-4 capitalize">{displayDate}</Text>
 
           {/* Title */}
           <TextInput
-            className="text-xl font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-3"
+            className="text-xl font-semibold text-ink mb-4 border-b border-line pb-3"
             placeholder="Titolo evento"
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor="#a49a8e"
             value={title}
             onChangeText={setTitle}
             autoFocus
           />
 
           {/* All day toggle */}
-          <View className="flex-row items-center justify-between py-3 border-b border-gray-100 mb-3">
-            <Text className="text-base text-gray-700">Tutto il giorno</Text>
+          <View className="flex-row items-center justify-between py-3 border-b border-line mb-3">
+            <Text className="text-base text-ink">Tutto il giorno</Text>
             <Switch value={allDay} onValueChange={setAllDay} trackColor={{ true: "#0e82ea" }} />
           </View>
 
@@ -148,9 +148,9 @@ export function CreateEventModal({
           {!allDay && (
             <View className="flex-row items-center mb-4" style={{ gap: 12 }}>
               <View className="flex-1">
-                <Text className="text-xs text-gray-500 mb-1">Inizio</Text>
+                <Text className="text-xs text-muted mb-1">Inizio</Text>
                 <TextInput
-                  className="bg-gray-50 rounded-xl px-3 py-2.5 text-base text-gray-800"
+                  className="bg-paper rounded-card px-3 py-2.5 text-base text-ink"
                   value={startTime}
                   onChangeText={setStartTime}
                   placeholder="09:00"
@@ -159,9 +159,9 @@ export function CreateEventModal({
                 />
               </View>
               <View className="flex-1">
-                <Text className="text-xs text-gray-500 mb-1">Fine</Text>
+                <Text className="text-xs text-muted mb-1">Fine</Text>
                 <TextInput
-                  className="bg-gray-50 rounded-xl px-3 py-2.5 text-base text-gray-800"
+                  className="bg-paper rounded-card px-3 py-2.5 text-base text-ink"
                   value={endTime}
                   onChangeText={setEndTime}
                   placeholder="10:00"
@@ -174,18 +174,18 @@ export function CreateEventModal({
 
           {/* Location */}
           <TextInput
-            className="bg-gray-50 rounded-xl px-3 py-3 text-base text-gray-800 mb-3"
+            className="bg-paper rounded-card px-3 py-3 text-base text-ink mb-3"
             placeholder="📍 Luogo (opzionale)"
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor="#a49a8e"
             value={location}
             onChangeText={setLocation}
           />
 
           {/* Description */}
           <TextInput
-            className="bg-gray-50 rounded-xl px-3 py-3 text-base text-gray-800 mb-4 min-h-20"
+            className="bg-paper rounded-card px-3 py-3 text-base text-ink mb-4 min-h-20"
             placeholder="Note (opzionale)"
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor="#a49a8e"
             value={description}
             onChangeText={setDescription}
             multiline
@@ -193,7 +193,7 @@ export function CreateEventModal({
           />
 
           {/* Color picker */}
-          <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+          <Text className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">
             Colore
           </Text>
           <View className="flex-row" style={{ gap: 10 }}>

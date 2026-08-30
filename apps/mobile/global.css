@@ -1,3 +1,8 @@
+/* I due caratteri del sistema visivo. Su web li serve Google Fonts; su
+   nativo il fallback è il font di sistema, perché @import non si applica.
+   Una build nativa richiederebbe expo-font con i file .ttf. */
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Public+Sans:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

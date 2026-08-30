@@ -68,7 +68,7 @@ export default function OnboardingScreen() {
         return;
       }
 
-      router.replace("/(app)/board");
+      router.replace("/(app)/oggi");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Codice non valido o scaduto.";
       showAlert("Errore", msg);
@@ -80,21 +80,21 @@ export default function OnboardingScreen() {
   // Schermata di successo: mostra il codice invito da condividere col partner.
   if (createdCode) {
     return (
-      <View className="flex-1 bg-white items-center justify-center px-8">
-        <Text className="text-3xl font-bold text-gray-900 mb-2">Coppia creata! 🎉</Text>
-        <Text className="text-base text-gray-500 text-center mb-8">
+      <View className="flex-1 bg-card items-center justify-center px-8">
+        <Text className="text-3xl font-bold text-ink mb-2">Coppia creata! 🎉</Text>
+        <Text className="text-base text-muted text-center mb-8">
           Condividi questo codice con il tuo partner. Valido per 48 ore.
         </Text>
 
-        <View className="bg-gray-100 rounded-2xl px-8 py-5 mb-10">
-          <Text className="text-3xl font-bold tracking-[8px] text-gray-900 text-center">
+        <View className="bg-hair rounded-card px-8 py-5 mb-10">
+          <Text className="text-3xl font-bold tracking-[8px] text-ink text-center">
             {createdCode}
           </Text>
         </View>
 
         <Pressable
-          onPress={() => router.replace("/(app)/board")}
-          className="w-full bg-brand-500 rounded-2xl py-4 items-center active:opacity-80"
+          onPress={() => router.replace("/(app)/oggi")}
+          className="w-full bg-brand-500 rounded-card py-4 items-center active:opacity-80"
         >
           <Text className="text-white font-semibold text-base">Continua</Text>
         </Pressable>
@@ -104,24 +104,24 @@ export default function OnboardingScreen() {
 
   if (mode === "choose") {
     return (
-      <View className="flex-1 bg-white items-center justify-center px-8">
-        <Text className="text-3xl font-bold text-gray-900 mb-2">Benvenuto/a!</Text>
-        <Text className="text-base text-gray-500 text-center mb-12">
+      <View className="flex-1 bg-card items-center justify-center px-8">
+        <Text className="text-3xl font-bold text-ink mb-2">Benvenuto/a!</Text>
+        <Text className="text-base text-muted text-center mb-12">
           Crea una nuova coppia oppure unisciti a quella del tuo partner.
         </Text>
 
         <Pressable
           onPress={() => setMode("create")}
-          className="w-full bg-brand-500 rounded-2xl py-4 items-center mb-4 active:opacity-80"
+          className="w-full bg-brand-500 rounded-card py-4 items-center mb-4 active:opacity-80"
         >
           <Text className="text-white font-semibold text-base">Crea una coppia</Text>
         </Pressable>
 
         <Pressable
           onPress={() => setMode("join")}
-          className="w-full border border-gray-200 rounded-2xl py-4 items-center active:opacity-70"
+          className="w-full border border-line rounded-card py-4 items-center active:opacity-70"
         >
-          <Text className="text-gray-700 font-semibold text-base">Ho un codice invito</Text>
+          <Text className="text-ink font-semibold text-base">Ho un codice invito</Text>
         </Pressable>
       </View>
     );
@@ -130,7 +130,7 @@ export default function OnboardingScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-white"
+      className="flex-1 bg-card"
     >
       <ScrollView
         contentContainerClassName="flex-1 items-center justify-center px-8"
@@ -145,8 +145,8 @@ export default function OnboardingScreen() {
 
         {mode === "create" ? (
           <>
-            <Text className="text-2xl font-bold text-gray-900 mb-2">Nuova coppia</Text>
-            <Text className="text-sm text-gray-500 text-center mb-8">
+            <Text className="text-2xl font-bold text-ink mb-2">Nuova coppia</Text>
+            <Text className="text-sm text-muted text-center mb-8">
               Dai un nome alla vostra coppia (opzionale).
             </Text>
 
@@ -154,15 +154,15 @@ export default function OnboardingScreen() {
               value={coupleName}
               onChangeText={setCoupleName}
               placeholder="es. Paolo & Sara"
-              placeholderTextColor="#9ca3af"
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 mb-6"
+              placeholderTextColor="#a49a8e"
+              className="w-full border border-line rounded-card px-4 py-3 text-base text-ink mb-6"
               maxLength={50}
             />
 
             <Pressable
               onPress={createCouple}
               disabled={loading}
-              className="w-full bg-brand-500 rounded-2xl py-4 items-center active:opacity-80"
+              className="w-full bg-brand-500 rounded-card py-4 items-center active:opacity-80"
             >
               {loading ? (
                 <ActivityIndicator color="white" />
@@ -173,8 +173,8 @@ export default function OnboardingScreen() {
           </>
         ) : (
           <>
-            <Text className="text-2xl font-bold text-gray-900 mb-2">Unisciti</Text>
-            <Text className="text-sm text-gray-500 text-center mb-8">
+            <Text className="text-2xl font-bold text-ink mb-2">Unisciti</Text>
+            <Text className="text-sm text-muted text-center mb-8">
               Inserisci il codice invito ricevuto dal tuo partner.
             </Text>
 
@@ -182,16 +182,16 @@ export default function OnboardingScreen() {
               value={inviteCode}
               onChangeText={(t) => setInviteCode(t.toUpperCase())}
               placeholder="ABC123"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor="#a49a8e"
               autoCapitalize="characters"
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 text-center tracking-widest mb-6"
+              className="w-full border border-line rounded-card px-4 py-3 text-base text-ink text-center tracking-widest mb-6"
               maxLength={10}
             />
 
             <Pressable
               onPress={joinCouple}
               disabled={loading}
-              className="w-full bg-brand-500 rounded-2xl py-4 items-center active:opacity-80"
+              className="w-full bg-brand-500 rounded-card py-4 items-center active:opacity-80"
             >
               {loading ? (
                 <ActivityIndicator color="white" />

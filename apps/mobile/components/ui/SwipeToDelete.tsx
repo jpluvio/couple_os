@@ -56,7 +56,7 @@ export function SwipeToDelete({
           accessibilityLabel="Elimina"
           className="justify-center"
         >
-          <View className="bg-red-500 rounded-xl items-center justify-center px-5 mr-4 h-full">
+          <View className="bg-red-500 rounded-card items-center justify-center px-5 mr-4 h-full">
             <Text className="text-white text-xl">🗑️</Text>
             <Text className="text-white text-xs font-semibold mt-0.5">Elimina</Text>
           </View>

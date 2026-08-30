@@ -135,28 +135,27 @@ export function PantryTab() {
         className="flex-1"
         contentContainerStyle={{ paddingTop: 8, paddingBottom: 120 }}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#f97316" />
+          <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#a8562e" />
         }
       >
         {isLoading && grouped.length === 0 ? (
           <SkeletonRowList count={5} />
         ) : grouped.length === 0 ? (
-          <View className="items-center py-20 px-8">
-            <Text className="text-5xl mb-4">🛒</Text>
-            <Text className="text-base font-semibold text-gray-700 text-center">Dispensa vuota</Text>
-            <Text className="text-sm text-gray-400 text-center mt-1">
-              Aggiungi i prodotti che hai in casa!
+          <View className="items-center px-8 py-20">
+            <Text className="text-center font-display text-[20px] text-ink">Dispensa vuota</Text>
+            <Text className="mt-2 text-center text-[13.5px] text-soft">
+              Aggiungi i prodotti che hai in casa, o falli entrare dalla lista della spesa.
             </Text>
           </View>
         ) : (
           grouped.map((group) => (
             <View key={group.value} className="mb-4">
-              <View className="px-4 pb-2 flex-row items-center" style={{ gap: 6 }}>
+              <View className="flex-row items-center px-6 pb-2" style={{ gap: 6 }}>
                 <Text className="text-base">{group.emoji}</Text>
-                <Text className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+                <Text className="text-[11px] uppercase text-accent">
                   {group.label}
                 </Text>
-                <Text className="text-xs text-gray-400">({group.items.length})</Text>
+                <Text className="text-[11px] text-soft">({group.items.length})</Text>
               </View>
               {group.items.map((item) => {
                 const expiry = item.expires_at ? formatExpiry(item.expires_at) : null;
@@ -169,14 +168,14 @@ export function PantryTab() {
                   >
                   <Pressable
                     onLongPress={() => handleLongPress(item)}
-                    className="bg-white mx-4 mb-2 rounded-xl px-4 py-3 flex-row items-center justify-between"
+                    className="mx-6 mb-2 flex-row items-center justify-between rounded-card border border-line bg-card px-4 py-3"
                   >
-                    <Text className="text-base text-gray-800 flex-1" numberOfLines={1}>
+                    <Text className="flex-1 text-[15px] text-ink" numberOfLines={1}>
                       {item.name}
                     </Text>
                     <View className="flex-row items-center" style={{ gap: 8 }}>
                       {(item.quantity != null || item.unit) && (
-                        <Text className="text-sm text-gray-500">
+                        <Text className="text-[13.5px] text-muted">
                           {item.quantity != null ? item.quantity : ""}{item.unit ? ` ${item.unit}` : ""}
                         </Text>
                       )}
@@ -200,37 +199,37 @@ export function PantryTab() {
       {/* FAB */}
       <Pressable
         onPress={() => setShowAdd(true)}
-        className="absolute bottom-8 right-6 w-14 h-14 bg-orange-500 rounded-full items-center justify-center"
+        className="absolute bottom-8 right-6 w-14 h-14 bg-accent rounded-full items-center justify-center"
         style={{ shadowColor: "#f97316", shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 6 }}
       >
         <Text className="text-white text-3xl" style={{ lineHeight: 36 }}>+</Text>
       </Pressable>
 
       <Modal visible={showAdd} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { resetForm(); setShowAdd(false); }}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-white">
-          <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-card">
+          <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-line">
             <Pressable onPress={() => { resetForm(); setShowAdd(false); }} className="py-1 px-2">
-              <Text className="text-base text-gray-500">Annulla</Text>
+              <Text className="text-base text-muted">Annulla</Text>
             </Pressable>
-            <Text className="text-base font-semibold text-gray-900">Nuovo prodotto</Text>
+            <Text className="text-base font-semibold text-ink">Nuovo prodotto</Text>
             <Pressable
               onPress={addItem}
               disabled={!name.trim() || loading}
-              className={`py-1.5 px-4 rounded-full ${name.trim() && !loading ? "bg-orange-500" : "bg-gray-200"}`}
+              className={`py-1.5 px-4 rounded-full ${name.trim() && !loading ? "bg-accent" : "bg-line"}`}
             >
               {loading ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <Text className={`text-sm font-semibold ${name.trim() ? "text-white" : "text-gray-400"}`}>Aggiungi</Text>
+                <Text className={`text-sm font-semibold ${name.trim() ? "text-white" : "text-soft"}`}>Aggiungi</Text>
               )}
             </Pressable>
           </View>
 
           <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 16 }}>
             <TextInput
-              className="text-base text-gray-800 border-b border-gray-100 pb-3"
+              className="text-base text-ink border-b border-line pb-3"
               placeholder="Nome prodotto"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor="#a49a8e"
               value={name}
               onChangeText={setName}
               autoFocus
@@ -238,22 +237,22 @@ export function PantryTab() {
 
             <View className="flex-row" style={{ gap: 12 }}>
               <View className="flex-1">
-                <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Quantità</Text>
+                <Text className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Quantità</Text>
                 <TextInput
-                  className="text-base text-gray-800 bg-gray-50 rounded-xl px-3 py-2"
+                  className="text-base text-ink bg-paper rounded-card px-3 py-2"
                   placeholder="es. 2"
-                  placeholderTextColor="#9ca3af"
+                  placeholderTextColor="#a49a8e"
                   value={quantity}
                   onChangeText={setQuantity}
                   keyboardType="numeric"
                 />
               </View>
               <View className="flex-1">
-                <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Unità</Text>
+                <Text className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Unità</Text>
                 <TextInput
-                  className="text-base text-gray-800 bg-gray-50 rounded-xl px-3 py-2"
+                  className="text-base text-ink bg-paper rounded-card px-3 py-2"
                   placeholder="es. kg, L, pz"
-                  placeholderTextColor="#9ca3af"
+                  placeholderTextColor="#a49a8e"
                   value={unit}
                   onChangeText={setUnit}
                 />
@@ -261,30 +260,30 @@ export function PantryTab() {
             </View>
 
             <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Scadenza (AAAA-MM-GG)</Text>
+              <Text className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Scadenza (AAAA-MM-GG)</Text>
               <TextInput
-                className="text-base text-gray-800 bg-gray-50 rounded-xl px-3 py-2"
+                className="text-base text-ink bg-paper rounded-card px-3 py-2"
                 placeholder="es. 2026-06-30"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor="#a49a8e"
                 value={expiresAt}
                 onChangeText={setExpiresAt}
               />
             </View>
 
             <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Categoria</Text>
+              <Text className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Categoria</Text>
               <View className="flex-row flex-wrap" style={{ gap: 8 }}>
                 {CATEGORIES.map((cat) => (
                   <Pressable
                     key={cat.value}
                     onPress={() => setCategory(cat.value)}
-                    className={`flex-row items-center px-3 py-2 rounded-xl border ${
-                      category === cat.value ? "bg-orange-500 border-orange-500" : "bg-white border-gray-200"
+                    className={`flex-row items-center px-3 py-2 rounded-card border ${
+                      category === cat.value ? "bg-accent border-accent" : "bg-card border-line"
                     }`}
                     style={{ gap: 4 }}
                   >
                     <Text>{cat.emoji}</Text>
-                    <Text className={`text-sm font-medium ${category === cat.value ? "text-white" : "text-gray-700"}`}>
+                    <Text className={`text-sm font-medium ${category === cat.value ? "text-white" : "text-ink"}`}>
                       {cat.label}
                     </Text>
                   </Pressable>

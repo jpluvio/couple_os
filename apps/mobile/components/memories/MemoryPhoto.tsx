@@ -21,10 +21,10 @@ export function MemoryPhoto({ path, className, style, contentFit = "cover" }: Me
   if (isLoading || !url) {
     return (
       <View
-        className={`bg-gray-100 items-center justify-center ${className ?? ""}`}
+        className={`bg-hair items-center justify-center ${className ?? ""}`}
         style={style as object}
       >
-        <ActivityIndicator size="small" color="#0e82ea" />
+        <ActivityIndicator size="small" color="#a8562e" />
       </View>
     );
   }

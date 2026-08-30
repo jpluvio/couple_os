@@ -84,15 +84,15 @@ export default function CalendarScreen() {
   if (!user || !couple) return null;
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-paper">
       {/* Header */}
       <View className="px-4 pt-2 pb-3">
-        <Text className="text-2xl font-bold text-gray-900">Calendario</Text>
+        <Text className="text-2xl font-bold text-ink">Calendario</Text>
       </View>
 
       <ScrollView className="flex-1">
         {/* Calendar */}
-        <View className="bg-white mx-4 rounded-2xl overflow-hidden mb-4"
+        <View className="bg-card mx-4 rounded-card overflow-hidden mb-4"
           style={{ shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}>
           <Calendar
             current={today}
@@ -121,22 +121,22 @@ export default function CalendarScreen() {
         <View className="flex-row px-4 mb-3" style={{ gap: 16 }}>
           <View className="flex-row items-center" style={{ gap: 4 }}>
             <View className="w-2 h-2 rounded-full" style={{ backgroundColor: myColor }} />
-            <Text className="text-xs text-gray-500">I miei eventi</Text>
+            <Text className="text-xs text-muted">I miei eventi</Text>
           </View>
           {partner && (
             <View className="flex-row items-center" style={{ gap: 4 }}>
               <View className="w-2 h-2 rounded-full" style={{ backgroundColor: partnerColor }} />
-              <Text className="text-xs text-gray-500">{partner.name ?? "Partner"}</Text>
+              <Text className="text-xs text-muted">{partner.name ?? "Partner"}</Text>
             </View>
           )}
         </View>
 
         {/* Selected day events */}
         <View className="px-4 mb-2 flex-row items-center justify-between">
-          <Text className="text-sm font-semibold text-gray-700 capitalize">{displayDay}</Text>
+          <Text className="text-sm font-semibold text-ink capitalize">{displayDay}</Text>
           <Pressable
             onPress={() => setShowCreate(true)}
-            className="flex-row items-center bg-blue-500 px-3 py-1.5 rounded-full"
+            className="flex-row items-center bg-accent px-3 py-1.5 rounded-full"
             style={{ gap: 4 }}
           >
             <Text className="text-white text-sm">+</Text>
@@ -146,7 +146,7 @@ export default function CalendarScreen() {
 
         {dayEvents.length === 0 ? (
           <View className="items-center py-8">
-            <Text className="text-gray-400 text-sm">Nessun evento questo giorno</Text>
+            <Text className="text-soft text-sm">Nessun evento questo giorno</Text>
           </View>
         ) : (
           dayEvents.map((ev) => (

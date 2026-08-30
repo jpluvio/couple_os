@@ -1,281 +1,249 @@
 import { useState } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  Modal,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-  RefreshControl,
-} from "react-native";
-import { showAlert } from "@/lib/alert";
+import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useCouple } from "@/hooks/useCouple";
+import { showAlert } from "@/lib/alert";
+import { Card, Label, Icon, Badge, Button, Empty } from "@/components/kit";
+import { SkeletonRowList } from "@/components/ui/Skeleton";
+import type { RecipeIngredient } from "@/types/database";
 
-type Ingredient = { id: string; name: string; quantity: string | null; recipe_id: string };
 type Recipe = {
   id: string;
   title: string;
   description: string | null;
-  servings: number | null;
-  couple_id: string;
-  created_at: string;
-  ingredients?: Ingredient[];
+  servings: number;
+  ingredients?: RecipeIngredient[];
 };
+
+type PantryLite = { id: string; name: string; ingredient_id: string | null };
+
+/** Stessa normalizzazione della `normalize_ingredient_name` in SQL. */
+function norm(s: string) {
+  return s
+    .trim()
+    .toLowerCase()
+    .replace(/[àáâãäå]/g, "a").replace(/[èéêë]/g, "e").replace(/[ìíîï]/g, "i")
+    .replace(/[òóôõö]/g, "o").replace(/[ùúûü]/g, "u").replace(/ç/g, "c").replace(/ñ/g, "n")
+    .replace(/\s+/g, " ");
+}
+
+/**
+ * Stessa regola di arrotondamento della RPC `add_recipe_to_shopping_list`.
+ * Vive in due posti perché il server decide il dato e il client deve
+ * mostrare in anticipo lo stesso numero: se divergessero, l'utente
+ * vedrebbe una quantità e ne otterrebbe un'altra.
+ */
+function arrotonda(v: number, unit: string | null) {
+  if (!unit) return Math.ceil(v);
+  if (v >= 100) return Math.round(v / 10) * 10;
+  if (v >= 10) return Math.round(v / 5) * 5;
+  return Math.round(v * 2) / 2;
+}
+
+function formatQta(ing: RecipeIngredient, fattore: number) {
+  if (ing.quantity_num == null) return ing.quantity_text ?? "q.b.";
+  const v = arrotonda(ing.quantity_num * fattore, ing.unit);
+  return ing.unit ? `${v} ${ing.unit}` : String(v);
+}
 
 export function RecipesTab() {
   const { couple } = useCouple();
   const queryClient = useQueryClient();
   const coupleId = couple?.id ?? "";
-  const qKey = ["recipes", coupleId];
 
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [showAdd, setShowAdd] = useState(false);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [servings, setServings] = useState("");
-  const [ingredientLines, setIngredientLines] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [aperta, setAperta] = useState<string | null>(null);
+  const [porzioni, setPorzioni] = useState<Record<string, number>>({});
+  const [escluse, setEscluse] = useState<Record<string, boolean>>({});
+  const [invio, setInvio] = useState(false);
 
   const { data: recipes, isLoading, refetch } = useQuery({
-    queryKey: qKey,
+    queryKey: ["recipes", coupleId],
     enabled: !!coupleId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("recipes")
-        .select("*, ingredients:recipe_ingredients(*)")
+        .select("id, title, description, servings, ingredients:recipe_ingredients(*)")
         .eq("couple_id", coupleId)
-        .order("created_at", { ascending: false });
+        .order("title");
       if (error) throw error;
-      return data as Recipe[];
+      return (data ?? []) as unknown as Recipe[];
     },
   });
 
-  function parseIngredients(text: string): { name: string; quantity: string | null }[] {
-    return text
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .map((line) => {
-        // Try to parse "quantity name" (e.g. "200g farina", "2 uova")
-        const match = line.match(/^([\d.,]+\s*\w*)\s+(.+)$/);
-        if (match) return { quantity: match[1].trim(), name: match[2].trim() };
-        return { quantity: null, name: line };
-      });
+  // Serve solo a mostrare in anticipo cosa verrà escluso: la decisione
+  // vera la prende la RPC, che vede la dispensa aggiornata.
+  const { data: dispensa } = useQuery({
+    queryKey: ["pantry-lite", coupleId],
+    enabled: !!coupleId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("pantry_items").select("id, name, ingredient_id").eq("couple_id", coupleId);
+      return (data ?? []) as PantryLite[];
+    },
+  });
+
+  function inDispensa(ing: RecipeIngredient) {
+    if (!dispensa) return false;
+    return dispensa.some((p) =>
+      ing.ingredient_id && p.ingredient_id
+        ? p.ingredient_id === ing.ingredient_id
+        : norm(p.name) === norm(ing.name)
+    );
   }
 
-  async function addRecipe() {
-    if (!title.trim() || !coupleId) return;
-    setLoading(true);
+  async function aggiungiAllaLista(r: Recipe) {
+    const scelte = porzioni[r.id] ?? r.servings;
+    const escluseIds = (r.ingredients ?? [])
+      .filter((i) => escluse[i.id])
+      .map((i) => i.id);
+
+    setInvio(true);
     try {
-      const { data: recipe, error } = await supabase
-        .from("recipes")
-        .insert({
-          title: title.trim(),
-          description: description.trim() || null,
-          servings: servings ? parseInt(servings) : null,
-          couple_id: coupleId,
-        })
-        .select()
-        .single();
+      const { data, error } = await supabase.rpc("add_recipe_to_shopping_list", {
+        p_recipe_id: r.id,
+        p_servings: scelte,
+        p_escludi_in_dispensa: true,
+        p_escludi_ids: escluseIds,
+      });
+
       if (error) throw error;
 
-      const parsed = parseIngredients(ingredientLines);
-      if (parsed.length > 0) {
-        await supabase.from("recipe_ingredients").insert(
-          parsed.map((ing) => ({ ...ing, recipe_id: recipe.id }))
-        );
-      }
-
-      queryClient.invalidateQueries({ queryKey: qKey });
-      resetForm();
-      setShowAdd(false);
-    } catch {
-      showAlert("Errore", "Impossibile aggiungere la ricetta.");
+      queryClient.invalidateQueries({ queryKey: ["shopping", coupleId] });
+      const n = (data as unknown as number) ?? 0;
+      showAlert(
+        n === 0 ? "Niente da aggiungere" : "Aggiunti alla lista",
+        n === 0
+          ? "Hai già tutto in dispensa."
+          : `${n} ${n === 1 ? "ingrediente aggiunto" : "ingredienti aggiunti"} per ${scelte} porzioni.`
+      );
+    } catch (err) {
+      showAlert(
+        "Non riuscito",
+        "Impossibile aggiungere alla lista. Se la migrazione 008 non è ancora applicata, questa funzione non è disponibile."
+      );
+      console.warn("[ricette] add_recipe_to_shopping_list:", err);
     } finally {
-      setLoading(false);
+      setInvio(false);
     }
   }
 
-  function resetForm() {
-    setTitle("");
-    setDescription("");
-    setServings("");
-    setIngredientLines("");
-  }
+  if (isLoading && !recipes) return <SkeletonRowList count={4} />;
 
-  function handleLongPress(recipe: Recipe) {
-    showAlert(recipe.title, undefined, [
-      {
-        text: "🗑️ Elimina",
-        style: "destructive",
-        onPress: async () => {
-          await supabase.from("recipes").delete().eq("id", recipe.id);
-          queryClient.invalidateQueries({ queryKey: qKey });
-        },
-      },
-      { text: "Annulla", style: "cancel" },
-    ]);
+  if (!recipes || recipes.length === 0) {
+    return <Empty title="Nessuna ricetta" hint="Salvane una e potrai mandarne gli ingredienti nella lista della spesa." />;
   }
 
   return (
-    <View className="flex-1">
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ paddingTop: 8, paddingBottom: 120 }}
-        refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#f97316" />
-        }
-      >
-        {(recipes ?? []).length === 0 && !isLoading ? (
-          <View className="items-center py-20 px-8">
-            <Text className="text-5xl mb-4">👨‍🍳</Text>
-            <Text className="text-base font-semibold text-gray-700 text-center">Nessuna ricetta ancora</Text>
-            <Text className="text-sm text-gray-400 text-center mt-1">
-              Salva le vostre ricette preferite!
-            </Text>
-          </View>
-        ) : (
-          (recipes ?? []).map((recipe) => {
-            const expanded = expandedId === recipe.id;
-            return (
-              <Pressable
-                key={recipe.id}
-                onPress={() => setExpandedId(expanded ? null : recipe.id)}
-                onLongPress={() => handleLongPress(recipe)}
-                className="bg-white mx-4 mb-3 rounded-xl overflow-hidden"
-              >
-                <View className="px-4 py-3 flex-row items-center justify-between">
-                  <View className="flex-1 mr-3">
-                    <Text className="text-base font-semibold text-gray-900" numberOfLines={1}>
-                      {recipe.title}
-                    </Text>
-                    {recipe.description ? (
-                      <Text className="text-sm text-gray-500 mt-0.5" numberOfLines={expanded ? undefined : 1}>
-                        {recipe.description}
-                      </Text>
-                    ) : null}
-                  </View>
-                  <View className="flex-row items-center" style={{ gap: 8 }}>
-                    {recipe.servings != null && (
-                      <View className="flex-row items-center bg-orange-50 px-2 py-1 rounded-lg" style={{ gap: 3 }}>
-                        <Text className="text-xs">🍽️</Text>
-                        <Text className="text-xs font-medium text-orange-600">{recipe.servings}</Text>
-                      </View>
-                    )}
-                    <Text className="text-gray-400 text-lg">{expanded ? "▲" : "▼"}</Text>
+    <ScrollView
+      contentContainerStyle={{ paddingBottom: 120 }}
+      refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#a8562e" />}
+    >
+      {recipes.map((r) => {
+        const on = aperta === r.id;
+        const scelte = porzioni[r.id] ?? r.servings;
+        const fattore = scelte / Math.max(r.servings, 1);
+        const ingredienti = [...(r.ingredients ?? [])].sort((a, b) => a.sort_order - b.sort_order);
+        const daAggiungere = ingredienti.filter(
+          (i) => !escluse[i.id] && !inDispensa(i) && i.quantity_num != null
+        ).length;
+
+        return (
+          <Card key={r.id}>
+            <Pressable onPress={() => setAperta(on ? null : r.id)} className="flex-row items-start justify-between" style={{ gap: 12 }}>
+              <View className="flex-1" style={{ gap: 2 }}>
+                <Text className="font-display text-[23px] leading-[26px] text-ink">{r.title}</Text>
+                <Text className="text-[13px] text-muted">
+                  {r.description ? `${r.description} · ` : ""}Ricetta base per {r.servings}
+                </Text>
+              </View>
+              <Icon name={on ? "chevronUp" : "chevronDown"} size={20} color="#a49a8e" />
+            </Pressable>
+
+            {on && (
+              <View className="mt-4">
+                {/* Porzioni */}
+                <View className="flex-row items-center justify-between rounded-pill border border-line bg-paper px-3 py-2.5">
+                  <Text className="text-[14px] text-muted">Porzioni</Text>
+                  <View className="flex-row items-center" style={{ gap: 16 }}>
+                    <Pressable
+                      accessibilityLabel="Una porzione in meno"
+                      onPress={() => setPorzioni({ ...porzioni, [r.id]: Math.max(1, scelte - 1) })}
+                      className="h-8 w-8 items-center justify-center rounded-full border border-line bg-card"
+                    >
+                      <Icon name="minus" size={14} color="#a8562e" width={2} />
+                    </Pressable>
+                    <Text className="min-w-[24px] text-center font-display text-[21px] text-ink">{scelte}</Text>
+                    <Pressable
+                      accessibilityLabel="Una porzione in più"
+                      onPress={() => setPorzioni({ ...porzioni, [r.id]: Math.min(12, scelte + 1) })}
+                      className="h-8 w-8 items-center justify-center rounded-full bg-accent"
+                    >
+                      <Icon name="plus" size={14} color="#ffffff" width={2} />
+                    </Pressable>
                   </View>
                 </View>
 
-                {expanded && (recipe.ingredients ?? []).length > 0 && (
-                  <View className="px-4 pb-4 border-t border-gray-50">
-                    <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mt-3 mb-2">
-                      Ingredienti
-                    </Text>
-                    {(recipe.ingredients ?? []).map((ing) => (
-                      <View key={ing.id} className="flex-row items-center py-1" style={{ gap: 8 }}>
-                        <View className="w-1.5 h-1.5 rounded-full bg-orange-400" />
-                        <Text className="text-sm text-gray-700 flex-1">
-                          {ing.quantity ? (
-                            <Text className="font-medium text-gray-900">{ing.quantity} </Text>
-                          ) : null}
-                          {ing.name}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </Pressable>
-            );
-          })
-        )}
-      </ScrollView>
+                <View className="mb-1 mt-4">
+                  <Label>Ingredienti · ricalcolati per {scelte}</Label>
+                </View>
 
-      {/* FAB */}
-      <Pressable
-        onPress={() => setShowAdd(true)}
-        className="absolute bottom-8 right-6 w-14 h-14 bg-orange-500 rounded-full items-center justify-center"
-        style={{ shadowColor: "#f97316", shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 6 }}
-      >
-        <Text className="text-white text-3xl" style={{ lineHeight: 36 }}>+</Text>
-      </Pressable>
+                {ingredienti.map((i, idx) => {
+                  const gia = inDispensa(i);
+                  const fuori = escluse[i.id];
+                  const nonScalabile = i.quantity_num == null;
+                  const spento = gia || fuori || nonScalabile;
+                  return (
+                    <Pressable
+                      key={i.id}
+                      onPress={() => setEscluse({ ...escluse, [i.id]: !fuori })}
+                      className={`flex-row items-center py-2.5 ${idx < ingredienti.length - 1 ? "border-b border-hair" : ""}`}
+                      style={{ gap: 12 }}
+                    >
+                      <Text
+                        className={`w-[64px] ${nonScalabile ? "text-[13px] text-soft" : "font-display text-[15px]"}`}
+                        style={nonScalabile ? undefined : { color: spento ? "#a49a8e" : "#a8562e" }}
+                      >
+                        {formatQta(i, fattore)}
+                      </Text>
+                      <Text
+                        className="flex-1 text-[14.5px]"
+                        style={{
+                          color: spento ? "#8a7f74" : "#1a1714",
+                          textDecorationLine: fuori ? "line-through" : "none",
+                        }}
+                      >
+                        {i.name}
+                      </Text>
+                      {nonScalabile ? <Badge text="non scalato" color="#a49a8e" />
+                        : gia ? <Badge text="in dispensa" color="#166534" />
+                        : fuori ? <Badge text="esclusa" color="#a49a8e" />
+                        : null}
+                    </Pressable>
+                  );
+                })}
 
-      <Modal visible={showAdd} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { resetForm(); setShowAdd(false); }}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-white">
-          <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
-            <Pressable onPress={() => { resetForm(); setShowAdd(false); }} className="py-1 px-2">
-              <Text className="text-base text-gray-500">Annulla</Text>
-            </Pressable>
-            <Text className="text-base font-semibold text-gray-900">Nuova ricetta</Text>
-            <Pressable
-              onPress={addRecipe}
-              disabled={!title.trim() || loading}
-              className={`py-1.5 px-4 rounded-full ${title.trim() && !loading ? "bg-orange-500" : "bg-gray-200"}`}
-            >
-              {loading ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Text className={`text-sm font-semibold ${title.trim() ? "text-white" : "text-gray-400"}`}>Salva</Text>
-              )}
-            </Pressable>
-          </View>
+                <View className="mt-4">
+                  {invio ? (
+                    <View className="items-center py-3.5"><ActivityIndicator color="#a8562e" /></View>
+                  ) : (
+                    <Button
+                      icon="cart"
+                      label={daAggiungere === 0 ? "Hai già tutto" : `Aggiungi ${daAggiungere} alla lista`}
+                      disabled={daAggiungere === 0}
+                      onPress={() => aggiungiAllaLista(r)}
+                    />
+                  )}
+                </View>
 
-          <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 16 }}>
-            <TextInput
-              className="text-base text-gray-800 border-b border-gray-100 pb-3"
-              placeholder="Nome ricetta"
-              placeholderTextColor="#9ca3af"
-              value={title}
-              onChangeText={setTitle}
-              autoFocus
-            />
-
-            <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Descrizione</Text>
-              <TextInput
-                className="text-base text-gray-800 bg-gray-50 rounded-xl px-3 py-2"
-                placeholder="Breve descrizione o note..."
-                placeholderTextColor="#9ca3af"
-                value={description}
-                onChangeText={setDescription}
-                multiline
-                numberOfLines={3}
-              />
-            </View>
-
-            <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Porzioni</Text>
-              <TextInput
-                className="text-base text-gray-800 bg-gray-50 rounded-xl px-3 py-2"
-                placeholder="es. 4"
-                placeholderTextColor="#9ca3af"
-                value={servings}
-                onChangeText={setServings}
-                keyboardType="numeric"
-              />
-            </View>
-
-            <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Ingredienti</Text>
-              <Text className="text-xs text-gray-400 mb-2">Un ingrediente per riga, es. "200g farina" o "2 uova"</Text>
-              <TextInput
-                className="text-base text-gray-800 bg-gray-50 rounded-xl px-3 py-2"
-                placeholder={"200g farina\n2 uova\n100ml latte"}
-                placeholderTextColor="#9ca3af"
-                value={ingredientLines}
-                onChangeText={setIngredientLines}
-                multiline
-                numberOfLines={6}
-                style={{ minHeight: 120, textAlignVertical: "top" }}
-              />
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </Modal>
-    </View>
+                <Text className="mt-2.5 text-center text-[12px] leading-[18px] text-soft">
+                  Quello che hai già in dispensa resta fuori.{"\n"}Tocca una riga per escluderla o rimetterla.
+                </Text>
+              </View>
+            )}
+          </Card>
+        );
+      })}
+    </ScrollView>
   );
 }

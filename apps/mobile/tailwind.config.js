@@ -9,21 +9,32 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        brand: {
-          50:  "#f0f7ff",
-          100: "#e0effe",
-          200: "#baddfd",
-          300: "#7ec2fc",
-          400: "#38a0f8",
-          500: "#0e82ea",
-          600: "#0264c8",
-          700: "#034ea2",
-          800: "#074385",
-          900: "#0c3a6e",
-        },
+        // Direzione editoriale calda. Sostituisce i sette accenti scorrelati
+        // (uno per tab) con un accento solo e due colori partner.
+        paper:  "#faf7f2",  // sfondo
+        card:   "#ffffff",
+        line:   "#ece4d9",  // bordi
+        hair:   "#f5efe6",  // separatori interni
+        ink:    "#1a1714",  // testo primario
+        muted:  "#8a7f74",  // testo secondario
+        soft:   "#a49a8e",  // testo terziario
+        accent: "#a8562e",  // terracotta
+        tint:   "#f2ece2",  // fondo dell'accento
+        paolo:  "#a8562e",
+        giulia: "#4a6b63",
+        ok:     "#166534",
+        warn:   "#c2410c",
+        bad:    "#b91c1c",
       },
       fontFamily: {
-        sans: ["System"],
+        sans:    ["Public Sans", "system-ui", "sans-serif"],
+        display: ["Newsreader", "Georgia", "serif"],
+      },
+      borderRadius: {
+        // Angoli netti: è una scelta della direzione, non un default.
+        DEFAULT: "4px",
+        card: "4px",
+        pill: "2px",
       },
     },
   },

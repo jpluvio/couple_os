@@ -8,7 +8,7 @@ const STATUS_CONFIG: Record<CheckInStatus, { label: string; emoji: string; class
   waiting_you: {
     label: "Tocca a te",
     emoji: "✏️",
-    classes: "bg-blue-50 text-blue-600",
+    classes: "bg-tint text-accent",
   },
   waiting_partner: {
     label: "In attesa del partner",
@@ -35,7 +35,7 @@ export function CheckinCard({ checkin, currentUserId, onPress }: CheckinCardProp
   return (
     <Pressable
       onPress={onPress}
-      className="bg-white mx-4 mb-3 rounded-2xl p-4"
+      className="bg-card mx-4 mb-3 rounded-card p-4"
       style={{
         shadowColor: "#000",
         shadowOpacity: 0.06,
@@ -46,14 +46,14 @@ export function CheckinCard({ checkin, currentUserId, onPress }: CheckinCardProp
     >
       {/* Header: periodo + tempo */}
       <View className="flex-row items-center justify-between mb-2">
-        <Text className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+        <Text className="text-xs font-semibold text-soft uppercase tracking-wide">
           {PERIOD_LABELS[checkin.period_type]}
         </Text>
-        <Text className="text-xs text-gray-400">{relativeTime(checkin.created_at)}</Text>
+        <Text className="text-xs text-soft">{relativeTime(checkin.created_at)}</Text>
       </View>
 
       {/* Prompt */}
-      <Text className="text-base font-semibold text-gray-900 leading-relaxed mb-3">
+      <Text className="text-base font-semibold text-ink leading-relaxed mb-3">
         {checkin.prompt}
       </Text>
 

@@ -153,13 +153,13 @@ export default function TodoScreen() {
   if (!user || !couple) return null;
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-paper">
       {/* Header */}
       <View className="px-4 pt-2 pb-3 flex-row items-center justify-between">
         <View>
-          <Text className="text-2xl font-bold text-gray-900">To-Do</Text>
+          <Text className="text-2xl font-bold text-ink">To-Do</Text>
           {openCount > 0 && (
-            <Text className="text-sm text-gray-500 mt-0.5">{openCount} task aperti</Text>
+            <Text className="text-sm text-muted mt-0.5">{openCount} task aperti</Text>
           )}
         </View>
         <Pressable
@@ -189,17 +189,17 @@ export default function TodoScreen() {
               key={list.id}
               onPress={() => setSelectedListId(list.id)}
               onLongPress={() => deleteList(list.id)}
-              className={`mr-2 px-4 py-2.5 rounded-2xl flex-row items-center ${
-                isSelected ? "bg-green-500" : "bg-white border border-gray-200"
+              className={`mr-2 px-4 py-2.5 rounded-card flex-row items-center ${
+                isSelected ? "bg-green-500" : "bg-card border border-line"
               }`}
               style={{ gap: 6 }}
             >
               <Text className="text-base">{list.emoji ?? "📝"}</Text>
-              <Text className={`text-sm font-semibold ${isSelected ? "text-white" : "text-gray-700"}`}>
+              <Text className={`text-sm font-semibold ${isSelected ? "text-white" : "text-ink"}`}>
                 {list.name}
               </Text>
               {listOpenCount !== null && listOpenCount > 0 && (
-                <View className={`rounded-full px-1.5 min-w-5 items-center ${isSelected ? "bg-white/30" : "bg-green-500"}`}>
+                <View className={`rounded-full px-1.5 min-w-5 items-center ${isSelected ? "bg-card/30" : "bg-green-500"}`}>
                   <Text className={`text-xs font-bold ${isSelected ? "text-white" : "text-white"}`}>
                     {listOpenCount}
                   </Text>
@@ -208,7 +208,7 @@ export default function TodoScreen() {
             </Pressable>
           );
         })}
-        {listsLoading && <ActivityIndicator color="#22c55e" />}
+        {listsLoading && <ActivityIndicator color="#a8562e" />}
       </ScrollView>
 
       {/* Items list */}
@@ -217,7 +217,7 @@ export default function TodoScreen() {
           className="flex-1"
           contentContainerStyle={{ paddingTop: 4, paddingBottom: 120 }}
           refreshControl={
-            <RefreshControl refreshing={itemsLoading} onRefresh={refetchItems} tintColor="#22c55e" />
+            <RefreshControl refreshing={itemsLoading} onRefresh={refetchItems} tintColor="#a8562e" />
           }
         >
           {itemsLoading && (items ?? []).length === 0 ? (
@@ -225,8 +225,8 @@ export default function TodoScreen() {
           ) : (items ?? []).length === 0 ? (
             <View className="items-center py-16 px-8">
               <Text className="text-4xl mb-3">✅</Text>
-              <Text className="text-base font-semibold text-gray-700 text-center">Lista vuota</Text>
-              <Text className="text-sm text-gray-400 text-center mt-1">
+              <Text className="text-base font-semibold text-ink text-center">Lista vuota</Text>
+              <Text className="text-sm text-soft text-center mt-1">
                 Aggiungi il primo task!
               </Text>
             </View>
@@ -240,8 +240,8 @@ export default function TodoScreen() {
         !listsLoading && (
           <View className="flex-1 items-center justify-center px-8">
             <Text className="text-5xl mb-4">📋</Text>
-            <Text className="text-lg font-semibold text-gray-700 text-center">Nessuna lista ancora</Text>
-            <Text className="text-sm text-gray-400 text-center mt-1">Crea la prima lista per iniziare!</Text>
+            <Text className="text-lg font-semibold text-ink text-center">Nessuna lista ancora</Text>
+            <Text className="text-sm text-soft text-center mt-1">Crea la prima lista per iniziare!</Text>
           </View>
         )
       )}
@@ -259,24 +259,24 @@ export default function TodoScreen() {
 
       {/* Create List Modal */}
       <Modal visible={showCreateList} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowCreateList(false)}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-white">
-          <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-card">
+          <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-line">
             <Pressable onPress={() => setShowCreateList(false)} className="py-1 px-2">
-              <Text className="text-base text-gray-500">Annulla</Text>
+              <Text className="text-base text-muted">Annulla</Text>
             </Pressable>
-            <Text className="text-base font-semibold text-gray-900">Nuova lista</Text>
+            <Text className="text-base font-semibold text-ink">Nuova lista</Text>
             <Pressable
               onPress={createList}
               disabled={!listName.trim() || listLoading}
-              className={`py-1.5 px-4 rounded-full ${listName.trim() && !listLoading ? "bg-green-500" : "bg-gray-200"}`}
+              className={`py-1.5 px-4 rounded-full ${listName.trim() && !listLoading ? "bg-green-500" : "bg-line"}`}
             >
               {listLoading ? <ActivityIndicator size="small" color="#fff" /> : (
-                <Text className={`text-sm font-semibold ${listName.trim() ? "text-white" : "text-gray-400"}`}>Crea</Text>
+                <Text className={`text-sm font-semibold ${listName.trim() ? "text-white" : "text-soft"}`}>Crea</Text>
               )}
             </Pressable>
           </View>
           <View className="px-4 pt-4" style={{ gap: 12 }}>
-            <View className="flex-row items-center bg-gray-50 rounded-xl px-3 py-2" style={{ gap: 8 }}>
+            <View className="flex-row items-center bg-paper rounded-card px-3 py-2" style={{ gap: 8 }}>
               <TextInput
                 className="text-3xl w-10"
                 value={listEmoji}
@@ -284,9 +284,9 @@ export default function TodoScreen() {
                 maxLength={2}
               />
               <TextInput
-                className="flex-1 text-base text-gray-800"
+                className="flex-1 text-base text-ink"
                 placeholder="Nome lista"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor="#a49a8e"
                 value={listName}
                 onChangeText={setListName}
                 autoFocus
@@ -299,44 +299,44 @@ export default function TodoScreen() {
 
       {/* Create Item Modal */}
       <Modal visible={showCreateItem} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowCreateItem(false)}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-white">
-          <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-card">
+          <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-line">
             <Pressable onPress={() => setShowCreateItem(false)} className="py-1 px-2">
-              <Text className="text-base text-gray-500">Annulla</Text>
+              <Text className="text-base text-muted">Annulla</Text>
             </Pressable>
-            <Text className="text-base font-semibold text-gray-900">Nuovo task</Text>
+            <Text className="text-base font-semibold text-ink">Nuovo task</Text>
             <Pressable
               onPress={createItem}
               disabled={!itemTitle.trim() || itemLoading}
-              className={`py-1.5 px-4 rounded-full ${itemTitle.trim() && !itemLoading ? "bg-green-500" : "bg-gray-200"}`}
+              className={`py-1.5 px-4 rounded-full ${itemTitle.trim() && !itemLoading ? "bg-green-500" : "bg-line"}`}
             >
               {itemLoading ? <ActivityIndicator size="small" color="#fff" /> : (
-                <Text className={`text-sm font-semibold ${itemTitle.trim() ? "text-white" : "text-gray-400"}`}>Aggiungi</Text>
+                <Text className={`text-sm font-semibold ${itemTitle.trim() ? "text-white" : "text-soft"}`}>Aggiungi</Text>
               )}
             </Pressable>
           </View>
           <View className="px-4 pt-4" style={{ gap: 16 }}>
             <TextInput
-              className="text-base text-gray-800 border-b border-gray-100 pb-3"
+              className="text-base text-ink border-b border-line pb-3"
               placeholder="Cosa devi fare?"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor="#a49a8e"
               value={itemTitle}
               onChangeText={setItemTitle}
               autoFocus
               onSubmitEditing={createItem}
             />
             <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Priorità</Text>
+              <Text className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Priorità</Text>
               <View className="flex-row" style={{ gap: 8 }}>
                 {PRIORITIES.map((p) => (
                   <Pressable
                     key={p}
                     onPress={() => setItemPriority(p)}
-                    className={`flex-1 py-2 rounded-xl items-center border ${
-                      itemPriority === p ? "bg-green-500 border-green-500" : "bg-white border-gray-200"
+                    className={`flex-1 py-2 rounded-card items-center border ${
+                      itemPriority === p ? "bg-green-500 border-green-500" : "bg-card border-line"
                     }`}
                   >
-                    <Text className={`text-sm font-medium ${itemPriority === p ? "text-white" : "text-gray-600"}`}>
+                    <Text className={`text-sm font-medium ${itemPriority === p ? "text-white" : "text-muted"}`}>
                       {PRIORITY_LABELS[p]}
                     </Text>
                   </Pressable>

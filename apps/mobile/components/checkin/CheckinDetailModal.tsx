@@ -95,24 +95,24 @@ export function CheckinDetailModal({
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1 bg-white"
+        className="flex-1 bg-card"
       >
         {/* Header */}
-        <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
+        <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-line">
           <Pressable onPress={onClose} className="py-1 px-2">
-            <Text className="text-base text-gray-500">Chiudi</Text>
+            <Text className="text-base text-muted">Chiudi</Text>
           </Pressable>
-          <Text className="text-base font-semibold text-gray-900">Check-in</Text>
+          <Text className="text-base font-semibold text-ink">Check-in</Text>
           <View className="w-14" />
         </View>
 
         <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled">
           {/* Prompt */}
-          <View className="bg-blue-50 rounded-2xl px-4 py-4 mb-4">
-            <Text className="text-xs font-semibold text-blue-500 uppercase tracking-wide mb-1">
+          <View className="bg-tint rounded-card px-4 py-4 mb-4">
+            <Text className="text-xs font-semibold text-accent uppercase tracking-wide mb-1">
               {PERIOD_LABELS[checkin.period_type]}
             </Text>
-            <Text className="text-lg font-semibold text-gray-900 leading-relaxed">
+            <Text className="text-lg font-semibold text-ink leading-relaxed">
               {checkin.prompt}
             </Text>
           </View>
@@ -139,10 +139,10 @@ export function CheckinDetailModal({
               <AnswerCard name={myName} mood={myMood} response={myResponse} accent="blue" />
               <View className="items-center py-8 px-6 mt-2">
                 <Text className="text-4xl mb-3">⏳</Text>
-                <Text className="text-base font-semibold text-gray-700 text-center">
+                <Text className="text-base font-semibold text-ink text-center">
                   In attesa di {partnerName}
                 </Text>
-                <Text className="text-sm text-gray-400 text-center mt-1">
+                <Text className="text-sm text-soft text-center mt-1">
                   La sua risposta sarà visibile quando avrà completato il check-in.
                 </Text>
               </View>
@@ -150,7 +150,7 @@ export function CheckinDetailModal({
           ) : (
             // ─── Manca la tua risposta: form ───
             <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+              <Text className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">
                 Come ti senti?
               </Text>
               <View className="flex-row justify-between mb-6">
@@ -160,8 +160,8 @@ export function CheckinDetailModal({
                     <Pressable
                       key={m.value}
                       onPress={() => setMood(m.value)}
-                      className={`items-center justify-center w-14 h-14 rounded-2xl border ${
-                        selected ? "bg-blue-50 border-blue-400" : "bg-white border-gray-200"
+                      className={`items-center justify-center w-14 h-14 rounded-card border ${
+                        selected ? "bg-tint border-blue-400" : "bg-card border-line"
                       }`}
                     >
                       <Text className="text-2xl">{m.emoji}</Text>
@@ -170,28 +170,28 @@ export function CheckinDetailModal({
                 })}
               </View>
 
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+              <Text className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">
                 La tua risposta
               </Text>
               <TextInput
-                className="text-base text-gray-800 min-h-28 leading-relaxed border border-gray-200 rounded-2xl px-4 py-3"
+                className="text-base text-ink min-h-28 leading-relaxed border border-line rounded-card px-4 py-3"
                 placeholder="Scrivi cosa ne pensi..."
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor="#a49a8e"
                 value={response}
                 onChangeText={setResponse}
                 multiline
                 maxLength={1000}
                 textAlignVertical="top"
               />
-              <Text className="text-xs text-gray-400 text-right mt-1 mb-5">
+              <Text className="text-xs text-soft text-right mt-1 mb-5">
                 {response.length}/1000
               </Text>
 
               <Pressable
                 onPress={submit}
                 disabled={!mood || !response.trim() || loading}
-                className={`py-3.5 rounded-2xl items-center ${
-                  mood && response.trim() && !loading ? "bg-blue-500" : "bg-gray-200"
+                className={`py-3.5 rounded-card items-center ${
+                  mood && response.trim() && !loading ? "bg-accent" : "bg-line"
                 }`}
               >
                 {loading ? (
@@ -199,7 +199,7 @@ export function CheckinDetailModal({
                 ) : (
                   <Text
                     className={`text-base font-semibold ${
-                      mood && response.trim() ? "text-white" : "text-gray-400"
+                      mood && response.trim() ? "text-white" : "text-soft"
                     }`}
                   >
                     Invia risposta
@@ -207,7 +207,7 @@ export function CheckinDetailModal({
                 )}
               </Pressable>
 
-              <Text className="text-xs text-gray-400 text-center mt-3">
+              <Text className="text-xs text-soft text-center mt-3">
                 La tua risposta resterà nascosta finché anche {partnerName} non avrà risposto.
               </Text>
             </View>
@@ -235,17 +235,17 @@ function AnswerCard({
   const isBlue = accent === "blue";
   return (
     <View
-      className={`rounded-2xl px-4 py-4 border ${
-        isBlue ? "bg-blue-50 border-blue-100" : "bg-gray-50 border-gray-200"
+      className={`rounded-card px-4 py-4 border ${
+        isBlue ? "bg-tint border-blue-100" : "bg-paper border-line"
       }`}
     >
       <View className="flex-row items-center justify-between mb-2">
-        <Text className={`text-sm font-semibold ${isBlue ? "text-blue-600" : "text-gray-700"}`}>
+        <Text className={`text-sm font-semibold ${isBlue ? "text-accent" : "text-ink"}`}>
           {name}
         </Text>
         <Text className="text-2xl">{moodEmoji(mood)}</Text>
       </View>
-      <Text className="text-base text-gray-800 leading-relaxed">
+      <Text className="text-base text-ink leading-relaxed">
         {response ?? "—"}
       </Text>
     </View>

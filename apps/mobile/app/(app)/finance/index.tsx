@@ -28,21 +28,21 @@ export default function FinanceScreen() {
   if (!user || !couple) return null;
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-paper">
       {/* Header */}
       <View className="px-4 pt-2 pb-3">
-        <Text className="text-2xl font-bold text-gray-900">Finanze</Text>
-        <Text className="text-sm text-gray-500 mt-0.5 capitalize">{MONTH_LABEL}</Text>
+        <Text className="text-2xl font-bold text-ink">Finanze</Text>
+        <Text className="text-sm text-muted mt-0.5 capitalize">{MONTH_LABEL}</Text>
       </View>
 
       {/* Tab selector */}
-      <View className="flex-row mx-4 mb-3 bg-gray-100 rounded-2xl p-1">
+      <View className="flex-row mx-4 mb-3 bg-hair rounded-card p-1">
         {TABS.map((tab) => (
           <Pressable
             key={tab.key}
             onPress={() => setActiveTab(tab.key)}
-            className={`flex-1 flex-row items-center justify-center py-2 rounded-xl ${
-              activeTab === tab.key ? "bg-white" : ""
+            className={`flex-1 flex-row items-center justify-center py-2 rounded-card ${
+              activeTab === tab.key ? "bg-card" : ""
             }`}
             style={
               activeTab === tab.key
@@ -53,7 +53,7 @@ export default function FinanceScreen() {
             <Text className="text-sm">{tab.emoji}</Text>
             <Text
               className={`text-sm font-semibold ${
-                activeTab === tab.key ? "text-emerald-600" : "text-gray-500"
+                activeTab === tab.key ? "text-accent" : "text-muted"
               }`}
             >
               {tab.label}

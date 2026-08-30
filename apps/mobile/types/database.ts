@@ -491,6 +491,7 @@ export type Database = {
       }
       pantry_items: {
         Row: {
+          ingredient_id: string | null
           category: Database["public"]["Enums"]["pantry_category"]
           couple_id: string
           created_at: string
@@ -502,6 +503,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ingredient_id?: string | null
           category?: Database["public"]["Enums"]["pantry_category"]
           couple_id: string
           created_at?: string
@@ -513,6 +515,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ingredient_id?: string | null
           category?: Database["public"]["Enums"]["pantry_category"]
           couple_id?: string
           created_at?: string
@@ -622,6 +625,11 @@ export type Database = {
       }
       recipe_ingredients: {
         Row: {
+          ingredient_id: string | null
+          quantity_num: number | null
+          unit: string | null
+          quantity_text: string | null
+          sort_order: number
           id: string
           name: string
           quantity: string | null
@@ -689,6 +697,7 @@ export type Database = {
       }
       shopping_items: {
         Row: {
+          ingredient_id: string | null
           category: Database["public"]["Enums"]["pantry_category"]
           checked: boolean
           couple_id: string
@@ -701,6 +710,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ingredient_id?: string | null
           category?: Database["public"]["Enums"]["pantry_category"]
           checked?: boolean
           couple_id: string
@@ -713,6 +723,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ingredient_id?: string | null
           category?: Database["public"]["Enums"]["pantry_category"]
           checked?: boolean
           couple_id?: string
@@ -875,6 +886,17 @@ export type Database = {
       create_couple: { Args: { couple_name?: string }; Returns: Json }
       get_couple_id: { Args: never; Returns: string }
       join_couple_by_code: { Args: { invite_code: string }; Returns: string }
+      normalize_ingredient_name: { Args: { txt: string }; Returns: string }
+      add_recipe_to_shopping_list: {
+        Args: {
+          p_recipe_id: string
+          p_servings: number
+          p_escludi_in_dispensa?: boolean
+          p_escludi_ids?: string[]
+        }
+        Returns: number
+      }
+      stock_purchased_items: { Args: { p_scadenze?: Json }; Returns: number }
     }
     Enums: {
       checkin_period: "weekly" | "monthly" | "yearly"
@@ -1060,3 +1082,30 @@ export type FinancialGoal = Tables<"financial_goals">;
 export type CheckIn = Tables<"check_ins">;
 export type Memory = Tables<"memories">;
 export type Notification = Tables<"notifications">;
+
+// ── 008: anagrafica ingredienti e quantità strutturate ──
+// Scritti a mano: senza accesso al database non si possono rigenerare
+// con `supabase gen types`. Da rigenerare dopo aver applicato la 008.
+
+export type Ingredient = {
+  id: string;
+  name: string;
+  name_norm: string;
+  default_unit: string | null;
+  category: PantryCategory;
+  couple_id: string;
+  created_at: string;
+  updated_at: string;
+};
+
+/** Riga di ricetta con la quantità già strutturata. */
+export type RecipeIngredient = {
+  id: string;
+  recipe_id: string;
+  name: string;
+  ingredient_id: string | null;
+  quantity_num: number | null;
+  unit: string | null;
+  quantity_text: string | null;
+  sort_order: number;
+};

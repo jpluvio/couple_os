@@ -62,7 +62,7 @@ export function SkeletonCardList({ count = 4, showAvatar = false }: { count?: nu
   return (
     <View style={{ gap: 8 }} className="px-4 pt-1">
       {Array.from({ length: count }).map((_, i) => (
-        <View key={i} className="bg-white rounded-2xl px-4 py-3.5">
+        <View key={i} className="bg-card rounded-card px-4 py-3.5">
           <View className="flex-row items-center" style={{ gap: 10 }}>
             {showAvatar && <Skeleton width={36} height={36} radius={18} />}
             <View className="flex-1" style={{ gap: 7 }}>
@@ -81,7 +81,7 @@ export function SkeletonRowList({ count = 5 }: { count?: number }) {
   return (
     <View style={{ gap: 8 }} className="px-4 pt-1">
       {Array.from({ length: count }).map((_, i) => (
-        <View key={i} className="bg-white rounded-xl px-4 py-3 flex-row items-center" style={{ gap: 10 }}>
+        <View key={i} className="bg-card rounded-card px-4 py-3 flex-row items-center" style={{ gap: 10 }}>
           <Skeleton width={26} height={26} radius={13} />
           <View className="flex-1" style={{ gap: 6 }}>
             <Skeleton width="60%" height={12} />

@@ -49,19 +49,19 @@ export function EventCard({ event, currentUserId, queryKey, partnerColor }: Even
   const card = (
     <Pressable
       onLongPress={handleLongPress}
-      className="bg-white mx-4 mb-2 rounded-xl px-4 py-3 flex-row items-center"
+      className="bg-card mx-4 mb-2 rounded-card px-4 py-3 flex-row items-center"
       style={{ shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 6, shadowOffset: { width: 0, height: 1 }, elevation: 1 }}
     >
       <View className="w-1 self-stretch rounded-full mr-3" style={{ backgroundColor: event.color ?? dotColor }} />
       <View className="flex-1">
-        <Text className="text-sm font-semibold text-gray-800">{event.title}</Text>
+        <Text className="text-sm font-semibold text-ink">{event.title}</Text>
         {!event.all_day && (
-          <Text className="text-xs text-gray-400 mt-0.5">
+          <Text className="text-xs text-soft mt-0.5">
             {formatTime(event.start_at)} – {formatTime(event.end_at)}
           </Text>
         )}
-        {event.all_day && <Text className="text-xs text-gray-400 mt-0.5">Tutto il giorno</Text>}
-        {event.location ? <Text className="text-xs text-gray-400 mt-0.5">📍 {event.location}</Text> : null}
+        {event.all_day && <Text className="text-xs text-soft mt-0.5">Tutto il giorno</Text>}
+        {event.location ? <Text className="text-xs text-soft mt-0.5">📍 {event.location}</Text> : null}
       </View>
     </Pressable>
   );

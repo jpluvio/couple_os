@@ -70,12 +70,12 @@ function TrendChart({
       </View>
 
       {/* Linea di base + etichette dei mesi */}
-      <View className="h-px bg-gray-200 mt-1" />
+      <View className="h-px bg-line mt-1" />
       <View className="flex-row mt-1.5" style={{ gap: 6 }}>
         {data.map((m) => (
           <View key={m.key} className="flex-1 items-center">
             <Text
-              className={`text-xs ${m.key === lastKey ? "font-semibold text-gray-700" : "text-gray-400"}`}
+              className={`text-xs ${m.key === lastKey ? "font-semibold text-ink" : "text-soft"}`}
             >
               {m.label}
             </Text>
@@ -105,18 +105,18 @@ function CategoryBars({
             <View className="flex-row items-center justify-between mb-1">
               <View className="flex-row items-center flex-1" style={{ gap: 6 }}>
                 <Text className="text-sm">{r.emoji}</Text>
-                <Text className="text-sm font-medium text-gray-800" numberOfLines={1}>
+                <Text className="text-sm font-medium text-ink" numberOfLines={1}>
                   {r.label}
                 </Text>
               </View>
               <View className="flex-row items-baseline" style={{ gap: 6 }}>
-                <Text className="text-sm font-semibold text-gray-900">{euro(r.amount)}</Text>
-                <Text className="text-xs text-gray-400" style={{ width: 38, textAlign: "right" }}>
+                <Text className="text-sm font-semibold text-ink">{euro(r.amount)}</Text>
+                <Text className="text-xs text-soft" style={{ width: 38, textAlign: "right" }}>
                   {pct.toFixed(0)}%
                 </Text>
               </View>
             </View>
-            <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <View className="h-2 bg-hair rounded-full overflow-hidden">
               <View
                 className="h-full rounded-full"
                 style={{
@@ -207,12 +207,12 @@ export function StatsTab() {
   if (isLoading && !expenses) {
     return (
       <View className="flex-1" style={{ gap: 12 }}>
-        <View className="mx-4 bg-white rounded-2xl px-4 py-4" style={{ gap: 10 }}>
+        <View className="mx-4 bg-card rounded-card px-4 py-4" style={{ gap: 10 }}>
           <Skeleton width="40%" height={10} />
           <Skeleton width="55%" height={26} />
           <Skeleton width="70%" height={11} />
         </View>
-        <View className="mx-4 bg-white rounded-2xl px-4 py-4" style={{ gap: 10 }}>
+        <View className="mx-4 bg-card rounded-card px-4 py-4" style={{ gap: 10 }}>
           <Skeleton width="30%" height={12} />
           <Skeleton height={120} radius={6} />
         </View>
@@ -224,10 +224,10 @@ export function StatsTab() {
     return (
       <View className="flex-1 items-center py-20 px-8">
         <Text className="text-5xl mb-4">📈</Text>
-        <Text className="text-base font-semibold text-gray-700 text-center">
+        <Text className="text-base font-semibold text-ink text-center">
           Ancora nessun dato da analizzare
         </Text>
-        <Text className="text-sm text-gray-400 text-center mt-1">
+        <Text className="text-sm text-soft text-center mt-1">
           Aggiungi qualche spesa: i grafici compaiono da soli.
         </Text>
       </View>
@@ -239,50 +239,50 @@ export function StatsTab() {
       className="flex-1"
       contentContainerStyle={{ paddingBottom: 120, gap: 12 }}
       refreshControl={
-        <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#10b981" />
+        <RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#a8562e" />
       }
     >
       {/* Totale del mese + confronto col mese precedente */}
-      <View className="mx-4 bg-white rounded-2xl px-4 py-4">
-        <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+      <View className="mx-4 bg-card rounded-card px-4 py-4">
+        <Text className="text-xs font-semibold text-muted uppercase tracking-wide">
           Speso questo mese
         </Text>
-        <Text className="text-3xl font-bold text-gray-900 mt-1">{euro(stats.currentTotal)}</Text>
+        <Text className="text-3xl font-bold text-ink mt-1">{euro(stats.currentTotal)}</Text>
 
         {stats.prevTotal > 0 ? (
-          <Text className="text-sm text-gray-500 mt-1">
-            <Text className={delta > 0 ? "text-red-500 font-semibold" : "text-emerald-600 font-semibold"}>
+          <Text className="text-sm text-muted mt-1">
+            <Text className={delta > 0 ? "text-red-500 font-semibold" : "text-accent font-semibold"}>
               {delta > 0 ? "▲" : "▼"} {euro(Math.abs(delta))}
               {deltaPct !== null ? ` (${Math.abs(deltaPct).toFixed(0)}%)` : ""}
             </Text>{" "}
             rispetto al mese scorso
           </Text>
         ) : (
-          <Text className="text-sm text-gray-400 mt-1">Nessuna spesa il mese scorso</Text>
+          <Text className="text-sm text-soft mt-1">Nessuna spesa il mese scorso</Text>
         )}
 
-        <Text className="text-xs text-gray-400 mt-2">
+        <Text className="text-xs text-soft mt-2">
           Media sui mesi con spese: {euro(stats.average)}
         </Text>
       </View>
 
       {/* Andamento */}
-      <View className="mx-4 bg-white rounded-2xl px-4 py-4">
-        <Text className="text-sm font-semibold text-gray-800 mb-1">Andamento</Text>
-        <Text className="text-xs text-gray-400 mb-3">Totale speso negli ultimi {MONTHS_SHOWN} mesi</Text>
+      <View className="mx-4 bg-card rounded-card px-4 py-4">
+        <Text className="text-sm font-semibold text-ink mb-1">Andamento</Text>
+        <Text className="text-xs text-soft mb-3">Totale speso negli ultimi {MONTHS_SHOWN} mesi</Text>
         <TrendChart data={stats.trend} maxValue={stats.maxMonth} />
       </View>
 
       {/* Categorie */}
-      <View className="mx-4 bg-white rounded-2xl px-4 py-4">
-        <Text className="text-sm font-semibold text-gray-800 mb-1">Dove sono finiti i soldi</Text>
-        <Text className="text-xs text-gray-400 mb-4">
+      <View className="mx-4 bg-card rounded-card px-4 py-4">
+        <Text className="text-sm font-semibold text-ink mb-1">Dove sono finiti i soldi</Text>
+        <Text className="text-xs text-soft mb-4">
           Categorie principali di questo mese, sul totale di {euro(stats.currentTotal)}
         </Text>
         {stats.categories.length > 0 ? (
           <CategoryBars rows={stats.categories} total={stats.currentTotal} />
         ) : (
-          <Text className="text-sm text-gray-400">Nessuna spesa questo mese.</Text>
+          <Text className="text-sm text-soft">Nessuna spesa questo mese.</Text>
         )}
       </View>
     </ScrollView>

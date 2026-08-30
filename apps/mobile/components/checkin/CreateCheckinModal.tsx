@@ -65,13 +65,13 @@ export function CreateCheckinModal({
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View className="flex-1 bg-white">
+      <View className="flex-1 bg-card">
         {/* Header */}
-        <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
+        <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-line">
           <Pressable onPress={onClose} className="py-1 px-2">
-            <Text className="text-base text-gray-500">Annulla</Text>
+            <Text className="text-base text-muted">Annulla</Text>
           </Pressable>
-          <Text className="text-base font-semibold text-gray-900">Nuovo check-in</Text>
+          <Text className="text-base font-semibold text-ink">Nuovo check-in</Text>
           {/* Spazio per bilanciare l'header */}
           <View className="w-16" />
         </View>
@@ -80,17 +80,17 @@ export function CreateCheckinModal({
         {!partnerId ? (
           <View className="flex-1 items-center justify-center px-8">
             <Text className="text-5xl mb-4">💞</Text>
-            <Text className="text-lg font-semibold text-gray-700 text-center">
+            <Text className="text-lg font-semibold text-ink text-center">
               Serve un partner
             </Text>
-            <Text className="text-sm text-gray-400 text-center mt-1">
+            <Text className="text-sm text-soft text-center mt-1">
               Invita il tuo partner alla coppia per iniziare un check-in insieme.
             </Text>
           </View>
         ) : (
           <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled">
             {/* Filtro per periodo */}
-            <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            <Text className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">
               Periodo
             </Text>
             <View className="flex-row mb-5" style={{ gap: 8 }}>
@@ -101,10 +101,10 @@ export function CreateCheckinModal({
                     key={p}
                     onPress={() => setPeriod(p)}
                     className={`px-3 py-1.5 rounded-full border ${
-                      selected ? "bg-blue-500 border-blue-500" : "bg-white border-gray-200"
+                      selected ? "bg-accent border-accent" : "bg-card border-line"
                     }`}
                   >
-                    <Text className={`text-sm font-medium ${selected ? "text-white" : "text-gray-600"}`}>
+                    <Text className={`text-sm font-medium ${selected ? "text-white" : "text-muted"}`}>
                       {PERIOD_LABELS[p]}
                     </Text>
                   </Pressable>
@@ -113,17 +113,17 @@ export function CreateCheckinModal({
             </View>
 
             {/* Lista prompt disponibili */}
-            <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            <Text className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">
               Scegli una domanda
             </Text>
 
             {isLoading ? (
               <View className="py-10 items-center">
-                <ActivityIndicator color="#0e82ea" />
+                <ActivityIndicator color="#a8562e" />
               </View>
             ) : !prompts || prompts.length === 0 ? (
               <View className="py-10 items-center">
-                <Text className="text-sm text-gray-400 text-center">
+                <Text className="text-sm text-soft text-center">
                   Nessuna domanda disponibile per questo periodo.
                 </Text>
               </View>
@@ -136,15 +136,15 @@ export function CreateCheckinModal({
                       key={prompt.id}
                       onPress={() => createFromPrompt(prompt)}
                       disabled={!!creatingId}
-                      className="bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 flex-row items-center justify-between"
+                      className="bg-paper border border-line rounded-card px-4 py-4 flex-row items-center justify-between"
                     >
-                      <Text className="text-base text-gray-800 flex-1 pr-3 leading-relaxed">
+                      <Text className="text-base text-ink flex-1 pr-3 leading-relaxed">
                         {prompt.text}
                       </Text>
                       {busy ? (
-                        <ActivityIndicator size="small" color="#0e82ea" />
+                        <ActivityIndicator size="small" color="#a8562e" />
                       ) : (
-                        <Text className="text-blue-500 text-xl">＋</Text>
+                        <Text className="text-accent text-xl">＋</Text>
                       )}
                     </Pressable>
                   );

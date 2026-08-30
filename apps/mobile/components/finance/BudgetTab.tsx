@@ -25,7 +25,7 @@ const catInfo = categoryInfo;
 function ProgressBar({ ratio, color }: { ratio: number; color: string }) {
   const clamped = Math.min(ratio, 1);
   return (
-    <View className="h-2 bg-gray-100 rounded-full overflow-hidden mt-2">
+    <View className="h-2 bg-hair rounded-full overflow-hidden mt-2">
       <View
         className="h-full rounded-full"
         style={{ width: `${clamped * 100}%`, backgroundColor: color }}
@@ -161,14 +161,14 @@ export function BudgetTab() {
     <View className="flex-1">
       {/* Summary */}
       {(budgets?.length ?? 0) > 0 && (
-        <View className="mx-4 mb-3 bg-white rounded-2xl px-4 py-3">
+        <View className="mx-4 mb-3 bg-card rounded-card px-4 py-3">
           <View className="flex-row justify-between">
-            <Text className="text-xs text-gray-500">Totale budget</Text>
-            <Text className="text-xs text-gray-500">Speso</Text>
+            <Text className="text-xs text-muted">Totale budget</Text>
+            <Text className="text-xs text-muted">Speso</Text>
           </View>
           <View className="flex-row justify-between mt-1">
-            <Text className="text-lg font-bold text-gray-900">€{totalBudget.toFixed(0)}</Text>
-            <Text className={`text-lg font-bold ${totalSpent > totalBudget ? "text-red-500" : "text-emerald-600"}`}>
+            <Text className="text-lg font-bold text-ink">€{totalBudget.toFixed(0)}</Text>
+            <Text className={`text-lg font-bold ${totalSpent > totalBudget ? "text-red-500" : "text-accent"}`}>
               €{totalSpent.toFixed(0)}
             </Text>
           </View>
@@ -183,14 +183,14 @@ export function BudgetTab() {
         className="flex-1"
         contentContainerStyle={{ paddingTop: 4, paddingBottom: 120 }}
         refreshControl={
-          <RefreshControl refreshing={loadingBudgets} onRefresh={refetch} tintColor="#10b981" />
+          <RefreshControl refreshing={loadingBudgets} onRefresh={refetch} tintColor="#a8562e" />
         }
       >
         {allCategories.length === 0 && !loadingBudgets ? (
           <View className="items-center py-20 px-8">
             <Text className="text-5xl mb-4">📊</Text>
-            <Text className="text-base font-semibold text-gray-700 text-center">Nessun budget impostato</Text>
-            <Text className="text-sm text-gray-400 text-center mt-1">
+            <Text className="text-base font-semibold text-ink text-center">Nessun budget impostato</Text>
+            <Text className="text-sm text-soft text-center mt-1">
               Imposta un budget mensile per ogni categoria!
             </Text>
           </View>
@@ -207,22 +207,22 @@ export function BudgetTab() {
                 key={cat}
                 onPress={() => openEdit(cat)}
                 onLongPress={() => handleLongPress(cat)}
-                className="bg-white mx-4 mb-2 rounded-xl px-4 py-3"
+                className="bg-card mx-4 mb-2 rounded-card px-4 py-3"
               >
                 <View className="flex-row items-center justify-between">
                   <View className="flex-row items-center" style={{ gap: 8 }}>
                     <Text className="text-xl">{info.emoji}</Text>
-                    <Text className="text-sm font-semibold text-gray-800">{info.label}</Text>
+                    <Text className="text-sm font-semibold text-ink">{info.label}</Text>
                   </View>
                   <View className="items-end">
-                    <Text className={`text-sm font-bold ${over ? "text-red-500" : "text-gray-900"}`}>
+                    <Text className={`text-sm font-bold ${over ? "text-red-500" : "text-ink"}`}>
                       €{spent.toFixed(0)}
                       {budget ? (
-                        <Text className="text-gray-400 font-normal"> / €{budget.amount.toFixed(0)}</Text>
+                        <Text className="text-soft font-normal"> / €{budget.amount.toFixed(0)}</Text>
                       ) : null}
                     </Text>
                     {!budget && (
-                      <Text className="text-xs text-gray-400">Nessun budget</Text>
+                      <Text className="text-xs text-soft">Nessun budget</Text>
                     )}
                   </View>
                 </View>
@@ -241,7 +241,7 @@ export function BudgetTab() {
       {/* FAB */}
       <Pressable
         onPress={() => { resetForm(); setShowAdd(true); }}
-        className="absolute bottom-8 right-6 w-14 h-14 bg-emerald-500 rounded-full items-center justify-center"
+        className="absolute bottom-8 right-6 w-14 h-14 bg-accent rounded-full items-center justify-center"
         style={{ shadowColor: "#10b981", shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 6 }}
       >
         <Text className="text-white text-3xl" style={{ lineHeight: 36 }}>+</Text>
@@ -253,34 +253,34 @@ export function BudgetTab() {
         presentationStyle="pageSheet"
         onRequestClose={() => { resetForm(); setShowAdd(false); }}
       >
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-white">
-          <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-gray-100">
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-card">
+          <View className="flex-row items-center justify-between px-4 pt-5 pb-3 border-b border-line">
             <Pressable onPress={() => { resetForm(); setShowAdd(false); }} className="py-1 px-2">
-              <Text className="text-base text-gray-500">Annulla</Text>
+              <Text className="text-base text-muted">Annulla</Text>
             </Pressable>
-            <Text className="text-base font-semibold text-gray-900">
+            <Text className="text-base font-semibold text-ink">
               {editBudget ? "Modifica budget" : "Nuovo budget"}
             </Text>
             <Pressable
               onPress={saveBudget}
               disabled={!budgetAmount.trim() || loading}
-              className={`py-1.5 px-4 rounded-full ${budgetAmount.trim() && !loading ? "bg-emerald-500" : "bg-gray-200"}`}
+              className={`py-1.5 px-4 rounded-full ${budgetAmount.trim() && !loading ? "bg-accent" : "bg-line"}`}
             >
               {loading ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <Text className={`text-sm font-semibold ${budgetAmount.trim() ? "text-white" : "text-gray-400"}`}>Salva</Text>
+                <Text className={`text-sm font-semibold ${budgetAmount.trim() ? "text-white" : "text-soft"}`}>Salva</Text>
               )}
             </Pressable>
           </View>
 
           <ScrollView className="flex-1 px-4 pt-4" keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 20 }}>
             <View>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Budget mensile (€)</Text>
+              <Text className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Budget mensile (€)</Text>
               <TextInput
-                className="text-3xl font-bold text-gray-900 border-b border-gray-100 pb-2"
+                className="text-3xl font-bold text-ink border-b border-line pb-2"
                 placeholder="0"
-                placeholderTextColor="#d1d5db"
+                placeholderTextColor="#c7bdb1"
                 value={budgetAmount}
                 onChangeText={setBudgetAmount}
                 keyboardType="decimal-pad"
@@ -290,19 +290,19 @@ export function BudgetTab() {
 
             {!editBudget && (
               <View>
-                <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Categoria</Text>
+                <Text className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Categoria</Text>
                 <View className="flex-row flex-wrap" style={{ gap: 8 }}>
                   {CATEGORIES.map((cat) => (
                     <Pressable
                       key={cat.value}
                       onPress={() => setCategory(cat.value)}
-                      className={`flex-row items-center px-3 py-2 rounded-xl border ${
-                        category === cat.value ? "bg-emerald-500 border-emerald-500" : "bg-white border-gray-200"
+                      className={`flex-row items-center px-3 py-2 rounded-card border ${
+                        category === cat.value ? "bg-accent border-accent" : "bg-card border-line"
                       }`}
                       style={{ gap: 4 }}
                     >
                       <Text>{cat.emoji}</Text>
-                      <Text className={`text-sm font-medium ${category === cat.value ? "text-white" : "text-gray-700"}`}>
+                      <Text className={`text-sm font-medium ${category === cat.value ? "text-white" : "text-ink"}`}>
                         {cat.label}
                       </Text>
                     </Pressable>

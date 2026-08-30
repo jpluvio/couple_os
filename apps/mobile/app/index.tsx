@@ -7,14 +7,14 @@ export default function Index() {
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#0e82ea" />
+      <View className="flex-1 items-center justify-center bg-card">
+        <ActivityIndicator size="large" color="#a8562e" />
       </View>
     );
   }
 
   if (session) {
-    return <Redirect href="/(app)/board" />;
+    return <Redirect href="/(app)/oggi" />;
   }
 
   return <Redirect href="/(auth)/login" />;

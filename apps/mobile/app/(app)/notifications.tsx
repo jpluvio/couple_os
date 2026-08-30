@@ -49,28 +49,28 @@ export default function NotificationsScreen() {
         const route = TYPE_ROUTE[item.type as NotificationType];
         if (route) router.push(route);
       }}
-      className={`flex-row items-start px-4 py-3 border-b border-gray-100 ${
-        item.read ? "bg-white" : "bg-blue-50"
+      className={`flex-row items-start px-4 py-3 border-b border-line ${
+        item.read ? "bg-card" : "bg-tint"
       }`}
     >
       <Text className="text-2xl mr-3">{TYPE_EMOJI[item.type as NotificationType] ?? "🔔"}</Text>
       <View className="flex-1">
-        <Text className="text-base font-semibold text-gray-900">{item.title}</Text>
-        <Text className="text-sm text-gray-600 mt-0.5">{item.body}</Text>
-        <Text className="text-xs text-gray-400 mt-1">{timeAgo(item.created_at)}</Text>
+        <Text className="text-base font-semibold text-ink">{item.title}</Text>
+        <Text className="text-sm text-muted mt-0.5">{item.body}</Text>
+        <Text className="text-xs text-soft mt-1">{timeAgo(item.created_at)}</Text>
       </View>
-      {!item.read && <View className="w-2.5 h-2.5 rounded-full bg-blue-500 mt-1.5" />}
+      {!item.read && <View className="w-2.5 h-2.5 rounded-full bg-accent mt-1.5" />}
     </Pressable>
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-card" edges={["top"]}>
       {/* Header */}
-      <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-100">
+      <View className="flex-row items-center justify-between px-4 py-3 border-b border-line">
         <Pressable onPress={() => router.back()} hitSlop={8} className="w-10">
-          <Text className="text-2xl text-gray-700">‹</Text>
+          <Text className="text-2xl text-ink">‹</Text>
         </Pressable>
-        <Text className="text-lg font-bold text-gray-900">Notifiche</Text>
+        <Text className="text-lg font-bold text-ink">Notifiche</Text>
         <Pressable
           onPress={markAllRead}
           disabled={unreadCount === 0}
@@ -78,7 +78,7 @@ export default function NotificationsScreen() {
         >
           <Text
             className={`text-sm font-semibold ${
-              unreadCount === 0 ? "text-gray-300" : "text-blue-500"
+              unreadCount === 0 ? "text-gray-300" : "text-accent"
             }`}
           >
             Segna lette
@@ -93,16 +93,16 @@ export default function NotificationsScreen() {
         estimatedItemSize={80}
         contentContainerStyle={{ paddingBottom: 40 }}
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={refetch} tintColor="#0e82ea" />
+          <RefreshControl refreshing={loading} onRefresh={refetch} tintColor="#a8562e" />
         }
         ListEmptyComponent={
           !loading ? (
             <View className="items-center justify-center py-24 px-8">
               <Text className="text-5xl mb-4">🔔</Text>
-              <Text className="text-lg font-semibold text-gray-700 text-center">
+              <Text className="text-lg font-semibold text-ink text-center">
                 Nessuna notifica
               </Text>
-              <Text className="text-sm text-gray-400 text-center mt-1">
+              <Text className="text-sm text-soft text-center mt-1">
                 Qui vedrai gli aggiornamenti del tuo partner.
               </Text>
             </View>

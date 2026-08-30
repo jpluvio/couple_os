@@ -29,7 +29,7 @@ function AuthGuard() {
     } else if (session && inAuthGroup && !onOnboarding) {
       // Utente autenticato: vai alla board, ma lascialo libero
       // sulla schermata di onboarding (crea/unisciti a una coppia).
-      router.replace("/(app)/board");
+      router.replace("/(app)/oggi");
     }
   }, [session, loading, exchangingCode, segments]);
 

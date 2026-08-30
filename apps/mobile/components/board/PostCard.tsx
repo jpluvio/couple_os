@@ -104,34 +104,34 @@ export function PostCard({ post, currentUserId, queryKey }: PostCardProps) {
   return (
     <Pressable
       onLongPress={handleLongPress}
-      className="bg-white mx-4 mb-3 rounded-2xl p-4"
+      className="bg-card mx-4 mb-3 rounded-card p-4"
       style={{ shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 }}
     >
       {/* Header */}
       <View className="flex-row items-center justify-between mb-3">
         <View className="flex-row items-center" style={{ gap: 8 }}>
-          <View className="w-8 h-8 rounded-full bg-blue-100 items-center justify-center">
-            <Text className="text-xs font-bold text-blue-600">{initials}</Text>
+          <View className="w-8 h-8 rounded-full bg-tint items-center justify-center">
+            <Text className="text-xs font-bold text-accent">{initials}</Text>
           </View>
           <View>
-            <Text className="text-sm font-semibold text-gray-800">
+            <Text className="text-sm font-semibold text-ink">
               {post.author?.name ?? "Utente"}
             </Text>
-            <Text className="text-xs text-gray-400">{relativeTime(post.created_at)}</Text>
+            <Text className="text-xs text-soft">{relativeTime(post.created_at)}</Text>
           </View>
         </View>
         {post.pinned && <Text className="text-base">📌</Text>}
       </View>
 
       {/* Content */}
-      <Text className="text-gray-800 text-base leading-relaxed mb-3">{post.content}</Text>
+      <Text className="text-ink text-base leading-relaxed mb-3">{post.content}</Text>
 
       {/* Tags */}
       {post.tags.length > 0 && (
         <View className="flex-row flex-wrap mb-3" style={{ gap: 4 }}>
           {post.tags.map((tag) => (
-            <View key={tag} className="bg-blue-50 px-2 py-0.5 rounded-full">
-              <Text className="text-xs text-blue-600 font-medium">{tag}</Text>
+            <View key={tag} className="bg-tint px-2 py-0.5 rounded-full">
+              <Text className="text-xs text-accent font-medium">{tag}</Text>
             </View>
           ))}
         </View>
@@ -144,13 +144,13 @@ export function PostCard({ post, currentUserId, queryKey }: PostCardProps) {
             key={emoji}
             onPress={() => toggleReaction(emoji, userReacted)}
             className={`flex-row items-center px-2 py-1 rounded-full border ${
-              userReacted ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-200"
+              userReacted ? "bg-tint border-line" : "bg-paper border-line"
             }`}
           >
             <Text className="text-sm">{emoji}</Text>
             {count > 0 && (
               <Text
-                className={`text-xs ml-1 font-semibold ${userReacted ? "text-blue-600" : "text-gray-500"}`}
+                className={`text-xs ml-1 font-semibold ${userReacted ? "text-accent" : "text-muted"}`}
               >
                 {count}
               </Text>
