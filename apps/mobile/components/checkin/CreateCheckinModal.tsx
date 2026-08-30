@@ -6,8 +6,8 @@ import {
   Pressable,
   ScrollView,
   ActivityIndicator,
-  Alert,
 } from "react-native";
+import { showAlert } from "@/lib/alert";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import type { CheckinPeriod } from "@/types/database";
@@ -57,7 +57,7 @@ export function CreateCheckinModal({
       queryClient.invalidateQueries({ queryKey });
       onClose();
     } catch {
-      Alert.alert("Errore", "Impossibile creare il check-in. Riprova.");
+      showAlert("Errore", "Impossibile creare il check-in. Riprova.");
     } finally {
       setCreatingId(null);
     }

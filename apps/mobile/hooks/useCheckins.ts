@@ -1,6 +1,6 @@
-import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useTableSubscription } from "@/lib/realtime";
 import { useAuth } from "./useAuth";
 import type { CheckIn, CheckinPeriod, Tables } from "@/types/database";
 
@@ -39,24 +39,11 @@ export function useCheckins() {
   });
 
   // Subscription realtime: ogni cambiamento sui check-in della coppia invalida la query.
-  useEffect(() => {
-    if (!cid) return;
-
-    const channel = supabase
-      .channel(`checkins-${cid}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "check_ins", filter: `couple_id=eq.${cid}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: qKey });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [cid]);
+  useTableSubscription(
+    cid ? `checkins-${cid}` : null,
+    [{ table: "check_ins", filter: `couple_id=eq.${cid}` }],
+    () => queryClient.invalidateQueries({ queryKey: qKey })
+  );
 
   return {
     checkins: query.data ?? [],

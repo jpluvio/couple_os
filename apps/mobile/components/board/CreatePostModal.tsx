@@ -9,8 +9,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert,
 } from "react-native";
+import { showAlert } from "@/lib/alert";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -52,7 +52,7 @@ export function CreatePostModal({ visible, onClose, coupleId, authorId, queryKey
       setSelectedTags([]);
       onClose();
     } catch {
-      Alert.alert("Errore", "Impossibile pubblicare il post. Riprova.");
+      showAlert("Errore", "Impossibile pubblicare il post. Riprova.");
     } finally {
       setLoading(false);
     }

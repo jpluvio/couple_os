@@ -10,8 +10,8 @@ import {
   Platform,
   Switch,
   ActivityIndicator,
-  Alert,
 } from "react-native";
+import { showAlert } from "@/lib/alert";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -74,7 +74,7 @@ export function CreateEventModal({
       queryClient.invalidateQueries({ queryKey });
       handleClose();
     } catch {
-      Alert.alert("Errore", "Impossibile creare l'evento. Riprova.");
+      showAlert("Errore", "Impossibile creare l'evento. Riprova.");
     } finally {
       setLoading(false);
     }

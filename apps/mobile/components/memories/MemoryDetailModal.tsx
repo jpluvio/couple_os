@@ -6,8 +6,8 @@ import {
   Pressable,
   ScrollView,
   Dimensions,
-  Alert,
 } from "react-native";
+import { showAlert } from "@/lib/alert";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { MemoryPhoto } from "./MemoryPhoto";
@@ -41,7 +41,7 @@ export function MemoryDetailModal({ memory, currentUserId, coupleId, onClose }: 
     : "?";
 
   function confirmDelete() {
-    Alert.alert("Elimina memoria", "Sei sicuro? L'azione non è reversibile.", [
+    showAlert("Elimina memoria", "Sei sicuro? L'azione non è reversibile.", [
       { text: "Annulla", style: "cancel" },
       {
         text: "Elimina",

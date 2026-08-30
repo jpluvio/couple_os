@@ -9,8 +9,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert,
 } from "react-native";
+import { showAlert } from "@/lib/alert";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { supabase } from "@/lib/supabase";
@@ -55,7 +55,7 @@ export function CreateMemoryModal({ visible, onClose, coupleId, authorId }: Crea
   async function pickPhotos() {
     const remaining = MAX_PHOTOS - photos.length;
     if (remaining <= 0) {
-      Alert.alert("Limite raggiunto", `Puoi aggiungere al massimo ${MAX_PHOTOS} foto.`);
+      showAlert("Limite raggiunto", `Puoi aggiungere al massimo ${MAX_PHOTOS} foto.`);
       return;
     }
 
@@ -63,7 +63,7 @@ export function CreateMemoryModal({ visible, onClose, coupleId, authorId }: Crea
     if (Platform.OS !== "web") {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
-        Alert.alert("Permesso negato", "Concedi l'accesso alla galleria per aggiungere foto.");
+        showAlert("Permesso negato", "Concedi l'accesso alla galleria per aggiungere foto.");
         return;
       }
     }
@@ -130,7 +130,7 @@ export function CreateMemoryModal({ visible, onClose, coupleId, authorId }: Crea
       reset();
       onClose();
     } catch {
-      Alert.alert("Errore", "Impossibile salvare la memoria. Riprova.");
+      showAlert("Errore", "Impossibile salvare la memoria. Riprova.");
     } finally {
       setLoading(false);
     }

@@ -5,24 +5,15 @@ import {
   Pressable,
   TextInput,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from "react-native";
+import { showAlert } from "@/lib/alert";
 import { useRouter } from "expo-router";
 import { supabase } from "@/lib/supabase";
 
 type Mode = "choose" | "create" | "join";
-
-// Alert.alert è un no-op su react-native-web: usiamo window.alert sul web.
-function notify(title: string, message: string) {
-  if (Platform.OS === "web") {
-    window.alert(`${title}\n\n${message}`);
-  } else {
-    Alert.alert(title, message);
-  }
-}
 
 export default function OnboardingScreen() {
   const [mode, setMode] = useState<Mode>("choose");
@@ -47,7 +38,7 @@ export default function OnboardingScreen() {
       setCreatedCode(data.invite_code as string);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Impossibile creare la coppia. Riprova.";
-      notify("Errore", msg);
+      showAlert("Errore", msg);
     } finally {
       setLoading(false);
     }
@@ -57,7 +48,7 @@ export default function OnboardingScreen() {
     const code = inviteCode.trim().toUpperCase();
     // I codici emessi prima dell'hardening erano di 6 caratteri, i nuovi di 10.
     if (code.length < 6 || code.length > 10) {
-      notify("Codice non valido", "Controlla il codice e riprova.");
+      showAlert("Codice non valido", "Controlla il codice e riprova.");
       return;
     }
 
@@ -73,14 +64,14 @@ export default function OnboardingScreen() {
       // La funzione restituisce null sul codice non valido: sollevare
       // un'eccezione lato DB annullerebbe il conteggio dei tentativi.
       if (!data) {
-        notify("Codice non valido", "Il codice non esiste, è scaduto o è già stato usato.");
+        showAlert("Codice non valido", "Il codice non esiste, è scaduto o è già stato usato.");
         return;
       }
 
       router.replace("/(app)/board");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Codice non valido o scaduto.";
-      notify("Errore", msg);
+      showAlert("Errore", msg);
     } finally {
       setLoading(false);
     }

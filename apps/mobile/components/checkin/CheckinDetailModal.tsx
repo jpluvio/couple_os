@@ -9,8 +9,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert,
 } from "react-native";
+import { showAlert } from "@/lib/alert";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 import type { CheckIn, User } from "@/types/database";
@@ -77,7 +77,7 @@ export function CheckinDetailModal({
       queryClient.invalidateQueries({ queryKey });
       onClose();
     } catch {
-      Alert.alert("Errore", "Impossibile salvare la risposta. Riprova.");
+      showAlert("Errore", "Impossibile salvare la risposta. Riprova.");
     } finally {
       setLoading(false);
     }

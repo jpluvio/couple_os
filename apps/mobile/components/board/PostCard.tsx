@@ -1,4 +1,5 @@
-import { View, Text, Pressable, Alert } from "react-native";
+import { View, Text, Pressable} from "react-native";
+import { showAlert } from "@/lib/alert";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
@@ -68,7 +69,7 @@ export function PostCard({ post, currentUserId, queryKey }: PostCardProps) {
 
   function handleLongPress() {
     if (post.author_id !== currentUserId) return;
-    Alert.alert("Post", undefined, [
+    showAlert("Post", undefined, [
       {
         text: post.pinned ? "Rimuovi pin" : "📌 Fissa in cima",
         onPress: async () => {
@@ -80,7 +81,7 @@ export function PostCard({ post, currentUserId, queryKey }: PostCardProps) {
         text: "🗑️ Elimina",
         style: "destructive",
         onPress: () =>
-          Alert.alert("Elimina post", "Sei sicuro?", [
+          showAlert("Elimina post", "Sei sicuro?", [
             { text: "Annulla", style: "cancel" },
             {
               text: "Elimina",

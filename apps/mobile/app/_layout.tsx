@@ -7,15 +7,19 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { queryClient, asyncStoragePersister } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useOAuthCallback } from "@/hooks/useOAuthCallback";
 
 function AuthGuard() {
   const { session, loading } = useAuth();
+  const exchangingCode = useOAuthCallback();
   usePushNotifications();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
-    if (loading) return;
+    // Durante lo scambio del code OAuth la sessione non c'è ancora: rimbalzare
+    // ora manderebbe l'utente al login proprio mentre sta finendo di accedere.
+    if (loading || exchangingCode) return;
 
     const inAuthGroup = segments[0] === "(auth)";
     const onOnboarding = segments.includes("onboarding");
@@ -27,7 +31,7 @@ function AuthGuard() {
       // sulla schermata di onboarding (crea/unisciti a una coppia).
       router.replace("/(app)/board");
     }
-  }, [session, loading, segments]);
+  }, [session, loading, exchangingCode, segments]);
 
   return null;
 }

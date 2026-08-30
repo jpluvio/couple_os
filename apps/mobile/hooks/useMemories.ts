@@ -1,6 +1,6 @@
-import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useTableSubscription } from "@/lib/realtime";
 import type { Memory } from "@/types/database";
 
 // Memoria con il relativo autore (join su users).
@@ -39,24 +39,11 @@ export function useMemories(coupleId: string) {
   });
 
   // Sottoscrizione realtime: invalida il feed a ogni cambiamento.
-  useEffect(() => {
-    if (!coupleId) return;
-
-    const channel = supabase
-      .channel(`memories-${coupleId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "memories", filter: `couple_id=eq.${coupleId}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: qKey });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [coupleId]);
+  useTableSubscription(
+    coupleId ? `memories-${coupleId}` : null,
+    [{ table: "memories", filter: `couple_id=eq.${coupleId}` }],
+    () => queryClient.invalidateQueries({ queryKey: qKey })
+  );
 
   return query;
 }

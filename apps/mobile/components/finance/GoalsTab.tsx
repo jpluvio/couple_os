@@ -8,10 +8,10 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
+import { showAlert } from "@/lib/alert";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useCouple } from "@/hooks/useCouple";
@@ -60,7 +60,7 @@ export function GoalsTab() {
     const target = parseFloat(targetAmount.replace(",", "."));
     const saved = savedAmount ? parseFloat(savedAmount.replace(",", ".")) : 0;
     if (isNaN(target) || target <= 0) {
-      Alert.alert("Errore", "Inserisci un importo target valido.");
+      showAlert("Errore", "Inserisci un importo target valido.");
       return;
     }
     setLoading(true);
@@ -75,7 +75,7 @@ export function GoalsTab() {
       resetForm();
       setShowAdd(false);
     } catch {
-      Alert.alert("Errore", "Impossibile aggiungere l'obiettivo.");
+      showAlert("Errore", "Impossibile aggiungere l'obiettivo.");
     } finally {
       setLoading(false);
     }
@@ -85,7 +85,7 @@ export function GoalsTab() {
     if (!showUpdate || !updateAmount.trim()) return;
     const amount = parseFloat(updateAmount.replace(",", "."));
     if (isNaN(amount) || amount < 0) {
-      Alert.alert("Errore", "Inserisci un importo valido.");
+      showAlert("Errore", "Inserisci un importo valido.");
       return;
     }
     setLoading(true);
@@ -98,7 +98,7 @@ export function GoalsTab() {
       setShowUpdate(null);
       setUpdateAmount("");
     } catch {
-      Alert.alert("Errore", "Impossibile aggiornare l'obiettivo.");
+      showAlert("Errore", "Impossibile aggiornare l'obiettivo.");
     } finally {
       setLoading(false);
     }
@@ -111,7 +111,7 @@ export function GoalsTab() {
   }
 
   function handleLongPress(goal: FinancialGoal) {
-    Alert.alert(goal.title, undefined, [
+    showAlert(goal.title, undefined, [
       {
         text: "🗑️ Elimina",
         style: "destructive",

@@ -8,10 +8,10 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
+import { showAlert } from "@/lib/alert";
 import Animated, { useSharedValue, withTiming, useAnimatedStyle } from "react-native-reanimated";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -139,7 +139,7 @@ export function ShoppingTab() {
       resetForm();
       setShowAdd(false);
     } catch {
-      Alert.alert("Errore", "Impossibile aggiungere il prodotto.");
+      showAlert("Errore", "Impossibile aggiungere il prodotto.");
     } finally {
       setLoading(false);
     }
@@ -156,7 +156,7 @@ export function ShoppingTab() {
   async function clearChecked() {
     const checked = (items ?? []).filter((i) => i.checked);
     if (checked.length === 0) return;
-    Alert.alert("Svuota completati", `Elimina ${checked.length} prodotti spuntati?`, [
+    showAlert("Svuota completati", `Elimina ${checked.length} prodotti spuntati?`, [
       { text: "Annulla", style: "cancel" },
       {
         text: "Elimina",
@@ -170,7 +170,7 @@ export function ShoppingTab() {
   }
 
   function handleLongPress(item: ShoppingItem) {
-    Alert.alert(item.name, undefined, [
+    showAlert(item.name, undefined, [
       {
         text: "🗑️ Elimina",
         style: "destructive",

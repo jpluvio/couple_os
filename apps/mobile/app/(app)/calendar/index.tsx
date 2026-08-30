@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Calendar, type DateData } from "react-native-calendars";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useTableSubscription } from "@/lib/realtime";
 import { useAuth } from "@/hooks/useAuth";
 import { useCouple } from "@/hooks/useCouple";
 import { EventCard, type CalendarEvent } from "@/components/calendar/EventCard";
@@ -47,18 +48,11 @@ export default function CalendarScreen() {
   });
 
   // Real-time subscription
-  useEffect(() => {
-    if (!coupleId) return;
-    const channel = supabase
-      .channel(`calendar-${coupleId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "events", filter: `couple_id=eq.${coupleId}` },
-        () => { queryClient.invalidateQueries({ queryKey: qKey }); }
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [coupleId]);
+  useTableSubscription(
+    coupleId ? `calendar-${coupleId}` : null,
+    [{ table: "events", filter: `couple_id=eq.${coupleId}` }],
+    () => queryClient.invalidateQueries({ queryKey: qKey })
+  );
 
   // Build marked dates for the calendar
   const markedDates: Record<string, { dots: { key: string; color: string }[]; selected?: boolean; selectedColor?: string }> = {};

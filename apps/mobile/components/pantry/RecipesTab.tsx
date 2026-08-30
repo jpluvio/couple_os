@@ -8,10 +8,10 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
+import { showAlert } from "@/lib/alert";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useCouple } from "@/hooks/useCouple";
@@ -95,7 +95,7 @@ export function RecipesTab() {
       resetForm();
       setShowAdd(false);
     } catch {
-      Alert.alert("Errore", "Impossibile aggiungere la ricetta.");
+      showAlert("Errore", "Impossibile aggiungere la ricetta.");
     } finally {
       setLoading(false);
     }
@@ -109,7 +109,7 @@ export function RecipesTab() {
   }
 
   function handleLongPress(recipe: Recipe) {
-    Alert.alert(recipe.title, undefined, [
+    showAlert(recipe.title, undefined, [
       {
         text: "🗑️ Elimina",
         style: "destructive",
