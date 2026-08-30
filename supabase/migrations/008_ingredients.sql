@@ -103,6 +103,12 @@ alter table public.recipe_ingredients
 comment on column public.recipe_ingredients.quantity is
   'DEPRECATA: sostituita da quantity_num + unit + quantity_text. Rimuovibile nella 009.';
 
+-- Preparazione: il procedimento della ricetta. Testo libero, un passo per
+-- riga — l'app li numera in lettura. Una tabella di passi separata sarebbe
+-- più rigida senza dare nulla in più: nessuno riordina i passi da solo.
+alter table public.recipes
+  add column if not exists instructions text;
+
 alter table public.pantry_items
   add column if not exists ingredient_id uuid references public.ingredients(id) on delete set null;
 

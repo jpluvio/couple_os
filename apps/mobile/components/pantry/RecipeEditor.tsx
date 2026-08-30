@@ -44,7 +44,14 @@ export function RecipeEditor({
 }: {
   visible: boolean;
   onClose: () => void;
-  recipe?: { id: string; title: string; description: string | null; servings: number; ingredients?: RecipeIngredient[] } | null;
+  recipe?: {
+    id: string;
+    title: string;
+    description: string | null;
+    servings: number;
+    instructions: string | null;
+    ingredients?: RecipeIngredient[];
+  } | null;
 }) {
   const { couple } = useCouple();
   const queryClient = useQueryClient();
@@ -52,6 +59,7 @@ export function RecipeEditor({
 
   const [titolo, setTitolo] = useState(recipe?.title ?? "");
   const [descrizione, setDescrizione] = useState(recipe?.description ?? "");
+  const [preparazione, setPreparazione] = useState(recipe?.instructions ?? "");
   const [porzioni, setPorzioni] = useState(recipe?.servings ?? 2);
   const [righe, setRighe] = useState<Riga[]>(
     recipe?.ingredients?.length
@@ -92,13 +100,24 @@ export function RecipeEditor({
       if (recipeId) {
         const { error } = await supabase
           .from("recipes")
-          .update({ title: nome, description: descrizione.trim() || null, servings: porzioni })
+          .update({
+            title: nome,
+            description: descrizione.trim() || null,
+            servings: porzioni,
+            instructions: preparazione.trim() || null,
+          })
           .eq("id", recipeId);
         if (error) throw error;
       } else {
         const { data, error } = await supabase
           .from("recipes")
-          .insert({ title: nome, description: descrizione.trim() || null, servings: porzioni, couple_id: coupleId })
+          .insert({
+            title: nome,
+            description: descrizione.trim() || null,
+            servings: porzioni,
+            instructions: preparazione.trim() || null,
+            couple_id: coupleId,
+          })
           .select("id")
           .single();
         if (error) throw error;
@@ -246,6 +265,21 @@ export function RecipeEditor({
               <Icon name="plus" size={15} color="#a8562e" width={2} />
               <Text className="text-[13.5px] font-semibold text-accent">Aggiungi ingrediente</Text>
             </Pressable>
+          </View>
+
+          <View style={{ gap: 8 }}>
+            <Label>Preparazione</Label>
+            <Text className="-mt-1 text-[12.5px] text-soft">Un passo per riga: l'app li numera da sola.</Text>
+            <TextInput
+              className="rounded-card bg-paper px-3 py-3 text-[15px] leading-[22px] text-ink"
+              placeholder={"Taglia le melanzane a cubetti e falle friggere.\nScalda il sugo con l'aglio.\nUnisci la pasta e manteca."}
+              placeholderTextColor="#a49a8e"
+              value={preparazione}
+              onChangeText={setPreparazione}
+              multiline
+              textAlignVertical="top"
+              style={{ minHeight: 130 }}
+            />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

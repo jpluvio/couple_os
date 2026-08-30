@@ -14,6 +14,7 @@ type Recipe = {
   title: string;
   description: string | null;
   servings: number;
+  instructions: string | null;
   ingredients?: RecipeIngredient[];
 };
 
@@ -65,7 +66,7 @@ export function RecipesTab() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("recipes")
-        .select("id, title, description, servings, ingredients:recipe_ingredients(*)")
+        .select("id, title, description, servings, instructions, ingredients:recipe_ingredients(*)")
         .eq("couple_id", coupleId)
         .order("title");
       if (error) throw error;
@@ -92,6 +93,26 @@ export function RecipesTab() {
         ? p.ingredient_id === ing.ingredient_id
         : norm(p.name) === norm(ing.name)
     );
+  }
+
+  function eliminaRicetta(r: Recipe) {
+    showAlert(`Eliminare "${r.title}"?`, "Spariscono anche i suoi ingredienti.", [
+      {
+        text: "Elimina",
+        style: "destructive",
+        onPress: async () => {
+          // recipe_ingredients ha on delete cascade: basta la ricetta.
+          const { error } = await supabase.from("recipes").delete().eq("id", r.id);
+          if (error) {
+            showAlert("Non riuscito", "Impossibile eliminare la ricetta.");
+            return;
+          }
+          setAperta(null);
+          queryClient.invalidateQueries({ queryKey: ["recipes", coupleId] });
+        },
+      },
+      { text: "Annulla", style: "cancel" },
+    ]);
   }
 
   async function aggiungiAllaLista(r: Recipe) {
@@ -177,9 +198,14 @@ export function RecipesTab() {
             </Pressable>
 
             {on && (
-              <Pressable onPress={() => setEditor(r)} className="mt-2 self-start">
-                <Text className="text-[13px] font-semibold text-accent">Modifica ricetta</Text>
-              </Pressable>
+              <View className="mt-2 flex-row items-center" style={{ gap: 18 }}>
+                <Pressable onPress={() => setEditor(r)}>
+                  <Text className="text-[13px] font-semibold text-accent">Modifica</Text>
+                </Pressable>
+                <Pressable onPress={() => eliminaRicetta(r)}>
+                  <Text className="text-[13px] font-semibold text-[#b91c1c]">Elimina</Text>
+                </Pressable>
+              </View>
             )}
 
             {on && (
@@ -261,6 +287,24 @@ export function RecipesTab() {
                 <Text className="mt-2.5 text-center text-[12px] leading-[18px] text-soft">
                   Quello che hai già in dispensa resta fuori.{"\n"}Tocca una riga per escluderla o rimetterla.
                 </Text>
+
+                {r.instructions?.trim() ? (
+                  <View className="mt-6 border-t border-hair pt-5">
+                    <Label>Preparazione</Label>
+                    <View className="mt-3" style={{ gap: 12 }}>
+                      {r.instructions
+                        .split("\n")
+                        .map((p) => p.trim())
+                        .filter(Boolean)
+                        .map((passo, i) => (
+                          <View key={i} className="flex-row" style={{ gap: 12 }}>
+                            <Text className="w-[20px] font-display text-[15px] text-accent">{i + 1}</Text>
+                            <Text className="flex-1 text-[14.5px] leading-[22px] text-ink">{passo}</Text>
+                          </View>
+                        ))}
+                    </View>
+                  </View>
+                ) : null}
               </View>
             )}
           </Card>
