@@ -1,0 +1,112 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Oggi",
+      "is_interactive": true
+    },
+    {
+      "file": "Agenda.dc.html",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Agenda"
+    },
+    {
+      "file": "Bacheca.dc.html",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Bacheca"
+    },
+    {
+      "file": "Noi.dc.html",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Noi · Check-in",
+      "is_interactive": true
+    },
+    {
+      "file": "Dispensa.dc.html",
+      "x": 0,
+      "y": 1010,
+      "w": 390,
+      "h": 844,
+      "title": "Casa · Dispensa",
+      "is_interactive": true
+    },
+    {
+      "file": "Ricette.dc.html",
+      "x": 490,
+      "y": 1010,
+      "w": 390,
+      "h": 844,
+      "title": "Casa · Ricette",
+      "is_interactive": true
+    },
+    {
+      "file": "Soldi.dc.html",
+      "x": 980,
+      "y": 1010,
+      "w": 390,
+      "h": 844,
+      "title": "Soldi · Analisi"
+    },
+    {
+      "file": "Memories.dc.html",
+      "x": 1470,
+      "y": 1010,
+      "w": 390,
+      "h": 844,
+      "title": "Noi · Memories"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "sistema",
+      "x": 0,
+      "y": -210,
+      "w": 860,
+      "text": "Direzione A — editoriale caldo.\n\nCarta #faf7f2, inchiostro #1a1714, accento terracotta #a8562e. Titoli in Newsreader (serif), testo in Public Sans. Angoli a 4px, bordi invece di ombre.\n\nI due partner hanno un colore ciascuno — terracotta e verde bosco — al posto dei sette accenti scorrelati di oggi."
+    },
+    {
+      "id": "nav",
+      "x": 980,
+      "y": -210,
+      "w": 880,
+      "text": "Sette tab diventano cinque: Oggi · Agenda · Casa · Soldi · Noi.\n\n\"Casa\" raccoglie dispensa, spesa e ricette. \"Noi\" raccoglie check-in e memories. La Bacheca vive dentro Oggi.\n\nTutte le etichette in italiano, tutte le icone disegnate: niente emoji."
+    },
+    {
+      "id": "ricette-nota",
+      "x": 490,
+      "y": 1900,
+      "w": 390,
+      "text": "Cliccabile. Cambia le porzioni e le grammature si ricalcolano davvero.\n\nRegola di arrotondamento: i pezzi si arrotondano per eccesso (mezza melanzana non si compra), i pesi a passi leggibili — 10 g sopra i 100, 5 g sopra i 10. Tocca una riga per escluderla o rimetterla."
+    },
+    {
+      "id": "dispensa-nota",
+      "x": 0,
+      "y": 1900,
+      "w": 390,
+      "text": "Cliccabile. Tocca un prodotto per segnarlo finito: l'avviso delle scadenze in alto si aggiorna da solo.\n\nLa scadenza esiste già nel database. Quello che manca è il passaggio spesa → dispensa."
+    },
+    {
+      "id": "interattive",
+      "x": 980,
+      "y": 1900,
+      "w": 880,
+      "text": "Quattro schermate su otto sono cliccabili: Oggi, Dispensa, Ricette e Noi — quelle dove nell'app si agisce davvero.\n\nAgenda, Bacheca, Soldi e Memories restano statiche: sono viste da leggere.\n\nLa barra in fondo è disegnata: le schermate sono isolate fra loro e non si naviga da una all'altra."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}

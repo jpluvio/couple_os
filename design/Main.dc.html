@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Public+Sans:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #a8562e; } a:hover { color: #7d3e20; }
+  </style>
+</helmet>
+<div style="width: 390px; height: 844px; background: #faf7f2; font-family: 'Public Sans', system-ui, sans-serif; color: #1a1714; display: flex; flex-direction: column; overflow: hidden;">
+<div style="padding: 56px 24px 18px 24px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;"><div style="display: flex; flex-direction: column; gap: 3px;"><div style="font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #8a7f74;">Domenica 30 agosto</div><div style="font-family: 'Newsreader', Georgia, serif; font-size: 32px; line-height: 1.08; font-weight: 400;">Buongiorno,<br>Paolo e Giulia</div></div><div style="width: 40px; height: 40px; border-radius: 20px; background: #f2ece2; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5c5249" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><div style="position: absolute; top: 7px; right: 8px; width: 7px; height: 7px; border-radius: 4px; background: #a8562e;"></div></div></div><div style="margin: 0 24px 12px 24px; padding: 18px 20px; background: #ffffff; border: 1px solid #ece4d9; border-radius: 4px;"><div style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #a8562e;">Oggi</div><div style="display: flex; flex-direction: column; gap: 4px; margin-top: 12px;"><sc-for list="{{ voci }}" as="v" hint-placeholder-count="3"><div onClick="{{ v.toggle }}" style="display: flex; gap: 12px; align-items: center; padding: 7px 0; cursor: pointer;"><div style="width: 18px; height: 18px; border-radius: 3px; border: 1.5px solid {{ v.boxBorder }}; background: {{ v.boxBg }}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><sc-if value="{{ v.fatto }}" hint-placeholder-val="{{ true }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></sc-if></div><div style="width: 3px; align-self: stretch; background: {{ v.barra }}; flex-shrink: 0;"></div><div style="display: flex; flex-direction: column; gap: 1px;"><div style="font-size: 15px; font-weight: 500; color: {{ v.titoloColore }}; text-decoration: {{ v.strike }};">{{ v.titolo }}</div><div style="font-size: 13px; color: #8a7f74;">{{ v.sotto }}</div></div></div></sc-for></div><div style="font-size: 12.5px; color: #a49a8e; margin-top: 12px;">{{ riassunto }}</div></div><div style="margin: 0 24px; padding: 16px 18px; background: #f2ece2; border-radius: 4px; display: flex; align-items: center; justify-content: space-between; gap: 12px;"><div style="display: flex; flex-direction: column; gap: 3px;"><div style="font-size: 14px; font-weight: 600;">Check-in della settimana</div><div style="font-size: 13px; color: #7a6f64;">Giulia ha già risposto</div></div><div style="padding: 9px 16px; background: #1a1714; color: #faf7f2; border-radius: 2px; font-size: 13px; font-weight: 500; white-space: nowrap;">Rispondi</div></div><div style="flex-grow: 1;"></div><div style="border-top: 1px solid #ece4d9; background: #fffdfa; padding: 12px 16px 30px 16px; display: flex; justify-content: space-between;"><div style="display: flex; flex-direction: column; align-items: center; gap: 5px; width: 62px;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#1a1714" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/></svg><div style="font-size: 10.5px; font-weight: 600; color: #1a1714;">Oggi</div></div><div style="display: flex; flex-direction: column; align-items: center; gap: 5px; width: 62px;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#a49a8e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v4M18 2v4M3 9h18M5 5h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg><div style="font-size: 10.5px; font-weight: 400; color: #a49a8e;">Agenda</div></div><div style="display: flex; flex-direction: column; align-items: center; gap: 5px; width: 62px;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#a49a8e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg><div style="font-size: 10.5px; font-weight: 400; color: #a49a8e;">Casa</div></div><div style="display: flex; flex-direction: column; align-items: center; gap: 5px; width: 62px;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#a49a8e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><div style="font-size: 10.5px; font-weight: 400; color: #a49a8e;">Soldi</div></div><div style="display: flex; flex-direction: column; align-items: center; gap: 5px; width: 62px;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#a49a8e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1L12 21l7.7-7.6 1.1-1a5.5 5.5 0 0 0 0-7.8z"/></svg><div style="font-size: 10.5px; font-weight: 400; color: #a49a8e;">Noi</div></div></div></div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { fatti: {} }; }
+  renderVals() {
+    const righe = [
+      { titolo: "Cena da Marta", sotto: "20:30 · con Giulia", barra: "#a8562e" },
+      { titolo: "Pagare l'affitto", sotto: "Scade oggi · assegnato a te", barra: "#d8cfc2" },
+      { titolo: "Yogurt in scadenza", sotto: "2 prodotti scadono domani", barra: "#d8cfc2" }
+    ];
+    let fatti = 0;
+    const voci = righe.map((r, i) => {
+      const fatto = this.state.fatti[i] === true;
+      if (fatto) fatti++;
+      return {
+        titolo: r.titolo, sotto: r.sotto, fatto: fatto,
+        barra: fatto ? "#e5ddd2" : r.barra,
+        boxBorder: fatto ? "#a8562e" : "#d8cfc2",
+        boxBg: fatto ? "#a8562e" : "transparent",
+        titoloColore: fatto ? "#a49a8e" : "#1a1714",
+        strike: fatto ? "line-through" : "none",
+        toggle: () => {
+          const next = Object.assign({}, this.state.fatti);
+          next[i] = !next[i];
+          this.setState({ fatti: next });
+        }
+      };
+    });
+    const restanti = righe.length - fatti;
+    return {
+      voci: voci,
+      riassunto: restanti === 0 ? "Tutto fatto per oggi." : restanti + " cose ancora da fare"
+    };
+  }
+}
+</script>
+</body>
+</html>

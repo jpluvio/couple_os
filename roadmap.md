@@ -52,7 +52,7 @@
 - [x] Modale crea/modifica evento
 - [x] Real-time via Supabase
 - [ ] Toggle vista settimanale / annuale
-- [ ] Swipe-to-delete su evento
+- [x] Swipe-to-delete su evento (solo sugli eventi propri: sugli altri fallirebbe sulla RLS)
 - [ ] Reminder configurabili per evento (15min / 1h / 1 giorno) — richiede campo `reminder_minutes` su `events`
 
 ### 1.3 — Todo
@@ -60,7 +60,7 @@
 - [x] Items filtrabili, checkbox con optimistic update
 - [x] Crea/modifica item con deadline, priority, assignee
 - [x] Pull-to-refresh
-- [ ] Swipe-to-delete su item
+- [x] Swipe-to-delete su item
 - [ ] Badge con contatore items aperti sul tab
 
 ---
@@ -83,8 +83,8 @@
 - [x] Aggiunta spesa rapida
 - [x] Budget mensile per categoria con confronto budget vs reale
 - [x] Goals con barra di progresso
-- [ ] Grafici (trend, categorie, confronto mese su mese)
-- [ ] Top 5 categorie con percentuali
+- [x] Grafici (trend 6 mesi, categorie, confronto mese su mese) — tab "Analisi", disegnati con `View` native: nessuna libreria di charting aggiunta
+- [x] Top 5 categorie con percentuali (oltre la quinta si aggregano in "Altre N")
 - [ ] Impostazione split mode (EQUAL/PROPORTIONAL) in settings
 
 ---
@@ -116,7 +116,7 @@
 
 ### 4.1 — Performance e UX
 - [x] FlashList sulle liste lunghe (board, check-in, memories, notifiche)
-- [ ] Skeleton loaders (oggi si usano spinner)
+- [x] Skeleton loaders su board, memories, todo, dispensa e analisi (prima queste liste mostravano il vuoto durante il caricamento)
 - [ ] Haptic feedback su azioni chiave
 - [ ] Animazioni di transizione custom (Reanimated)
 
@@ -130,6 +130,12 @@
 - [x] Tap su una notifica → apre il tab corrispondente
 - [ ] Configurare `extra.eas.projectId` e i certificati APNs/FCM — servono solo per la build nativa
 - [ ] Impostazioni notifiche utente (enable/disable per tipo)
+
+### 4.2b — Compatibilità web
+- [x] `Alert.alert` è uno stub vuoto su react-native-web: era usato in 37 punti (12 conferme di
+  eliminazione) e sul web spariva senza traccia. Sostituito ovunque da `showAlert` (`lib/alert.ts`),
+  che sul web ricade su `confirm()`/`alert()` del browser
+- [ ] Rimpiazzare i dialog nativi del browser con un modale in-app (oggi funzionano ma sono brutti e bloccanti)
 
 ### 4.3 — Offline e robustezza
 - [x] Persistenza query cache su AsyncStorage (`PersistQueryClientProvider`)
@@ -178,7 +184,7 @@
 | Calendar | ✅ | ✅ |
 | Todo | ✅ | ✅ |
 | Pantry | ✅ | ✅ |
-| Finance | ✅ | 🚧 (mancano i grafici) |
+| Finance | ✅ | ✅ |
 | Check-in | ✅ | ✅ |
 | Memories | ✅ | ✅ |
 | Notifiche in-app | ✅ | ✅ |

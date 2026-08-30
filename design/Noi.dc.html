@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Public+Sans:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #a8562e; } a:hover { color: #7d3e20; }
+  </style>
+</helmet>
+<div style="width: 390px; height: 844px; background: #faf7f2; font-family: 'Public Sans', system-ui, sans-serif; color: #1a1714; display: flex; flex-direction: column; overflow: hidden;">
+<div style="padding: 56px 24px 18px 24px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;"><div style="display: flex; flex-direction: column; gap: 3px;"><div style="font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #8a7f74;">Check-in · settimana 35</div><div style="font-family: 'Newsreader', Georgia, serif; font-size: 32px; line-height: 1.08; font-weight: 400;">Come stiamo?</div></div><div style="width: 40px; height: 40px; border-radius: 20px; background: #f2ece2; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5c5249" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><div style="position: absolute; top: 7px; right: 8px; width: 7px; height: 7px; border-radius: 4px; background: #a8562e;"></div></div></div><div style="margin: 0 24px 12px 24px; padding: 18px 20px; background: #ffffff; border: 1px solid #ece4d9; border-radius: 4px;"><div style="font-family: 'Newsreader', Georgia, serif; font-size: 20px; line-height: 1.35;">"Cosa ti ha fatto sentire più vicino a me questa settimana?"</div><div style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #a8562e; margin: 20px 0 10px 0;">Come ti senti</div><div style="display: flex; gap: 8px;"><sc-for list="{{ umori }}" as="u" hint-placeholder-count="3"><div onClick="{{ u.scegli }}" style="flex-grow: 1; text-align: center; padding: 11px 0; border: 1px solid {{ u.bordo }}; background: {{ u.sfondo }}; border-radius: 2px; font-size: 13.5px; font-weight: {{ u.peso }}; color: {{ u.colore }}; cursor: pointer;">{{ u.nome }}</div></sc-for></div><div style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #a8562e; margin: 20px 0 10px 0;">La tua risposta</div><div onClick="{{ scrivi }}" style="background: #faf7f2; border: 1px solid #ece4d9; border-radius: 3px; padding: 13px; min-height: 74px; font-size: 14px; color: {{ testoColore }}; line-height: 1.5; cursor: pointer; white-space: pre-line;">{{ testo }}</div><div onClick="{{ invia }}" style="display: flex; align-items: center; justify-content: center; background: {{ inviaBg }}; border-radius: 2px; padding: 14px; margin-top: 16px; cursor: pointer;"><div style="font-size: 14.5px; font-weight: 500; color: #faf7f2;">{{ inviaTesto }}</div></div></div><sc-if value="{{ rivelato }}" hint-placeholder-val="{{ false }}"><div style="margin: 0 24px; padding: 18px 20px; background: #ffffff; border: 1px solid #ece4d9; border-left: 2px solid #4a6b63; border-radius: 4px;"><div style="display: flex; gap: 11px; align-items: center; margin-bottom: 11px;"><div style="width: 30px; height: 30px; border-radius: 15px; background: #4a6b63; color: #ffffff; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center;">G</div><div style="font-size: 13.5px; font-weight: 600;">Giulia · si sente Bene</div></div><div style="font-size: 15px; line-height: 1.5;">Quando sabato hai disdetto per restare a casa con me anche se non stavo bene.</div></div></sc-if><sc-if value="{{ nonRivelato }}" hint-placeholder-val="{{ true }}"><div style="margin: 0 24px; padding: 15px 18px; background: #f2ece2; border-radius: 4px; display: flex; align-items: center; gap: 12px;"><div style="width: 30px; height: 30px; border-radius: 15px; background: #4a6b63; color: #ffffff; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">G</div><div style="font-size: 13.5px; color: #6d6259; line-height: 1.45;">Giulia ha già risposto.<br>Vedrai la sua risposta quando invii la tua.</div></div></sc-if><div style="flex-grow: 1;"></div><div style="border-top: 1px solid #ece4d9; background: #fffdfa; padding: 12px 16px 30px 16px; display: flex; justify-content: space-between;"><div style="display: flex; flex-direction: column; align-items: center; gap: 5px; width: 62px;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#a49a8e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/></svg><div style="font-size: 10.5px; font-weight: 400; color: #a49a8e;">Oggi</div></div><div style="display: flex; flex-direction: column; align-items: center; gap: 5px; width: 62px;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#a49a8e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v4M18 2v4M3 9h18M5 5h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg><div style="font-size: 10.5px; font-weight: 400; color: #a49a8e;">Agenda</div></div><div style="display: flex; flex-direction: column; align-items: center; gap: 5px; width: 62px;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#a49a8e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg><div style="font-size: 10.5px; font-weight: 400; color: #a49a8e;">Casa</div></div><div style="display: flex; flex-direction: column; align-items: center; gap: 5px; width: 62px;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#a49a8e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><div style="font-size: 10.5px; font-weight: 400; color: #a49a8e;">Soldi</div></div><div style="display: flex; flex-direction: column; align-items: center; gap: 5px; width: 62px;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#1a1714" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1L12 21l7.7-7.6 1.1-1a5.5 5.5 0 0 0 0-7.8z"/></svg><div style="font-size: 10.5px; font-weight: 600; color: #1a1714;">Noi</div></div></div></div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { umore: 0, scritto: false, inviato: false }; }
+  renderVals() {
+    const defs = [["Bene", "#15803d"], ["Così", "#a8562e"], ["Giù", "#7c6f64"]];
+    const umori = defs.map((d, i) => {
+      const on = this.state.umore === i;
+      return {
+        nome: d[0],
+        bordo: on ? d[1] : "#ece4d9",
+        sfondo: on ? d[1] + "12" : "#ffffff",
+        peso: on ? "600" : "400",
+        colore: on ? d[1] : "#8a7f74",
+        scegli: () => this.setState({ umore: i })
+      };
+    });
+    const testo = this.state.scritto
+      ? "Il pomeriggio di sabato, quando siamo rimasti a leggere senza dire niente per due ore."
+      : "Tocca per scrivere\u2026";
+    return {
+      umori: umori,
+      testo: testo,
+      testoColore: this.state.scritto ? "#1a1714" : "#a49a8e",
+      scrivi: () => this.setState({ scritto: !this.state.scritto }),
+      invia: () => { if (this.state.scritto) this.setState({ inviato: true }); },
+      inviaTesto: this.state.inviato ? "Risposta inviata" : "Invia la risposta",
+      inviaBg: this.state.inviato ? "#166534" : (this.state.scritto ? "#1a1714" : "#c7bdb1"),
+      rivelato: this.state.inviato,
+      nonRivelato: !this.state.inviato
+    };
+  }
+}
+</script>
+</body>
+</html>
